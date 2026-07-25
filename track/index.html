@@ -554,7 +554,21 @@ function render(){
   // time-based fuelling stop carries km=0, and "km >= 0" is true from the first
   // telemetry row — which showed every checkpoint cleared from the gun.
   const cpPassed = (cp) => num(cp.km)!=null && cp.km>0 && km!=null && km>=cp.km;
-  const cpIsDone = (cp) => (cpStates[cp.id] && cpStates[cp.id].complete) || cpPassed(cp);
+  // checkpointStates is keyed by the stop's SCHEDULED MINUTE (the app's
+  // `scheduledMinute(for:)`), not by checkpoint id — looking it up by cp.id
+  // silently never matched, so hand-ticked stops never showed as done here.
+  const cpKey = (cp) => {
+    if(num(cp.atMinute)!=null) return String(cp.atMinute);
+    // Mirror the app exactly: totalMinutes is rounded to a whole minute FIRST,
+    // then the fraction is applied and rounded again. Rounding differently here
+    // would produce an off-by-one key and silently lose the tick.
+    const planKm = num(PLAN.distanceKm);
+    const mins = Math.max(Math.round(TOTMIN), 0);
+    if(!planKm || planKm<=0) return null;
+    return String(Math.round(Math.min(Math.max(num(cp.km)/planKm,0),1) * mins));
+  };
+  const cpTicked = (cp) => { const k = cpKey(cp); return !!(k!=null && cpStates[k] && cpStates[k].complete); };
+  const cpIsDone = (cp) => cpTicked(cp) || cpPassed(cp);
   const cpDone = cpsAll.filter(cpIsDone).length;
   const kmFmt = (v)=> v==null ? "—" : v.toFixed(TOTKM<100?1:0);
   const primary = [
