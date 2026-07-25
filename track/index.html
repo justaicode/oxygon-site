@@ -549,7 +549,13 @@ function render(){
   // Headline row — pace, projected finish, distance, checkpoints (all highlighted).
   const cpsAll = PLAN.checkpoints || [];
   const cpStates = PLAN.checkpointStates || {};
-  const cpDone = cpsAll.filter(cp => (cpStates[cp.id] && cpStates[cp.id].complete) || (km!=null && km>=cp.km)).length;
+  // A checkpoint counts as done if it was ticked, or if the runner has passed its
+  // POSITION. The position test only applies to km-positioned checkpoints: a
+  // time-based fuelling stop carries km=0, and "km >= 0" is true from the first
+  // telemetry row — which showed every checkpoint cleared from the gun.
+  const cpPassed = (cp) => num(cp.km)!=null && cp.km>0 && km!=null && km>=cp.km;
+  const cpIsDone = (cp) => (cpStates[cp.id] && cpStates[cp.id].complete) || cpPassed(cp);
+  const cpDone = cpsAll.filter(cpIsDone).length;
   const kmFmt = (v)=> v==null ? "—" : v.toFixed(TOTKM<100?1:0);
   const primary = [
     statCard("Pace", secPerKm!=null?fmtPace(secPerKm):"—", "/km", secPerKm!=null?`${(3600/secPerKm).toFixed(1)} km/h`:null, "accent"),
@@ -559,7 +565,7 @@ function render(){
   if(TOTKM) primary.push(statCard("Distance", `${kmFmt(km!=null?km:0)}/${kmFmt(TOTKM)}`, "km", null, "accent"));
   if(cpsAll.length){
     const cpsSorted = cpsAll.slice().sort((a,b)=>a.km-b.km);
-    const nextCp = cpsSorted.find(cp => !((cpStates[cp.id]&&cpStates[cp.id].complete) || (km!=null && km>=cp.km)));
+    const nextCp = cpsSorted.find(cp => !cpIsDone(cp));
     const cpSub = nextCp
       ? (km!=null ? `next in ${Math.max(0,nextCp.km-km).toFixed(1)} km` : `next at ${nextCp.km.toFixed(TOTKM<100?1:0)} km`)
       : "all cleared";
@@ -642,7 +648,10 @@ function drawProfile(km){
   let cpm="";
   (PLAN.checkpoints||[]).forEach(cp=>{
     const p=posAt(cp.km); if(!p) return;
-    const done = (states[cp.id] && states[cp.id].complete) || (km!=null && km>=cp.km);
+    // Same rule as the headline count: only km-positioned checkpoints can be
+    // "passed" by distance (km=0 time-based stops would read done immediately).
+    const done = (states[cp.id] && states[cp.id].complete)
+              || (num(cp.km)!=null && cp.km>0 && km!=null && km>=cp.km);
     cpm += `<circle class="cp ${done?"done":""}" cx="${X(cp.km).toFixed(1)}" cy="${Y(p.elevationM).toFixed(1)}" r="3.2"/>`;
   });
 
