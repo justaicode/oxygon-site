@@ -502,8 +502,12 @@ function liveElapsed(){
 function render(){
   const st = raceState();
   const badge = $("status");
+  // Paused is still a live feed — position keeps updating, the clock is held —
+  // so keep the live styling but say so, rather than looking like a dead feed.
+  const isPaused = st==="live" && !!(LAST && LAST.paused);
   badge.className = "status" + (st==="live"?" live":st==="done"?" done":"");
-  $("status-t").textContent = st==="live" ? "Live" : st==="done" ? "Finished" : "Not started";
+  $("status-t").textContent = isPaused ? "Paused"
+    : st==="live" ? "Live" : st==="done" ? "Finished" : "Not started";
 
   const km = LAST ? num(LAST.km) : null;
   const elapsed = LAST ? num(LAST.elapsed_sec) : null;
