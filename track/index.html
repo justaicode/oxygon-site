@@ -784,7 +784,12 @@ function updateAge(){
   const t=Date.parse(LAST.updated_at); if(isNaN(t)){ $("age").textContent=""; return; }
   const sec=Math.max(0,(Date.now()-t)/1000);
   const st=raceState();
-  const stale = st==="live" && sec>25;
+  // Must sit above the app's publish interval plus real-world slack. The app
+  // sends every 12s normally, 30s while paused or low on battery, and 45s in
+  // battery-saver — so a 25s threshold cried "signal lost" during a perfectly
+  // healthy run. 100s clears every cadence with room for a patchy mountain
+  // signal, and still catches a genuinely dead feed quickly.
+  const stale = st==="live" && sec>100;
   $("app").classList.toggle("stale", stale);
   if(st==="done") $("age").textContent = "Race complete";
   else if(st==="pending") $("age").textContent = "Waiting for the start";
