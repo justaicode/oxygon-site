@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Live tracking · Dromeas</title>
+<title>Live tracking · Oxygon</title>
 <meta name="description" content="Follow the race live — position, pace, heart rate and conditions, in real time." />
 <meta name="theme-color" content="#0b1220" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -104,6 +104,15 @@
     background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:4px 7px;cursor:pointer;
     color:var(--accent);font:800 10.5px/1 inherit;letter-spacing:.3px;text-transform:uppercase}
   .cardpin svg{width:12px;height:12px;fill:currentColor}
+  /* Axis labels live in HTML, not in the SVG: the chart is drawn with
+     preserveAspectRatio="none", so any <text> inside it gets stretched
+     horizontally along with the profile and reads as smeared. */
+  .yax{position:absolute;left:3px;top:0;bottom:0;z-index:2;display:flex;flex-direction:column;
+       justify-content:space-between;padding:2px 0;font-size:10px;line-height:1;
+       color:var(--dim);pointer-events:none}
+  .yax.right{left:auto;right:3px;text-align:right}
+  .xax{display:flex;justify-content:space-between;margin-top:5px;padding:0 3px;
+       font-size:10px;color:var(--dim);font-variant-numeric:tabular-nums}
   .cardpin:active{background:var(--card)}
   .mapsmenu{position:fixed;z-index:50;background:var(--card2);border:1px solid var(--line);border-radius:11px;box-shadow:var(--shadow);overflow:hidden;min-width:150px}
   .mapsmenu .mm-h{padding:8px 14px 4px;color:var(--faint);font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;font-weight:800}
@@ -171,7 +180,7 @@
   <!-- Main -->
   <div id="app" class="hidden">
     <div class="top">
-      <div class="brand"><b>Dromeas</b> · Live</div>
+      <div class="brand"><b>Oxygon</b> · Live</div>
       <div class="theme" id="theme" role="group" aria-label="Theme">
         <button type="button" data-t="system" title="Follow system">Auto</button>
         <button type="button" data-t="light" title="Light" aria-label="Light">☀</button>
@@ -209,15 +218,18 @@
       <h2>Activity chart <span class="r">press &amp; hold to inspect</span></h2>
       <div class="pills" id="prof-pills"></div>
       <div class="profwrap">
+        <div class="yax" id="yax"></div>
+        <div class="yax right" id="yax2"></div>
         <svg class="profile" id="profile" viewBox="0 0 1000 150" preserveAspectRatio="none"></svg>
         <div class="scrubtip hidden" id="scrubtip"></div>
       </div>
+      <div class="xax" id="xax"></div>
     </div>
 
 
     <div class="foot">
       <span id="age" class="live-age"></span><br/>
-      Powered by <b>Dromeas</b> · Live race tracking
+      Powered by <b>Oxygon</b> · Live race tracking
     </div>
 
     <div class="adminbar hidden" id="adminbar">
@@ -346,8 +358,38 @@ function posAt(km){
 
 /* Measurement value at course fraction f (0..1): demo curves, or the hourly
    forecast mapped to predicted arrival time. Glucose is demo-only. */
+/* Conditions the app actually recorded during the activity: [[km, °C, %rh], ...],
+   one sample every five minutes. The forecast below is only the fallback — it says
+   what the day was supposed to be like, which is not the same thing and cannot be
+   averaged honestly. */
+function condPoints(){
+  const s = LAST && LAST.cond_series;
+  if(!Array.isArray(s) || s.length < 1) return [];
+  return s.map(p => ({ km:+p[0], temp:+p[1], humid:+p[2] }))
+          .filter(c => isFinite(c.km) && isFinite(c.temp) && isFinite(c.humid));
+}
+function condAtKm(km, key){
+  const cp = condPoints(); if(!cp.length) return null;
+  if(km <= cp[0].km) return cp[0][key];
+  for(let i=1;i<cp.length;i++){
+    if(km <= cp[i].km){ const a=cp[i-1], b=cp[i], g=(km-a.km)/Math.max(b.km-a.km,1e-6);
+      return a[key] + (b[key]-a[key])*g; }
+  }
+  return cp[cp.length-1][key];
+}
+/* Means across everything recorded — the number worth showing at the finish. */
+function condAverages(){
+  const cp = condPoints(); if(!cp.length) return null;
+  const mean = k => cp.reduce((a,c)=>a+c[k],0)/cp.length;
+  return { temp: mean("temp"), humid: mean("humid"), n: cp.length };
+}
+
 function measAt(f){
   if(SIM || (PLAN && PLAN.simulatorMode)) return { temp:Sim.temperature(f), humid:Sim.humidity(f), gluc:Sim.glucose(f) };
+  if(condPoints().length > 1){
+    const km = f * TOTKM;
+    return { temp:condAtKm(km,"temp"), humid:condAtKm(km,"humid"), gluc:null };
+  }
   const base = (LAST && LAST.started_at) ? Date.parse(LAST.started_at)/1000 : Date.now()/1000;
   const t = base + f*(TOTMIN*60);
   return { temp:forecastAt(PLAN.hourlyWeather,t,"tempC"), humid:forecastAt(PLAN.hourlyWeather,t,"humidity"), gluc:null };
@@ -540,14 +582,27 @@ function render(){
 
   // Conditions
   const sim = SIM || !!PLAN.simulatorMode;
+  const isDone = raceState() === "done";
   const nowSec = Date.now()/1000;
   let temp=null, humid=null, gluc=null;
   if(sim){ temp=Sim.temperature(frac); humid=Sim.humidity(frac); gluc=Sim.glucose(frac); }
   else{
-    temp = forecastAt(PLAN.hourlyWeather, nowSec, "tempC");
-    humid = forecastAt(PLAN.hourlyWeather, nowSec, "humidity");
-    if(temp==null && num(PLAN.temperatureC)!=null) temp = PLAN.temperatureC; // daily fallback
+    const rec = condPoints();
+    const avg = isDone ? condAverages() : null;
+    if(avg){
+      // The activity is over: the last reading is a number taken while the runner
+      // stood still catching their breath. The mean of what they actually ran
+      // through is the one worth reporting.
+      temp = avg.temp; humid = avg.humid;
+    } else if(rec.length){
+      temp = rec[rec.length-1].temp; humid = rec[rec.length-1].humid;
+    } else {
+      temp = forecastAt(PLAN.hourlyWeather, nowSec, "tempC");
+      humid = forecastAt(PLAN.hourlyWeather, nowSec, "humidity");
+      if(temp==null && num(PLAN.temperatureC)!=null) temp = PLAN.temperatureC; // daily fallback
+    }
   }
+  const condAvg = (!sim && isDone) ? condAverages() : null;
   const hr = LAST ? num(LAST.bpm) : null;
 
   // Headline row — pace, projected finish, distance, checkpoints (all highlighted).
@@ -598,10 +653,11 @@ function render(){
   // as "this feature is gone" instead of "no data yet"). Mirrors the in-app tiles.
   const metrics = [
     statCard("Heart rate", hr!=null?hr:"—", "bpm", hr!=null?null:"no strap", "", "--hr"),
-    statCard("Temp", temp!=null?Math.round(temp):"—", "°C",
+    statCard(condAvg?"Avg temp":"Temp", temp!=null?Math.round(temp):"—", "°C",
              temp!=null ? (sim?"demo":null) : "no forecast", "", "--temp"),
-    statCard("Humidity", humid!=null?Math.round(humid):"—", "%",
-             humid!=null ? (sim?"demo":null) : "no forecast", "", "--humid"),
+    statCard(condAvg?"Avg humidity":"Humidity", humid!=null?Math.round(humid):"—", "%",
+             condAvg ? `over ${condAvg.n} readings`
+                     : (humid!=null ? (sim?"demo":null) : "no forecast"), "", "--humid"),
     statCard("Glucose", gluc!=null?gluc.toFixed(1):"—", "mmol/L",
              gluc!=null ? "demo" : "not connected", "", "--gluc")
   ];
@@ -725,6 +781,16 @@ function drawProfile(km){
     <path class="fillp" d="${area}"/>
     <path class="linep" d="${line}"/>
     ${ov}${cpm}${scr}${me}`;
+
+  // Axes. Elevation on the left, distance underneath, and — only while the HR
+  // overlay is on — its own bpm scale on the right, because normalising heart rate
+  // into the elevation band makes a line nobody can put a number to.
+  const yax=$("yax"), yax2=$("yax2"), xax=$("xax");
+  if(yax) yax.innerHTML = `<span>${Math.round(MAXE)} m</span><span>${Math.round(MINE)} m</span>`;
+  if(yax2) yax2.innerHTML = SHOW.hr
+      ? `<span>${MRANGE.hr[1]} bpm</span><span>${MRANGE.hr[0]}</span>` : "";
+  if(xax) xax.innerHTML = [0,.25,.5,.75,1]
+      .map(f => `<span>${(f*TOTKM).toFixed(f===0?0:1)}${f===1?" km":""}</span>`).join("");
 }
 
 /* ----------------------------------------------------------------- map     */
