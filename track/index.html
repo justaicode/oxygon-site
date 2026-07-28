@@ -424,7 +424,7 @@ function wireScrub(){
     const cx = e.clientX!=null ? e.clientX : (e.touches&&e.touches[0] ? e.touches[0].clientX : rect.left);
     const frac = clamp((cx-rect.left)/Math.max(rect.width,1), 0, 1);
     SCRUB = frac;
-    drawProfile(LAST ? num(LAST.km) : null);
+    drawProfile(currentKm());
     const km=frac*TOTKM, sp=posAt(km), md=measAt(frac);
     const parts=[`<b>${km.toFixed(1)} km</b>`];
     if(sp) parts.push(`${Math.round(sp.elevationM)} m`);
@@ -436,7 +436,7 @@ function wireScrub(){
     tip.style.left = Math.min(92, Math.max(8, frac*100)) + "%";
     tip.classList.remove("hidden");
   };
-  const end=()=>{ if(SCRUB==null) return; SCRUB=null; drawProfile(LAST?num(LAST.km):null); tip.classList.add("hidden"); };
+  const end=()=>{ if(SCRUB==null) return; SCRUB=null; drawProfile(currentKm()); tip.classList.add("hidden"); };
   svg.addEventListener("pointerdown", e=>{ e.preventDefault(); try{ svg.setPointerCapture(e.pointerId); }catch(_){} set(e); });
   svg.addEventListener("pointermove", e=>{ if(SCRUB!=null){ e.preventDefault(); set(e); } });
   ["pointerup","pointercancel","pointerleave"].forEach(ev=>svg.addEventListener(ev, end));
@@ -514,6 +514,19 @@ async function tick(){
   }catch(e){/* keep last frame; age timer will flag staleness */}
 }
 
+/* Distance covered, straight from telemetry — but only once the activity has
+   actually started.
+
+   Resetting an activity clears the plan's startedAt and leaves the last telemetry
+   row sitting in the table. Reading that row regardless put a runner 17.1 km into
+   a race they had not begun, at 56%, with a pace of 0:07/km derived from the 115
+   seconds that row had banked. The plan is the authority on whether anyone is
+   running; telemetry only says where. */
+function currentKm(){
+  if(!LAST || raceState() === "pending") return null;
+  return num(LAST.km);
+}
+
 function raceState(){
   if(!LAST) return "pending";
   const ms = s => { const t = s ? Date.parse(s) : NaN; return isFinite(t) ? t : null; };
@@ -551,7 +564,7 @@ function render(){
   $("status-t").textContent = isPaused ? "Paused"
     : st==="live" ? "Live" : st==="done" ? "Finished" : "Not started";
 
-  const km = LAST ? num(LAST.km) : null;
+  const km = currentKm();
   const elapsed = LAST ? num(LAST.elapsed_sec) : null;
   const hasPos = km!=null && PTS.length;
 
@@ -889,7 +902,7 @@ function wirePills(){
   $("prof-pills").addEventListener("click",(e)=>{
     const b=e.target.closest(".pill"); if(!b || b.disabled) return;
     SHOW[b.dataset.k]=!SHOW[b.dataset.k];
-    renderPills(); drawProfile(LAST?num(LAST.km):null);
+    renderPills(); drawProfile(currentKm());
   });
 }
 
