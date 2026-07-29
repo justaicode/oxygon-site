@@ -406,6 +406,33 @@ function hrStats(){
   return { avg: Math.round(bpms.reduce((a,b)=>a+b,0)/bpms.length), max: Math.max(...bpms), n: bpms.length };
 }
 
+/* Glucose arrives as [[km, mgdl]] on the same slow cadence as the other series.
+   Its own reader rather than a third column on cond_series: the two are recorded by
+   different things at different rates — weather every five minutes from a forecast
+   lookup, glucose whenever the CGM app hands one to Health — so a run routinely has
+   plenty of one and none of the other. */
+function glucPoints(){
+  const s = LAST && LAST.gluc_series;
+  if(!Array.isArray(s) || s.length < 1) return [];
+  return s.map(p => ({ km:+p[0], gluc:+p[1] }))
+          .filter(g => isFinite(g.km) && isFinite(g.gluc));
+}
+function glucAtKm(km){
+  const gp = glucPoints(); if(!gp.length) return null;
+  if(km <= gp[0].km) return gp[0].gluc;
+  for(let i=1;i<gp.length;i++){
+    if(km <= gp[i].km){ const a=gp[i-1], b=gp[i], g=(km-a.km)/Math.max(b.km-a.km,1e-6);
+      return a.gluc + (b.gluc-a.gluc)*g; }
+  }
+  return gp[gp.length-1].gluc;
+}
+function glucStats(){
+  const gp = glucPoints(); if(!gp.length) return null;
+  const v = gp.map(g=>g.gluc);
+  return { avg: v.reduce((a,b)=>a+b,0)/v.length, min: Math.min(...v), max: Math.max(...v),
+           n: v.length, last: v[v.length-1] };
+}
+
 function condAverages(){
   const cp = condPoints(); if(!cp.length) return null;
   const mean = k => cp.reduce((a,c)=>a+c[k],0)/cp.length;
@@ -418,11 +445,14 @@ function measAt(f){
   if(SIM || (PLAN && PLAN.simulatorMode)) return { temp:Sim.temperature(f), humid:Sim.humidity(f), gluc:Sim.glucose(f) };
   if(condPoints().length > 1){
     const km = f * TOTKM;
-    return { temp:condAtKm(km,"temp"), humid:condAtKm(km,"humid"), gluc:null };
+    return { temp:condAtKm(km,"temp"), humid:condAtKm(km,"humid"), gluc:glucAtKm(km) };
   }
   const base = (LAST && LAST.started_at) ? Date.parse(LAST.started_at)/1000 : Date.now()/1000;
   const t = base + f*(TOTMIN*60);
-  return { temp:forecastAt(PLAN.hourlyWeather,t,"tempC"), humid:forecastAt(PLAN.hourlyWeather,t,"humidity"), gluc:null };
+  // No measured conditions yet, but glucose may still be flowing — the two come
+  // from unrelated sources, so one being absent says nothing about the other.
+  return { temp:forecastAt(PLAN.hourlyWeather,t,"tempC"), humid:forecastAt(PLAN.hourlyWeather,t,"humidity"),
+           gluc:glucAtKm(f*TOTKM) };
 }
 
 /* HR overlay points: the app-published series (the source device's full recorded
@@ -460,7 +490,7 @@ function wireScrub(){
     if(sp) parts.push(`${Math.round(sp.elevationM)} m`);
     if(SHOW.temp && md.temp!=null)  parts.push(`<span style="color:var(--temp)">${Math.round(md.temp)}°</span>`);
     if(SHOW.humid && md.humid!=null) parts.push(`<span style="color:var(--humid)">${Math.round(md.humid)}%</span>`);
-    if(SHOW.gluc && md.gluc!=null)  parts.push(`<span style="color:var(--gluc)">${md.gluc.toFixed(1)}</span>`);
+    if(SHOW.gluc && md.gluc!=null)  parts.push(`<span style="color:var(--gluc)">${Math.round(md.gluc)}</span>`);
     if(SHOW.hr){ const hh=hrAtKm(km); if(hh!=null) parts.push(`<span style="color:var(--hr)">${Math.round(hh)} bpm</span>`); }
     tip.innerHTML = parts.join(" · ");
     tip.style.left = Math.min(92, Math.max(8, frac*100)) + "%";
@@ -698,6 +728,7 @@ function render(){
   const running = !isDone && !!(LAST && LAST.started_at);
   const rec = sim ? [] : condPoints();
   const avgAll = (!sim && rec.length) ? condAverages() : null;
+  const glucs  = sim ? null : glucStats();
   const one = v => v==null ? null : (Math.abs(v) >= 10 ? Math.round(v) : v.toFixed(1));
 
   const metrics = [
@@ -724,10 +755,18 @@ function render(){
                  (running && avgAll) ? `<b>avg</b>${Math.round(avgAll.humid)}` : null),
 
     // mg/dL, matching the app — a page showing one unit while the phone in your
-    // hand shows another is worse than showing nothing. Real readings aren't
-    // published to the crew feed yet, so outside a demo this stays honest.
-    statCard("Glucose", gluc!=null?Math.round(gluc):"—", "mg/dL",
-             gluc!=null ? "demo" : "not connected", "", "--gluc")
+    // hand shows another is worse than showing nothing.
+    //
+    // Same live/finished flip as the other three: the reading now with the mean in
+    // the corner while running, the mean as the headline once it's over. "Not
+    // connected" only when no CGM is feeding Health at all, which is a real state
+    // and worth saying plainly rather than showing a dash.
+    (isDone && glucs)
+      ? statCard("Avg glucose", Math.round(glucs.avg), "mg/dL", null, "", "--gluc", null,
+                 `${Math.round(glucs.min)} – ${Math.round(glucs.max)}`)
+      : statCard("Glucose", gluc!=null?Math.round(gluc):"—", "mg/dL",
+                 gluc!=null ? (sim?"demo":null) : "not connected", "", "--gluc", null,
+                 (running && glucs) ? `<b>avg</b>${Math.round(glucs.avg)}` : null)
   ];
   $("stats-metrics").innerHTML = metrics.join("");
 
@@ -954,7 +993,10 @@ function updateAge(){
 function measAvail(){
   const sim=!!(PLAN&&PLAN.simulatorMode);
   const fc=!!(PLAN&&Array.isArray(PLAN.hourlyWeather)&&PLAN.hourlyWeather.length>1);
-  return { hr:true, temp: sim||fc||num(PLAN&&PLAN.temperatureC)!=null, humid: sim||fc, gluc: sim };
+  // Glucose is available whenever the runner is actually publishing readings —
+  // it was pinned to simulator-only back when there was no real source.
+  return { hr:true, temp: sim||fc||num(PLAN&&PLAN.temperatureC)!=null, humid: sim||fc,
+           gluc: sim || glucPoints().length > 0 };
 }
 function renderPills(){
   const a=measAvail();
