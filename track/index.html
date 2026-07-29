@@ -98,6 +98,14 @@
   .stat .v{font-weight:800;font-size:26px;letter-spacing:-.5px;margin-top:6px;font-variant-numeric:tabular-nums;line-height:1.05}
   .stat .u{font-size:14px;color:var(--dim);font-weight:600;margin-left:3px}
   .stat .sub2{color:var(--faint);font-size:12px;margin-top:3px;font-variant-numeric:tabular-nums}
+  /* The running mean rides in the corner rather than under the value: while the
+     activity is live the number you glance at is the one happening now, and two
+     equally-weighted figures make you decide which one you wanted. */
+  .stat{position:relative}
+  .stat .corner{position:absolute;right:12px;bottom:9px;text-align:right;line-height:1.2;
+                font-size:11px;color:var(--faint);font-variant-numeric:tabular-nums}
+  .stat .corner b{display:block;font-size:9px;font-weight:700;letter-spacing:.08em;
+                  text-transform:uppercase;opacity:.75}
   .stat .ic{width:8px;height:8px;border-radius:50%}
   .stat.accent{background:linear-gradient(180deg,var(--card2),var(--card))}
   .cardpin{position:absolute;top:7px;right:7px;z-index:2;display:inline-flex;align-items:center;gap:3px;
@@ -378,10 +386,20 @@ function condAtKm(km, key){
   return cp[cp.length-1][key];
 }
 /* Means across everything recorded — the number worth showing at the finish. */
+/* Heart-rate mean and peak across everything recorded so far. */
+function hrStats(){
+  const hp = hrPoints(); if(!hp.length) return null;
+  const bpms = hp.map(h=>h.bpm).filter(b=>isFinite(b));
+  if(!bpms.length) return null;
+  return { avg: Math.round(bpms.reduce((a,b)=>a+b,0)/bpms.length), max: Math.max(...bpms), n: bpms.length };
+}
+
 function condAverages(){
   const cp = condPoints(); if(!cp.length) return null;
   const mean = k => cp.reduce((a,c)=>a+c[k],0)/cp.length;
-  return { temp: mean("temp"), humid: mean("humid"), n: cp.length };
+  const range = k => [Math.min(...cp.map(c=>c[k])), Math.max(...cp.map(c=>c[k]))];
+  return { temp: mean("temp"), humid: mean("humid"), n: cp.length,
+           tempRange: range("temp"), humidRange: range("humid") };
 }
 
 function measAt(f){
@@ -664,13 +682,35 @@ function render(){
   // Conditions row. Every card is ALWAYS rendered — a missing reading shows "—"
   // with the reason underneath, rather than the whole box vanishing (which reads
   // as "this feature is gone" instead of "no data yet"). Mirrors the in-app tiles.
+  const hrs = hrStats();
+  const running = !isDone && !!(LAST && LAST.started_at);
+  const rec = sim ? [] : condPoints();
+  const avgAll = (!sim && rec.length) ? condAverages() : null;
+  const one = v => v==null ? null : (Math.abs(v) >= 10 ? Math.round(v) : v.toFixed(1));
+
   const metrics = [
-    statCard("Heart rate", hr!=null?hr:"—", "bpm", hr!=null?null:"no strap", "", "--hr"),
-    statCard(condAvg?"Avg temp":"Temp", temp!=null?Math.round(temp):"—", "°C",
-             temp!=null ? (sim?"demo":null) : "no forecast", "", "--temp"),
-    statCard(condAvg?"Avg humidity":"Humidity", humid!=null?Math.round(humid):"—", "%",
-             condAvg ? `over ${condAvg.n} readings`
-                     : (humid!=null ? (sim?"demo":null) : "no forecast"), "", "--humid"),
+    // Live: the reading now, with the mean so far in the corner. Finished: the
+    // mean is the headline, because the last reading of a done run is whatever
+    // the sensor saw while the runner stood still.
+    isDone && hrs
+      ? statCard("Avg heart rate", hrs.avg, "bpm", null, "", "--hr", null, `max ${hrs.max}`)
+      : statCard("Heart rate", hr!=null?hr:"—", "bpm", hr!=null?null:"no strap", "", "--hr", null,
+                 (running && hrs) ? `<b>avg</b>${hrs.avg}` : null),
+
+    isDone && avgAll
+      ? statCard("Avg temp", one(avgAll.temp), "°C", null, "", "--temp", null,
+                 `${one(avgAll.tempRange[0])} – ${one(avgAll.tempRange[1])}`)
+      : statCard("Temp", temp!=null?Math.round(temp):"—", "°C",
+                 temp!=null ? (sim?"demo":null) : "no forecast", "", "--temp", null,
+                 (running && avgAll) ? `<b>avg</b>${one(avgAll.temp)}` : null),
+
+    isDone && avgAll
+      ? statCard("Avg humidity", Math.round(avgAll.humid), "%", `over ${avgAll.n} readings`,
+                 "", "--humid", null, `${one(avgAll.humidRange[0])} – ${one(avgAll.humidRange[1])}`)
+      : statCard("Humidity", humid!=null?Math.round(humid):"—", "%",
+                 humid!=null ? (sim?"demo":null) : "no forecast", "", "--humid", null,
+                 (running && avgAll) ? `<b>avg</b>${Math.round(avgAll.humid)}` : null),
+
     statCard("Glucose", gluc!=null?gluc.toFixed(1):"—", "mmol/L",
              gluc!=null ? "demo" : "not connected", "", "--gluc")
   ];
@@ -688,13 +728,14 @@ function render(){
   updateAge();
 }
 
-function statCard(k, v, u, sub2, cls, dotVar, link){
+function statCard(k, v, u, sub2, cls, dotVar, link, corner){
   const dot = dotVar ? `<span class="ic" style="background:var(${dotVar})"></span>` : "";
   const pin = link ? `<button type="button" class="cardpin" aria-label="Open next checkpoint in Maps" onclick="showMapsMenu(event,'${link}')"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1112 6.5a2.5 2.5 0 010 5z"/></svg>Map</button>` : "";
   return `<div class="stat ${cls||""}">
     ${pin}<div class="k">${dot}${k}</div>
     <div class="v">${v}<span class="u">${u||""}</span></div>
     ${sub2?`<div class="sub2">${sub2}</div>`:""}
+    ${corner?`<div class="corner">${corner}</div>`:""}
   </div>`;
 }
 
