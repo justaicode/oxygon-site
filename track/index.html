@@ -218,7 +218,7 @@
     <div class="prog">
       <div class="track"><div class="fill" id="prog-fill"></div></div>
       <div class="meta">
-        <span><b id="cur-km">0.0</b> km</span>
+        <span><b id="cur-km">0</b> km</span>
         <span><b id="pct">0</b>%</span>
         <span>of <b id="tot-km">0</b> km</span>
       </div>
@@ -541,10 +541,10 @@ function setupPlan(plan){
   $("race-name").textContent = plan.raceName || "Race";
   document.title = (plan.raceName || "Race") + " · Live tracking";
   const startTxt = (plan.startHour!=null) ? `Start ${String(plan.startHour).padStart(2,"0")}:${String(plan.startMinute||0).padStart(2,"0")}` : "";
-  const distTxt = TOTKM ? `${TOTKM.toFixed(TOTKM<100?1:0)} km` : "";
+  const distTxt = TOTKM ? `${Math.round(TOTKM)} km` : "";
   const predTxt = TOTMIN ? `target ${fmtDurShort(TOTMIN*60)}` : "";
   $("race-sub").textContent = [distTxt, predTxt, startTxt].filter(Boolean).join("  ·  ");
-  $("tot-km").textContent = TOTKM ? TOTKM.toFixed(TOTKM<100?1:0) : "0";
+  $("tot-km").textContent = TOTKM ? String(Math.round(TOTKM)) : "0";
   if(plan.simulatorMode) { const s=$("status"); }
   drawProfile(null);
   renderPills();
@@ -635,7 +635,7 @@ function render(){
   // Progress
   const pct = (km!=null && TOTKM) ? clamp(km/TOTKM,0,1)*100 : 0;
   $("prog-fill").style.width = pct.toFixed(1)+"%";
-  $("cur-km").textContent = km!=null ? km.toFixed(1) : "0.0";
+  $("cur-km").textContent = km!=null ? String(Math.round(km)) : "0";
   $("pct").textContent = Math.round(pct);
 
   // Derived. Detect a restart (km jumped backwards) and clear per-run accumulators so
@@ -702,7 +702,10 @@ function render(){
   const cpTicked = (cp) => { const k = cpKey(cp); return !!(k!=null && cpStates[k] && cpStates[k].complete); };
   const cpIsDone = (cp) => cpTicked(cp) || cpPassed(cp);
   const cpDone = cpsAll.filter(cpIsDone).length;
-  const kmFmt = (v)=> v==null ? "—" : v.toFixed(TOTKM<100?1:0);
+  // Whole kilometres: the decimal made the busiest row on the page harder to
+  // read for precision nobody watching from the roadside is acting on. The
+  // checkpoint card keeps its decimal — "next in 2.3 km" is a real answer.
+  const kmFmt = (v)=> v==null ? "—" : String(Math.round(v));
   const primary = [
     statCard("Pace", secPerKm!=null?fmtPace(secPerKm):"—", "/km", secPerKm!=null?`${(3600/secPerKm).toFixed(1)} km/h`:null, "accent"),
     st==="done" ? statCard("Total", fmtDur(elapsed), "", null, "accent")
@@ -730,6 +733,14 @@ function render(){
   const avgAll = (!sim && rec.length) ? condAverages() : null;
   const glucs  = sim ? null : glucStats();
   const one = v => v==null ? null : (Math.abs(v) >= 10 ? Math.round(v) : v.toFixed(1));
+  /* Two bare numbers in a corner are a puzzle: "29 – 29" tells you nothing about
+     what it measures or what the pair means. Label it and carry the unit. Both ends
+     collapse to a single figure when they round the same, because a range whose
+     ends are equal is a value, and printing it twice just looks broken. */
+  const rangeText = (lo, hi, unit, fmt) => {
+    const a = String(fmt(lo)), b = String(fmt(hi));
+    return `<b>range</b>${a===b ? a+unit : `${a}–${b}${unit}`}`;
+  };
 
   const metrics = [
     // Live: the reading now, with the mean so far in the corner. Finished: the
@@ -742,14 +753,14 @@ function render(){
 
     isDone && avgAll
       ? statCard("Avg temp", one(avgAll.temp), "°C", null, "", "--temp", null,
-                 `${one(avgAll.tempRange[0])} – ${one(avgAll.tempRange[1])}`)
+                 rangeText(avgAll.tempRange[0], avgAll.tempRange[1], "°", one))
       : statCard("Temp", temp!=null?Math.round(temp):"—", "°C",
                  temp!=null ? (sim?"demo":null) : "no forecast", "", "--temp", null,
                  (running && avgAll) ? `<b>avg</b>${one(avgAll.temp)}` : null),
 
     isDone && avgAll
       ? statCard("Avg humidity", Math.round(avgAll.humid), "%", null,
-                 "", "--humid", null, `${one(avgAll.humidRange[0])} – ${one(avgAll.humidRange[1])}`)
+                 "", "--humid", null, rangeText(avgAll.humidRange[0], avgAll.humidRange[1], "%", Math.round))
       : statCard("Humidity", humid!=null?Math.round(humid):"—", "%",
                  humid!=null ? (sim?"demo":null) : "no forecast", "", "--humid", null,
                  (running && avgAll) ? `<b>avg</b>${Math.round(avgAll.humid)}` : null),
@@ -763,7 +774,7 @@ function render(){
     // and worth saying plainly rather than showing a dash.
     (isDone && glucs)
       ? statCard("Avg glucose", Math.round(glucs.avg), "mg/dL", null, "", "--gluc", null,
-                 `${Math.round(glucs.min)} – ${Math.round(glucs.max)}`)
+                 rangeText(glucs.min, glucs.max, "", Math.round))
       : statCard("Glucose", gluc!=null?Math.round(gluc):"—", "mg/dL",
                  gluc!=null ? (sim?"demo":null) : "not connected", "", "--gluc", null,
                  (running && glucs) ? `<b>avg</b>${Math.round(glucs.avg)}` : null)
