@@ -107,6 +107,13 @@
   .stat .corner b{display:block;font-size:9px;font-weight:700;letter-spacing:.08em;
                   text-transform:uppercase;opacity:.75}
   .stat .ic{width:8px;height:8px;border-radius:50%}
+  /* Icon form of the same marker. Keeps the colour (which is what ties a card to
+     its line on the chart) and adds a shape, so the row is readable at a glance
+     and without relying on colour alone. */
+  .stat .ico{width:13px;height:13px;flex:none;fill:none;stroke:currentColor;
+             stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;
+             vertical-align:-2px;margin-right:5px}
+  .stat .ico.solid{fill:currentColor;stroke:none}
   .stat.accent{background:linear-gradient(180deg,var(--card2),var(--card))}
   .cardpin{position:absolute;top:7px;right:7px;z-index:2;display:inline-flex;align-items:center;gap:3px;
     background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:4px 7px;cursor:pointer;
@@ -133,7 +140,10 @@
   .card h2{margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--dim);font-weight:800;display:flex;align-items:center;gap:8px}
   .card h2 .r{margin-left:auto;color:var(--faint);font-weight:600;text-transform:none;letter-spacing:0;font-size:12.5px}
 
-  #map{height:230px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--inset)}
+  /* Taller than the original 230px: the route is the thing a crew actually
+     navigates by, and on a phone 230px left it a strip. Capped in viewport
+     units so it can't eat a short screen whole. */
+  #map{height:min(360px,46vh);border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--inset)}
   .leaflet-container{background:var(--inset)}
   .pin{width:16px;height:16px;border-radius:50%;background:var(--live);border:3px solid #fff;box-shadow:0 0 0 4px rgba(255,75,87,.3),0 2px 6px rgba(0,0,0,.5)}
 
@@ -304,7 +314,9 @@ function fmtPace(secPerKm){
 const Sim = {
   temperature:(f)=> 18 + 8*Math.sin(f*2*Math.PI - Math.PI/2),
   humidity:(f)=> Math.min(92, Math.max(35, 64 - 24*Math.sin(f*2*Math.PI - Math.PI/2))),
-  glucose:(f)=> Math.max(3.8, 6.3 - f*0.6 + 1.2*Math.sin(f*6*Math.PI)),
+  // mg/dL, like everything else that touches glucose now. Same curve as before,
+  // ×18 out of mmol/L, so the demo still drifts down with fuelling bumps.
+  glucose:(f)=> Math.round(18 * Math.max(3.8, 6.3 - f*0.6 + 1.2*Math.sin(f*6*Math.PI))),
 };
 
 /* Interpolate the hourly forecast [{t,tempC,humidity}] at a UTC epoch (seconds). */
@@ -333,7 +345,7 @@ let SCRUB=null, SCRUB_WIRED=false;   // press-and-hold profile scrubber (0..1 co
 /* Profile overlays + theme. */
 let HRHIST=[];  // {km,bpm} — accumulated client-side (server keeps only the latest row)
 const SHOW={hr:false,temp:true,humid:false,gluc:false};
-const MRANGE={temp:[-5,45],humid:[0,100],gluc:[3,12],hr:[40,200]};
+const MRANGE={temp:[-5,45],humid:[0,100],gluc:[54,216],hr:[40,200]};
 const MCOLOR={temp:"--temp",humid:"--humid",gluc:"--gluc",hr:"--hr"};
 const PILLDEFS=[{k:"hr",l:"HR",c:"--hr"},{k:"temp",l:"Temp",c:"--temp"},{k:"humid",l:"Humidity",c:"--humid"},{k:"gluc",l:"Glucose",c:"--gluc"}];
 const THEME_KEY="dromeas_track_theme";
@@ -705,13 +717,16 @@ function render(){
                  (running && avgAll) ? `<b>avg</b>${one(avgAll.temp)}` : null),
 
     isDone && avgAll
-      ? statCard("Avg humidity", Math.round(avgAll.humid), "%", `over ${avgAll.n} readings`,
+      ? statCard("Avg humidity", Math.round(avgAll.humid), "%", null,
                  "", "--humid", null, `${one(avgAll.humidRange[0])} – ${one(avgAll.humidRange[1])}`)
       : statCard("Humidity", humid!=null?Math.round(humid):"—", "%",
                  humid!=null ? (sim?"demo":null) : "no forecast", "", "--humid", null,
                  (running && avgAll) ? `<b>avg</b>${Math.round(avgAll.humid)}` : null),
 
-    statCard("Glucose", gluc!=null?gluc.toFixed(1):"—", "mmol/L",
+    // mg/dL, matching the app — a page showing one unit while the phone in your
+    // hand shows another is worse than showing nothing. Real readings aren't
+    // published to the crew feed yet, so outside a demo this stays honest.
+    statCard("Glucose", gluc!=null?Math.round(gluc):"—", "mg/dL",
              gluc!=null ? "demo" : "not connected", "", "--gluc")
   ];
   $("stats-metrics").innerHTML = metrics.join("");
@@ -728,8 +743,25 @@ function render(){
   updateAge();
 }
 
+/* Small line icons for the measurement cards, matching the SF Symbols the app
+   uses for the same four readings (heart.fill / thermometer / humidity / drop) so
+   a runner and their crew are looking at the same vocabulary. Keyed by the colour
+   variable each card already passes, which avoids threading a new argument through
+   every call site. */
+const CARD_ICONS = {
+  "--hr":    '<path d="M12 20s-6.5-4.2-8.6-8C1.6 8.6 3.2 5 6.4 5 8.3 5 9.6 6 12 8.6 14.4 6 15.7 5 17.6 5c3.2 0 4.8 3.6 3 7-2.1 3.8-8.6 8-8.6 8z"/>',
+  "--temp":  '<path d="M14 13.8V5a2 2 0 10-4 0v8.8a4.5 4.5 0 104 0z"/><path d="M12 9v6"/>',
+  "--humid": '<path d="M4 8.5c2-1.4 4-1.4 6 0s4 1.4 6 0 3-1 4-.4"/><path d="M4 13c2-1.4 4-1.4 6 0s4 1.4 6 0 3-1 4-.4"/><path d="M4 17.5c2-1.4 4-1.4 6 0s4 1.4 6 0 3-1 4-.4"/>',
+  "--gluc":  '<path d="M12 3.5s5.2 5.6 5.2 9a5.2 5.2 0 11-10.4 0c0-3.4 5.2-9 5.2-9z"/>'
+};
+
 function statCard(k, v, u, sub2, cls, dotVar, link, corner){
-  const dot = dotVar ? `<span class="ic" style="background:var(${dotVar})"></span>` : "";
+  const paths = CARD_ICONS[dotVar];
+  const dot = dotVar
+    ? (paths
+        ? `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="color:var(${dotVar})">${paths}</svg>`
+        : `<span class="ic" style="background:var(${dotVar})"></span>`)
+    : "";
   const pin = link ? `<button type="button" class="cardpin" aria-label="Open next checkpoint in Maps" onclick="showMapsMenu(event,'${link}')"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1112 6.5a2.5 2.5 0 010 5z"/></svg>Map</button>` : "";
   return `<div class="stat ${cls||""}">
     ${pin}<div class="k">${dot}${k}</div>
