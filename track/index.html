@@ -303,10 +303,35 @@ function fmtDurShort(sec){
   const h=Math.floor(sec/3600), m=Math.round((sec%3600)/60);
   return h>0 ? `${h}h ${m}m` : `${m}m`;
 }
+/* [[elapsed, km]] covering roughly the last kilometre of ticks. Reset alongside
+   HRHIST when the run restarts, since a window spanning two runs is nonsense. */
+let PACEHIST = [];
+const PACE_WINDOW_KM = 1.0;
+/* Pace over the last kilometre — the unit a runner thinks in. Before a full km has
+   been covered this reports across everything so far, so it briefly equals the
+   overall average; the two agreeing early is correct, not a glitch. */
+function currentPace(){
+  if(PACEHIST.length < 2) return null;
+  const b = PACEHIST[PACEHIST.length-1];
+  // The most recent sample at least a kilometre back, else the oldest we have.
+  let a = PACEHIST[0];
+  for(let i=PACEHIST.length-1;i>=0;i--){
+    if(b[1]-PACEHIST[i][1] >= PACE_WINDOW_KM){ a = PACEHIST[i]; break; }
+  }
+  const dKm = b[1]-a[1], dT = b[0]-a[0];
+  if(!(dKm > 0.05) || !(dT > 10)) return null;
+  const p = dT/dKm;
+  return isFinite(p) && p > 0 ? p : null;
+}
+
 function fmtPace(secPerKm){
   if(secPerKm==null || !isFinite(secPerKm) || secPerKm<=0) return "—";
-  const m=Math.floor(secPerKm/60), s=Math.round(secPerKm%60);
-  return `${m}:${String(s).padStart(2,"0")}`;
+  // Round the total first, then split. Flooring the minutes while separately
+  // rounding the seconds renders anything a hair under a whole minute as ":60" —
+  // 299.9999 s/km came out as "4:60" instead of "5:00", and a rolling pace divides
+  // floating-point distances constantly, so it lands there often.
+  const total = Math.round(secPerKm);
+  return `${Math.floor(total/60)}:${String(total%60).padStart(2,"0")}`;
 }
 
 /* --------------------------------------------------- sim condition curves  */
@@ -641,14 +666,25 @@ function render(){
   // Derived. Detect a restart (km jumped backwards) and clear per-run accumulators so
   // stale pace/HR from the previous run don't bleed into the new one.
   if(km!=null){
-    if(PREV_KM!=null && km < PREV_KM - 1){ LAST_PACE=null; HRHIST=[]; }
+    if(PREV_KM!=null && km < PREV_KM - 1){ LAST_PACE=null; HRHIST=[]; PACEHIST=[]; }
     PREV_KM = km;
+  }
+  // A rolling window over recent ticks, for the pace *now* rather than the pace
+  // averaged over the whole run. Fed from the same telemetry the page already
+  // polls, so it costs nothing extra.
+  if(km!=null && elapsed!=null && elapsed>0){
+    const lastTick = PACEHIST[PACEHIST.length-1];
+    if(!lastTick || elapsed > lastTick[0]) PACEHIST.push([elapsed, km]);
+    // Trim by distance, keeping one sample beyond the kilometre so a full km stays
+    // available right after one completes.
+    while(PACEHIST.length > 2 && km - PACEHIST[1][1] >= PACE_WINDOW_KM + 0.25) PACEHIST.shift();
   }
   const rawPace = (km!=null && km>0.05 && elapsed!=null && elapsed>0) ? elapsed/km : null;
   if(rawPace!=null && isFinite(rawPace) && rawPace>0) LAST_PACE = rawPace;
   // Hold the last good pace through transient null ticks so the projected finish and
   // the checkpoint ETAs stay put instead of flickering to "—".
   const secPerKm = rawPace ?? LAST_PACE;
+  const nowPace = currentPace();
   const totalSec = (secPerKm!=null && TOTKM) ? secPerKm*TOTKM : null;
   const remainSec = (totalSec!=null && elapsed!=null) ? Math.max(0, totalSec-elapsed) : null;
   const frac = (km!=null && TOTKM) ? clamp(km/TOTKM,0,1) : 0;
@@ -707,7 +743,13 @@ function render(){
   // checkpoint card keeps its decimal — "next in 2.3 km" is a real answer.
   const kmFmt = (v)=> v==null ? "—" : String(Math.round(v));
   const primary = [
-    statCard("Pace", secPerKm!=null?fmtPace(secPerKm):"—", "/km", secPerKm!=null?`${(3600/secPerKm).toFixed(1)} km/h`:null, "accent"),
+    // Current pace as the headline with the run average in the corner, matching
+    // every sensor card and the app's live header. Falls back to the average for the
+    // headline until the window has enough ticks — better than a dash on arrival.
+    statCard(nowPace!=null ? "Last km" : "Pace",
+             (nowPace ?? secPerKm)!=null ? fmtPace(nowPace ?? secPerKm) : "—", "/km",
+             secPerKm!=null ? `${(3600/secPerKm).toFixed(1)} km/h` : null, "accent", null, null,
+             (nowPace!=null && secPerKm!=null) ? `<b>avg</b>${fmtPace(secPerKm)}` : null),
     st==="done" ? statCard("Total", fmtDur(elapsed), "", null, "accent")
                 : statCard("Projected finish", totalSec!=null?fmtDur(totalSec):"—", "", remainSec!=null?`${fmtDurShort(remainSec)} to go`:null, "accent")
   ];
