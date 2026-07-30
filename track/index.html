@@ -793,19 +793,22 @@ function render(){
       : statCard("Heart rate", hr!=null?hr:"—", "bpm", hr!=null?null:"no strap", "", "--hr", null,
                  (running && hrs) ? `<b>avg</b>${hrs.avg}` : null),
 
-    isDone && avgAll
-      ? statCard("Avg temp", one(avgAll.temp), "°C", null, "", "--temp", null,
-                 rangeText(avgAll.tempRange[0], avgAll.tempRange[1], "°", one))
-      : statCard("Temp", temp!=null?Math.round(temp):"—", "°C",
-                 temp!=null ? (sim?"demo":null) : "no forecast", "", "--temp", null,
-                 (running && avgAll) ? `<b>avg</b>${one(avgAll.temp)}` : null),
-
-    isDone && avgAll
-      ? statCard("Avg humidity", Math.round(avgAll.humid), "%", null,
-                 "", "--humid", null, rangeText(avgAll.humidRange[0], avgAll.humidRange[1], "%", Math.round))
-      : statCard("Humidity", humid!=null?Math.round(humid):"—", "%",
-                 humid!=null ? (sim?"demo":null) : "no forecast", "", "--humid", null,
-                 (running && avgAll) ? `<b>avg</b>${Math.round(avgAll.humid)}` : null),
+    // One combined Conditions card, matching the app exactly. Temperature and
+    // humidity used to sit in separate cards here while the app has always kept them
+    // in a single tile — so the same run read differently on the two screens, and the
+    // web card count changed between live and finished. Consistency beats the extra
+    // row: a runner and their crew should be looking at the same object.
+    (isDone && avgAll)
+      ? statCard("Avg conditions",
+                 `${one(avgAll.temp)}°<span style="font-size:15px;color:var(--humid);margin-left:6px">${Math.round(avgAll.humid)}%</span>`,
+                 "", null, "", "--temp", null,
+                 `<b>range</b>${one(avgAll.tempRange[0])}–${one(avgAll.tempRange[1])}° · ${Math.round(avgAll.humidRange[0])}–${Math.round(avgAll.humidRange[1])}%`)
+      : statCard("Conditions",
+                 temp!=null
+                   ? `${Math.round(temp)}°${humid!=null?`<span style="font-size:15px;color:var(--humid);margin-left:6px">${Math.round(humid)}%</span>`:""}`
+                   : "—",
+                 "", temp!=null ? (sim?"demo":null) : "no forecast", "", "--temp", null,
+                 (running && avgAll) ? `<b>avg</b>${one(avgAll.temp)}° ${Math.round(avgAll.humid)}%` : null),
 
     // mg/dL, matching the app — a page showing one unit while the phone in your
     // hand shows another is worse than showing nothing.
