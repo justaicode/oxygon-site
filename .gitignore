@@ -3,3 +3,6 @@
 
 # Full-resolution source screenshots — kept locally for App Store use; the site serves the .jpg versions
 /screenshots/*.png
+
+# macOS
+.DS_Store
