@@ -102,10 +102,13 @@
      activity is live the number you glance at is the one happening now, and two
      equally-weighted figures make you decide which one you wanted. */
   .stat{position:relative}
-  .stat .corner{position:absolute;right:12px;bottom:9px;text-align:right;line-height:1.2;
-                font-size:11px;color:var(--faint);font-variant-numeric:tabular-nums}
-  .stat .corner b{display:block;font-size:9px;font-weight:700;letter-spacing:.08em;
-                  text-transform:uppercase;opacity:.75}
+  /* The corner figure is secondary, not decorative — it is the average you compare the
+     headline against, and at 11px on a phone held at arm's length it was being read as
+     a caption rather than a number. The label stays small; the value carries the size. */
+  .stat .corner{position:absolute;right:12px;bottom:9px;text-align:right;line-height:1.25;
+                font-size:14px;color:var(--text);opacity:.72;font-variant-numeric:tabular-nums}
+  .stat .corner b{display:block;font-size:9.5px;font-weight:700;letter-spacing:.08em;
+                  text-transform:uppercase;color:var(--faint);opacity:1}
   .stat .ic{width:8px;height:8px;border-radius:50%}
   /* Icon form of the same marker. Keeps the colour (which is what ties a card to
      its line on the chart) and adds a shape, so the row is readable at a glance
@@ -612,6 +615,19 @@ function currentKm(){
   return num(LAST.km);
 }
 
+
+/* What to write under a reading that isn't there.
+
+   A missing sensor and a run that hasn't begun look identical from here — both arrive
+   as null — but they mean opposite things to the person reading the page. Before the
+   start there is no telemetry row at all, so the page knows nothing about the strap or
+   the CGM and must not imply otherwise; "no strap" then is a false alarm aimed at the
+   one person who could still fix it. Once the run is live, the same null really does
+   mean the sensor isn't feeding, and the specific wording earns its place. */
+function sensorNote(missingText){
+  return raceState()==="pending" ? "waiting for start" : missingText;
+}
+
 function raceState(){
   if(!LAST) return "pending";
   const ms = s => { const t = s ? Date.parse(s) : NaN; return isFinite(t) ? t : null; };
@@ -790,7 +806,7 @@ function render(){
     // the sensor saw while the runner stood still.
     isDone && hrs
       ? statCard("Avg heart rate", hrs.avg, "bpm", null, "", "--hr", null, `max ${hrs.max}`)
-      : statCard("Heart rate", hr!=null?hr:"—", "bpm", hr!=null?null:"no strap", "", "--hr", null,
+      : statCard("Heart rate", hr!=null?hr:"—", "bpm", hr!=null?null:sensorNote("no strap"), "", "--hr", null,
                  (running && hrs) ? `<b>avg</b>${hrs.avg}` : null),
 
     // One combined Conditions card, matching the app exactly. Temperature and
@@ -807,7 +823,7 @@ function render(){
                  temp!=null
                    ? `${Math.round(temp)}°${humid!=null?`<span style="font-size:15px;color:var(--humid);margin-left:6px">${Math.round(humid)}%</span>`:""}`
                    : "—",
-                 "", temp!=null ? (sim?"demo":null) : "no forecast", "", "--temp", null,
+                 "", temp!=null ? (sim?"demo":null) : sensorNote("no forecast"), "", "--temp", null,
                  (running && avgAll) ? `<b>avg</b>${one(avgAll.temp)}° ${Math.round(avgAll.humid)}%` : null),
 
     // mg/dL, matching the app — a page showing one unit while the phone in your
@@ -821,7 +837,7 @@ function render(){
       ? statCard("Avg glucose", Math.round(glucs.avg), "mg/dL", null, "", "--gluc", null,
                  rangeText(glucs.min, glucs.max, "", Math.round))
       : statCard("Glucose", gluc!=null?Math.round(gluc):"—", "mg/dL",
-                 gluc!=null ? (sim?"demo":null) : "not connected", "", "--gluc", null,
+                 gluc!=null ? (sim?"demo":null) : sensorNote("not connected"), "", "--gluc", null,
                  (running && glucs) ? `<b>avg</b>${Math.round(glucs.avg)}` : null)
   ];
   $("stats-metrics").innerHTML = metrics.join("");
