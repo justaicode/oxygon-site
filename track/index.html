@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Live tracking · Oxygon</title>
+<title>Live Telemetry · Oxygon</title>
 <meta name="description" content="Follow the race live — position, pace, heart rate and conditions, in real time." />
 <meta name="theme-color" content="#0b1220" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -201,7 +201,7 @@
   <!-- Main -->
   <div id="app" class="hidden">
     <div class="top">
-      <div class="brand"><b>Oxygon</b> · Live</div>
+      <div class="brand"><b>Oxygon</b> · Live Telemetry</div>
       <div class="theme" id="theme" role="group" aria-label="Theme">
         <button type="button" data-t="system" title="Follow system">Auto</button>
         <button type="button" data-t="light" title="Light" aria-label="Light">☀</button>
@@ -744,6 +744,13 @@ function render(){
       humid = forecastAt(PLAN.hourlyWeather, nowSec, "humidity");
       if(temp==null && num(PLAN.temperatureC)!=null) temp = PLAN.temperatureC; // daily fallback
     }
+    // Glucose, from the same published series the chart and the average already
+    // read. This assignment was simply missing: `gluc` was set only in the demo
+    // branch above, so on a real run the tile said "not connected" for three
+    // hours while the curve underneath it drew fine from the identical data.
+    // (30 km run, 1 Aug: 177 readings published, tile blank the whole way.)
+    const gs = glucStats();
+    if(gs) gluc = gs.last;
   }
   const condAvg = (!sim && isDone) ? condAverages() : null;
   const hr = LAST ? num(LAST.bpm) : null;
@@ -809,14 +816,10 @@ function render(){
   const avgAll = (!sim && rec.length) ? condAverages() : null;
   const glucs  = sim ? null : glucStats();
   const one = v => v==null ? null : (Math.abs(v) >= 10 ? Math.round(v) : v.toFixed(1));
-  /* Two bare numbers in a corner are a puzzle: "29 – 29" tells you nothing about
-     what it measures or what the pair means. Label it and carry the unit. Both ends
-     collapse to a single figure when they round the same, because a range whose
-     ends are equal is a value, and printing it twice just looks broken. */
-  const rangeText = (lo, hi, unit, fmt) => {
-    const a = String(fmt(lo)), b = String(fmt(hi));
-    return `<b>range</b>${a===b ? a+unit : `${a}–${b}${unit}`}`;
-  };
+  /* Ranges used to sit in the corner of every finished card. On a real 30 km run
+     that produced "range 26.9–29.1° · 40–48%" — a line long enough to wrap, saying
+     less than the average it was crowding. The average is the summary; the shape
+     of the run belongs to the chart, which draws it properly. */
 
   const metrics = [
     // Live: the reading now, with the mean so far in the corner. Finished: the
@@ -856,8 +859,7 @@ function render(){
     // connected" only when no CGM is feeding Health at all, which is a real state
     // and worth saying plainly rather than showing a dash.
     (isDone && glucs)
-      ? statCard("Avg glucose", Math.round(glucs.avg), "mg/dL", null, "", "--gluc", null,
-                 rangeText(glucs.min, glucs.max, "", Math.round))
+      ? statCard("Avg glucose", Math.round(glucs.avg), "mg/dL", null, "", "--gluc", null, null)
       : statCard("Glucose", gluc!=null?Math.round(gluc):"—", "mg/dL",
                  gluc!=null ? (sim?"demo":null) : sensorNote("not connected"), "", "--gluc", null,
                  (running && glucs) ? `<b>avg</b>${Math.round(glucs.avg)}` : null),
@@ -870,8 +872,7 @@ function render(){
     (isDone && avgAll)
       ? statCard("Avg conditions",
                  `${one(avgAll.temp)}°<span style="font-size:15px;color:var(--humid);margin-left:6px">${Math.round(avgAll.humid)}%</span>`,
-                 "", null, "", "--temp", null,
-                 `<b>range</b>${one(avgAll.tempRange[0])}–${one(avgAll.tempRange[1])}° · ${Math.round(avgAll.humidRange[0])}–${Math.round(avgAll.humidRange[1])}%`)
+                 "", null, "", "--temp", null, null)
       : statCard("Conditions",
                  temp!=null
                    ? `${Math.round(temp)}°${humid!=null?`<span style="font-size:15px;color:var(--humid);margin-left:6px">${Math.round(humid)}%</span>`:""}`
