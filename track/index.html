@@ -66,9 +66,24 @@
 
   /* Elapsed hero */
   .elapsed{display:flex;align-items:baseline;gap:10px;margin:0 2px 22px}
-  .batt{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;
-        font-variant-numeric:tabular-nums;margin-left:auto}
-  .batt svg{width:22px;height:12px}
+  /* Beside the live/finished badge, where the eye already goes for "is this
+     feed alive?" — battery answers the same question and used to sit tucked
+     against the elapsed clock, small enough to miss. */
+  .batt{display:inline-flex;align-items:center;gap:7px;font-size:15px;font-weight:800;
+        font-variant-numeric:tabular-nums}
+  .batt svg{width:30px;height:16px}
+  .expand{margin-left:auto;border:1px solid var(--line);background:var(--card);
+          color:var(--accent);font:inherit;font-size:12px;font-weight:700;
+          padding:4px 10px;border-radius:99px;cursor:pointer}
+  .expand:hover{border-color:var(--accent)}
+  /* Above Leaflet's own panes and controls, which sit around z-index 400–1000 —
+     at 900 the card map's zoom buttons floated through the overlay. */
+  .mapmodal{position:fixed;inset:0;z-index:4000;background:var(--bg);
+            display:flex;flex-direction:column}
+  .mapmodal.hidden{display:none}
+  .mapmodal-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;
+                border-bottom:1px solid var(--line);font-weight:800}
+  #map-big{flex:1;min-height:0}
   .elapsed .big{font-variant-numeric:tabular-nums;font-weight:800;font-size:44px;letter-spacing:-1px;line-height:1}
   .elapsed .lab{color:var(--faint);font-size:12px;text-transform:uppercase;letter-spacing:.6px;font-weight:700}
 
@@ -209,6 +224,7 @@
   <div id="app" class="hidden">
     <div class="top">
       <div class="brand"><b>Oxygon</b> · Live Telemetry</div>
+      <span id="battery"></span>
       <div class="theme" id="theme" role="group" aria-label="Theme">
         <button type="button" data-t="system" title="Follow system">Auto</button>
         <button type="button" data-t="light" title="Light" aria-label="Light">☀</button>
@@ -223,7 +239,6 @@
     <div class="elapsed">
       <span class="big" id="elapsed">0:00:00</span>
       <span class="lab" id="elapsed-lab">Elapsed</span>
-      <span id="battery"></span>
     </div>
 
     <div class="prog">
@@ -239,8 +254,23 @@
     <div class="grid metrics" id="stats-metrics"></div>
 
     <div class="card" id="map-card">
-      <h2>Location <span class="r" id="map-r"></span></h2>
+      <h2>Location
+        <span class="r" id="map-r"></span>
+        <button type="button" class="expand" id="map-expand"
+                aria-label="Expand the map">Expand</button>
+      </h2>
       <div id="map"></div>
+    </div>
+
+    <!-- Full-screen map. The card version is deliberately small so the numbers
+         above it stay on screen; this is for actually reading the terrain. -->
+    <div id="map-modal" class="mapmodal hidden" role="dialog" aria-modal="true"
+         aria-label="Race map">
+      <div class="mapmodal-bar">
+        <span id="map-modal-title">Location</span>
+        <button type="button" class="expand" id="map-close" aria-label="Close the map">Close</button>
+      </div>
+      <div id="map-big"></div>
     </div>
 
     <div class="card">
@@ -744,6 +774,7 @@ function render(){
   // Elapsed
   $("elapsed").textContent = fmtDur(liveElapsed());
   $("battery").innerHTML = batteryChip();
+  syncBigYou();   // the expanded map, if it's open
   $("elapsed-lab").textContent = st==="done" ? "Finish time" : "Elapsed";
 
   // Progress
@@ -1104,7 +1135,70 @@ function drawProfile(km){
 }
 
 /* ----------------------------------------------------------------- map     */
+/* The expanded map: built the first time it's asked for, then reused.
+   Its own Leaflet instance rather than moving the card's — relocating a live map
+   between containers leaves Leaflet with stale pane sizes and a grey half-tiled
+   canvas. Scroll-wheel zoom is on here and off in the card, because in the card
+   it hijacks the page scroll. */
+let BIGMAP=null, BIGYOU=null;
+function openBigMap(){
+  const modal=$("map-modal"); if(!modal) return;
+  modal.classList.remove("hidden");
+  $("map-modal-title").textContent = PLAN?.raceName || "Location";
+  const latlngs = PTS.map(p=>[p.latitude,p.longitude]);
+  if(!BIGMAP){
+    BIGMAP = L.map("map-big",{zoomControl:true, scrollWheelZoom:true});
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {maxZoom:19, attribution:'&copy; OpenStreetMap'}).addTo(BIGMAP);
+    if(latlngs.length){
+      L.polyline(latlngs,{color:"#4f9dff",weight:4,opacity:.9}).addTo(BIGMAP);
+      L.circleMarker(latlngs[0],{radius:6,color:"#33d69f",fillColor:"#33d69f",fillOpacity:1}).addTo(BIGMAP);
+      L.circleMarker(latlngs[latlngs.length-1],{radius:6,color:"#fff",fillColor:"#2f7df6",fillOpacity:1}).addTo(BIGMAP);
+    }
+    (PLAN.checkpoints||[]).forEach(cp=>{
+      const p=posAt(cp.km); if(!p) return;
+      L.circleMarker([p.latitude,p.longitude],
+        {radius:5,color:"#9fb0cc",fillColor:"#131f36",fillOpacity:1,weight:2})
+        .addTo(BIGMAP).bindTooltip(`CP · ${cp.km.toFixed(1)} km`);
+    });
+  }
+  // Leaflet measures on show, not on create — a map built inside a hidden element
+  // has no size and renders one grey tile.
+  //
+  // Two steps, not one: `invalidateSize` and `fitBounds` in the same tick left the
+  // map centred correctly at **zoom 0** — a whole world map — because the fit was
+  // computed against a container the browser had not laid out yet. Re-measure,
+  // yield a frame, then fit against real dimensions.
+  const fit = () => {
+    BIGMAP.invalidateSize();
+    requestAnimationFrame(()=>{
+      if(latlngs.length){
+        BIGMAP.fitBounds(L.polyline(latlngs).getBounds().pad(0.1), {maxZoom:16});
+      }
+      syncBigYou();
+    });
+  };
+  setTimeout(fit, 60);
+  // Belt and braces: if it still landed at world zoom, the container was slower
+  // than expected — fit again once it is unambiguously real.
+  setTimeout(()=>{ if(BIGMAP.getZoom() <= 2) fit(); }, 400);
+}
+function closeBigMap(){ $("map-modal")?.classList.add("hidden"); }
+
+/* Keep the runner's dot on the expanded map in step with the small one. */
+function syncBigYou(){
+  if(!BIGMAP || !LAST || LAST.km==null) return;
+  const p = posAt(LAST.km); if(!p) return;
+  const at=[p.latitude,p.longitude];
+  if(BIGYOU) BIGYOU.setLatLng(at);
+  else BIGYOU = L.circleMarker(at,{radius:8,color:"#fff",weight:3,
+                                   fillColor:"#ff4b57",fillOpacity:1}).addTo(BIGMAP);
+}
+
 function initMap(){
+  $("map-expand")?.addEventListener("click", openBigMap);
+  $("map-close")?.addEventListener("click", closeBigMap);
+  document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeBigMap(); });
   if(!window.L || !PTS.length){ $("map-card").classList.add("hidden"); return; }
   const latlngs = PTS.map(p=>[p.latitude,p.longitude]);
   MAP = L.map("map",{zoomControl:true, attributionControl:true, scrollWheelZoom:false});
