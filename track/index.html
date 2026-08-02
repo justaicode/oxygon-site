@@ -108,8 +108,12 @@
   /* The corner figure is secondary, not decorative — it is the average you compare the
      headline against, and at 11px on a phone held at arm's length it was being read as
      a caption rather than a number. The label stays small; the value carries the size. */
-  .stat .corner{position:absolute;right:12px;bottom:9px;text-align:right;line-height:1.25;
-                font-size:14px;color:var(--text);opacity:.72;font-variant-numeric:tabular-nums}
+  /* Was 14px on a 1.25 line, which on "AVG HEART RATE 126 bpm / max 138" put the
+     corner hard against the value above it — the two read as one crowded block.
+     A size down and a little more leading separates them without losing the
+     figure. */
+  .stat .corner{position:absolute;right:12px;bottom:9px;text-align:right;line-height:1.35;
+                font-size:12.5px;color:var(--text);opacity:.72;font-variant-numeric:tabular-nums}
   .stat .corner b{display:block;font-size:9.5px;font-weight:700;letter-spacing:.08em;
                   text-transform:uppercase;color:var(--faint);opacity:1}
   .stat .ic{width:8px;height:8px;border-radius:50%}
@@ -381,7 +385,38 @@ let SCRUB=null, SCRUB_WIRED=false;   // press-and-hold profile scrubber (0..1 co
 /* Profile overlays + theme. */
 let HRHIST=[];  // {km,bpm} — accumulated client-side (server keeps only the latest row)
 const SHOW={hr:false,temp:true,humid:false,gluc:false};
+/* Fallbacks only. Every series is auto-ranged to the data it actually has —
+   see `autoRange`. Fixed bands were why temperature read as a dead straight line:
+   a real run varying 28.5–28.8 °C, drawn on a -5..45 band, moves less than one
+   pixel. The variation was there the whole time; the scale hid it. */
 const MRANGE={temp:[-5,45],humid:[0,100],gluc:[54,216],hr:[40,200]};
+
+const MUNIT={temp:"°",humid:"%",gluc:"",hr:" bpm"};
+const MVAR ={temp:"--temp",humid:"--humid",gluc:"--gluc",hr:"--hr"};
+
+/* The span a series is drawn over: its own min/max, padded, with a floor so a
+   genuinely steady reading stays a steady line instead of being amplified into
+   meaningless noise. */
+function autoRange(key){
+  let vals=[];
+  if(key==="hr")        vals = hrPoints().map(h=>h.bpm);
+  else if(key==="gluc") vals = glucPoints().map(g=>g.gluc);
+  else                  vals = condPoints().map(c=>c[key==="temp"?"temp":"humid"]);
+  vals = vals.filter(v=>v!=null && isFinite(v));
+  if(vals.length<2) return MRANGE[key];
+  let lo=Math.min(...vals), hi=Math.max(...vals);
+  const minSpan = key==="temp" ? 2 : key==="humid" ? 5 : key==="gluc" ? 20 : 15;
+  if(hi-lo < minSpan){ const mid=(hi+lo)/2; lo=mid-minSpan/2; hi=mid+minSpan/2; }
+  const pad=(hi-lo)*0.12;
+  return [lo-pad, hi+pad];
+}
+
+/* Which series own the two axes. Left goes to the first thing selected, right to
+   the second; with three or four on, the rest still auto-range and are told apart
+   by colour, because a chart with four numbered axes is unreadable. */
+function axisKeys(){
+  return ["hr","temp","humid","gluc"].filter(k=>SHOW[k]);
+}
 const MCOLOR={temp:"--temp",humid:"--humid",gluc:"--gluc",hr:"--hr"};
 const PILLDEFS=[{k:"hr",l:"HR",c:"--hr"},{k:"temp",l:"Temp",c:"--temp"},{k:"humid",l:"Humidity",c:"--humid"},{k:"gluc",l:"Glucose",c:"--gluc"}];
 const THEME_KEY="oxygon_track_theme";
@@ -846,7 +881,8 @@ function render(){
     // mean is the headline, because the last reading of a done run is whatever
     // the sensor saw while the runner stood still.
     isDone && hrs
-      ? statCard("Avg heart rate", hrs.avg, "bpm", null, "", "--hr", null, `max ${hrs.max}`)
+      ? statCard("Avg heart rate", hrs.avg, "bpm", null, "", "--hr", null,
+                 `<b>max</b>${hrs.max}`)
       : statCard("Heart rate", hr!=null?hr:"—", "bpm", hr!=null?null:sensorNote("no strap"), "", "--hr", null,
                  // Strap battery wins the corner when it's low enough to matter:
                  // a flat strap is why the heart-rate trace stops, and the crew
@@ -1008,7 +1044,7 @@ function drawProfile(km){
     let d="",on=false;
     for(let i=0;i<=120;i++){ const f=i/120, v=valFn(f);
       if(v==null||!isFinite(v)){ on=false; continue; }
-      d+=(on?" L ":" M ")+(f*W).toFixed(1)+" "+Ym(v,MRANGE[key]).toFixed(1); on=true; }
+      d+=(on?" L ":" M ")+(f*W).toFixed(1)+" "+Ym(v,autoRange(key)).toFixed(1); on=true; }
     return d?`<path d="${d}" fill="none" stroke="var(${MCOLOR[key]})" stroke-width="2" stroke-linejoin="round" opacity=".9"/>`:"";
   };
   let ov="";
@@ -1019,7 +1055,7 @@ function drawProfile(km){
     const hp = hrPoints();
     if(hp.length>1){
       let d="",on=false;
-      for(const h of hp){ d+=(on?" L ":" M ")+(clamp(h.km/Math.max(TOTKM,1e-6),0,1)*W).toFixed(1)+" "+Ym(h.bpm,MRANGE.hr).toFixed(1); on=true; }
+      for(const h of hp){ d+=(on?" L ":" M ")+(clamp(h.km/Math.max(TOTKM,1e-6),0,1)*W).toFixed(1)+" "+Ym(h.bpm,autoRange("hr")).toFixed(1); on=true; }
       ov+=`<path d="${d}" fill="none" stroke="var(--hr)" stroke-width="2" stroke-linejoin="round" opacity=".9"/>`;
     }
   }
@@ -1030,10 +1066,10 @@ function drawProfile(km){
     const sx=SCRUB*W, sp=posAt(SCRUB*TOTKM), md=measAt(SCRUB);
     scr = `<line x1="${sx.toFixed(1)}" y1="0" x2="${sx.toFixed(1)}" y2="${H}" stroke="var(--dim)" stroke-width="1" stroke-dasharray="3 3"/>`;
     if(sp) scr += `<circle cx="${sx.toFixed(1)}" cy="${Y(sp.elevationM).toFixed(1)}" r="3.6" fill="var(--accent2)" stroke="var(--card)" stroke-width="1.5"/>`;
-    if(SHOW.temp && md.temp!=null)  scr+=`<circle cx="${sx.toFixed(1)}" cy="${Ym(md.temp,MRANGE.temp).toFixed(1)}" r="3" fill="var(--temp)"/>`;
-    if(SHOW.humid && md.humid!=null) scr+=`<circle cx="${sx.toFixed(1)}" cy="${Ym(md.humid,MRANGE.humid).toFixed(1)}" r="3" fill="var(--humid)"/>`;
-    if(SHOW.gluc && md.gluc!=null)  scr+=`<circle cx="${sx.toFixed(1)}" cy="${Ym(md.gluc,MRANGE.gluc).toFixed(1)}" r="3" fill="var(--gluc)"/>`;
-    if(SHOW.hr){ const hh=hrAtKm(SCRUB*TOTKM); if(hh!=null) scr+=`<circle cx="${sx.toFixed(1)}" cy="${Ym(hh,MRANGE.hr).toFixed(1)}" r="3" fill="var(--hr)"/>`; }
+    if(SHOW.temp && md.temp!=null)  scr+=`<circle cx="${sx.toFixed(1)}" cy="${Ym(md.temp,autoRange("temp")).toFixed(1)}" r="3" fill="var(--temp)"/>`;
+    if(SHOW.humid && md.humid!=null) scr+=`<circle cx="${sx.toFixed(1)}" cy="${Ym(md.humid,autoRange("humid")).toFixed(1)}" r="3" fill="var(--humid)"/>`;
+    if(SHOW.gluc && md.gluc!=null)  scr+=`<circle cx="${sx.toFixed(1)}" cy="${Ym(md.gluc,autoRange("gluc")).toFixed(1)}" r="3" fill="var(--gluc)"/>`;
+    if(SHOW.hr){ const hh=hrAtKm(SCRUB*TOTKM); if(hh!=null) scr+=`<circle cx="${sx.toFixed(1)}" cy="${Ym(hh,autoRange("hr")).toFixed(1)}" r="3" fill="var(--hr)"/>`; }
   }
 
   svg.innerHTML = `
@@ -1049,11 +1085,22 @@ function drawProfile(km){
   // overlay is on — its own bpm scale on the right, because normalising heart rate
   // into the elevation band makes a line nobody can put a number to.
   const yax=$("yax"), yax2=$("yax2"), xax=$("xax");
-  if(yax) yax.innerHTML = `<span>${Math.round(MAXE)} m</span><span>${Math.round(MINE)} m</span>`;
-  if(yax2) yax2.innerHTML = SHOW.hr
-      ? `<span>${MRANGE.hr[1]} bpm</span><span>${MRANGE.hr[0]}</span>` : "";
+  const ak = axisKeys();
+  const axisFor = (key) => {
+    const r = autoRange(key), u = MUNIT[key], c = `color:var(${MVAR[key]})`;
+    const fmt = v => key==="temp" ? v.toFixed(1) : Math.round(v);
+    return `<span style="${c}">${fmt(r[1])}${u}</span><span style="${c}">${fmt(r[0])}${u}</span>`;
+  };
+  // Left axis: elevation normally, but the first selected measure takes it over —
+  // an axis nobody selected is an axis nobody is reading.
+  if(yax) yax.innerHTML = ak.length
+      ? axisFor(ak[0])
+      : `<span>${Math.round(MAXE)} m</span><span>${Math.round(MINE)} m</span>`;
+  if(yax2) yax2.innerHTML = ak.length > 1 ? axisFor(ak[1]) : "";
+  // Every label carries km, not just the last. "7.6" alone is a number without
+  // a subject when you're glancing at a phone on a roadside.
   if(xax) xax.innerHTML = [0,.25,.5,.75,1]
-      .map(f => `<span>${(f*TOTKM).toFixed(f===0?0:1)}${f===1?" km":""}</span>`).join("");
+      .map(f => `<span>${(f*TOTKM).toFixed(f===0?0:1)} km</span>`).join("");
 }
 
 /* ----------------------------------------------------------------- map     */
