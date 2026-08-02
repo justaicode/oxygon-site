@@ -848,7 +848,12 @@ function render(){
     isDone && hrs
       ? statCard("Avg heart rate", hrs.avg, "bpm", null, "", "--hr", null, `max ${hrs.max}`)
       : statCard("Heart rate", hr!=null?hr:"—", "bpm", hr!=null?null:sensorNote("no strap"), "", "--hr", null,
-                 (running && hrs) ? `<b>avg</b>${hrs.avg}` : null),
+                 // Strap battery wins the corner when it's low enough to matter:
+                 // a flat strap is why the heart-rate trace stops, and the crew
+                 // sees that coming before the runner does.
+                 (LAST && LAST.hr_battery != null && LAST.hr_battery <= 25)
+                   ? `<b>strap</b>${Math.round(LAST.hr_battery)}%`
+                   : (running && hrs) ? `<b>avg</b>${hrs.avg}` : null),
 
     // Cardiac drift, straight from the runner's device — not recomputed here. The
     // published `hr_series` is downsampled for transport, so deriving it on this
