@@ -66,6 +66,9 @@
 
   /* Elapsed hero */
   .elapsed{display:flex;align-items:baseline;gap:10px;margin:0 2px 22px}
+  .batt{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;
+        font-variant-numeric:tabular-nums;margin-left:auto}
+  .batt svg{width:22px;height:12px}
   .elapsed .big{font-variant-numeric:tabular-nums;font-weight:800;font-size:44px;letter-spacing:-1px;line-height:1}
   .elapsed .lab{color:var(--faint);font-size:12px;text-transform:uppercase;letter-spacing:.6px;font-weight:700}
 
@@ -216,6 +219,7 @@
     <div class="elapsed">
       <span class="big" id="elapsed">0:00:00</span>
       <span class="lab" id="elapsed-lab">Elapsed</span>
+      <span id="battery"></span>
     </div>
 
     <div class="prog">
@@ -628,6 +632,21 @@ function currentKm(){
    the CGM and must not imply otherwise; "no strap" then is a false alarm aimed at the
    one person who could still fix it. Once the run is live, the same null really does
    mean the sensor isn't feeding, and the specific wording earns its place. */
+/* The runner's phone battery. Tracking ends when it does, so a crew that can see
+   it falling can act; one that can't just watches the feed stop. Amber under 20%,
+   red under 10% — the points at which somebody should be finding a cable. */
+function batteryChip(){
+  if(!LAST || LAST.battery_pct == null) return "";
+  const pct = Math.max(0, Math.min(100, Math.round(LAST.battery_pct)));
+  const charging = !!LAST.battery_charging;
+  const color = charging ? "var(--ok)" : pct < 10 ? "var(--live)" : pct < 20 ? "var(--temp)" : "var(--dim)";
+  return `<span class="batt" style="color:${color}" title="Runner's phone battery">
+    <svg viewBox="0 0 26 14" aria-hidden="true"><rect x="1" y="1" width="20" height="12" rx="3"
+      fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="3" y="3" width="${16*pct/100}"
+      height="8" rx="1.5" fill="currentColor"/><rect x="22.5" y="5" width="2.5" height="4" rx="1"
+      fill="currentColor"/></svg>${pct}%${charging?" ⚡":""}</span>`;
+}
+
 function sensorNote(missingText){
   return raceState()==="pending" ? "waiting for start" : missingText;
 }
@@ -689,6 +708,7 @@ function render(){
 
   // Elapsed
   $("elapsed").textContent = fmtDur(liveElapsed());
+  $("battery").innerHTML = batteryChip();
   $("elapsed-lab").textContent = st==="done" ? "Finish time" : "Elapsed";
 
   // Progress
