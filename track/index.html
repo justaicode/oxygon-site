@@ -81,6 +81,7 @@
   .mapmodal{position:fixed;inset:0;z-index:4000;background:var(--bg);
             display:flex;flex-direction:column}
   .mapmodal.hidden{display:none}
+  :root.map-expanded,:root.map-expanded body{overflow:hidden}
   .mapmodal-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;
                 border-bottom:1px solid var(--line);font-weight:800}
   #map-big{flex:1;min-height:0}
@@ -288,7 +289,7 @@
 
     <div class="foot">
       <span id="age" class="live-age"></span><br/>
-      Powered by <b>Oxygon</b> · Live race tracking
+      Powered by <b>Oxygon</b> · Live <span id="foot-kind">race</span> tracking
     </div>
 
     <div class="adminbar hidden" id="adminbar">
@@ -310,6 +311,7 @@ const SUPABASE_URL = "https://dtpmhkjrmdssfejvoror.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0cG1oa2pybWRzc2ZlanZvcm9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxODQzMDEsImV4cCI6MjA5OTc2MDMwMX0.MkbvgHUKD7Un9E6ia44-rObxaLtEsnxVM_LH1HLmtE8";
 const TELEMETRY_MS = 4000;   // live position/HR poll
 const PLAN_MS = 30000;       // plan refresh (checkpoint ticks / edits)
+const EMBED_MODE = new URL(location.href).searchParams.get("embed") === "1";
 
 /* --------------------------------------------------------------- utilities */
 const $ = (id) => document.getElementById(id);
@@ -407,7 +409,7 @@ function forecastAt(hourly, tSec, field){
 
 /* ------------------------------------------------------------- plan state  */
 let PLAN=null, PTS=[], TOTKM=0, TOTMIN=0, MINE=0, MAXE=0, MAP=null, ROUTE=null, MEMARK=null, CPMARKS=[];
-let LAST=null;         // last telemetry {km,bpm,elapsed_sec,updated_at,started_at,finished_at}
+let LAST=null, PILLSIG=null;         // last telemetry {km,bpm,elapsed_sec,updated_at,started_at,finished_at}
 let AGE_TIMER=null;
 let LAST_PACE=null;    // last valid pace (s/km), held through transient null ticks so the
 let PREV_KM=null;      // projected finish + ETAs don't blink; both reset on a restart
@@ -449,11 +451,27 @@ function axisKeys(){
 }
 const MCOLOR={temp:"--temp",humid:"--humid",gluc:"--gluc",hr:"--hr"};
 const PILLDEFS=[{k:"hr",l:"HR",c:"--hr"},{k:"temp",l:"Temp",c:"--temp"},{k:"humid",l:"Humidity",c:"--humid"},{k:"gluc",l:"Glucose",c:"--gluc"}];
+let IS_WORKOUT=false;
+/* Positions seen while polling, so a run with no course still draws the line it
+   is making. The recorded route only arrives at the finish; until then this is
+   the only trail there is. */
+let LIVETRAIL=[], LIVELINE=null, BIGLIVELINE=null;
 const THEME_KEY="oxygon_track_theme";
 
 function totalKm(plan){
   if(PTS.length) return PTS[PTS.length-1].distanceKm || plan.distanceKm || 0;
   return plan.distanceKm || 0;
+}
+/* The distance the bar and the chart are drawn against.
+   A race is run against a fixed distance: going long still means 42.2 km of
+   race, and "42.4 of 42.2" is the honest reading. A **workout's** planned
+   distance is a target the runner typed in — passing it is not overshooting a
+   course, it is just a longer run. Pegging the bar at 100% and reporting
+   "7 of 6" describes a plan nobody is bound by. */
+function chartKm(){
+  const covered = LAST ? num(LAST.km) : null;
+  if(IS_WORKOUT && covered!=null) return Math.max(TOTKM||0, covered);
+  return TOTKM;
 }
 function totalMin(plan){
   return (plan.predictedHours||0)*60 + (plan.predictedMinutes||0) + (plan.predictedSeconds||0)/60;
@@ -605,6 +623,7 @@ function wireScrub(){
 
 /* ------------------------------------------------------------ init / load  */
 async function boot(){
+  if(EMBED_MODE){ setSim(true); return; }
   const token = getToken();
   if(!token){ return showError("No race selected","Open the tracking link you were given — it should end with ?id=…"); }
   try{
@@ -632,20 +651,35 @@ function showError(title, msg){
 
 function setupPlan(plan){
   PLAN = plan;
-  PTS = (plan.track && Array.isArray(plan.track.points)) ? plan.track.points.filter(p=>num(p.distanceKm)!=null) : [];
+  // The planned course if there is one, otherwise the line actually run.
+  // A workout started without a GPX has only the second, and it does not exist
+  // until the activity finishes — while it is running the live position below is
+  // the only route information there is.
+  const line = (plan.track && Array.isArray(plan.track.points) && plan.track.points.length)
+             ? plan.track
+             : plan.recordedTrack;
+  PTS = (line && Array.isArray(line.points)) ? line.points.filter(p=>num(p.distanceKm)!=null) : [];
+  IS_WORKOUT = (plan.kind === "workout");
+  // Not everything shared here is a race. The page called every activity one,
+  // in the footer and at the finish, regardless of what the athlete declared.
+  const kindWord = IS_WORKOUT ? "workout" : "race";
+  if($("foot-kind")) $("foot-kind").textContent = kindWord;
   TOTKM = totalKm(plan);
   TOTMIN = totalMin(plan);
-  if(PTS.length){
-    MINE = Math.min(...PTS.map(p=>p.elevationM));
-    MAXE = Math.max(...PTS.map(p=>p.elevationM));
-  }
+  // Only the points that actually carry altitude. A recorded GPS line has gaps
+  // wherever the fix had no usable vertical estimate, and one undefined in the
+  // spread turns both bounds into NaN — which silently blanks the profile.
+  const elevs = PTS.map(p=>num(p.elevationM)).filter(e=>e!=null);
+  if(elevs.length){ MINE = Math.min(...elevs); MAXE = Math.max(...elevs); }
   $("race-name").textContent = plan.raceName || "Race";
   document.title = (plan.raceName || "Race") + " · Live tracking";
   const startTxt = (plan.startHour!=null) ? `Start ${String(plan.startHour).padStart(2,"0")}:${String(plan.startMinute||0).padStart(2,"0")}` : "";
-  const distTxt = TOTKM ? `${Math.round(TOTKM)} km` : "";
+  // Same one-decimal rule as every other distance on the page. Rounding here is
+  // what still showed "7 km" in the subtitle after the cards had been fixed.
+  const distTxt = TOTKM ? `${TOTKM >= 100 ? Math.round(TOTKM) : TOTKM.toFixed(1)} km` : "";
   const predTxt = TOTMIN ? `target ${fmtDurShort(TOTMIN*60)}` : "";
   $("race-sub").textContent = [distTxt, predTxt, startTxt].filter(Boolean).join("  ·  ");
-  $("tot-km").textContent = TOTKM ? String(Math.round(TOTKM)) : "0";
+  $("tot-km").textContent = TOTKM ? (TOTKM >= 100 ? String(Math.round(TOTKM)) : TOTKM.toFixed(1)) : "0";
   if(plan.simulatorMode) { const s=$("status"); }
   drawProfile(null);
   renderPills();
@@ -671,6 +705,16 @@ async function tick(){
     const rows = await rpc("public_telemetry", {token});
     const row = Array.isArray(rows) ? rows[0] : rows;
     LAST = row || LAST;
+    // Which measures exist is decided by the telemetry, but the pills were built
+    // once in setupPlan — before a single row had arrived, when every series was
+    // still empty. So temperature, humidity and glucose rendered disabled and
+    // stayed that way for the whole run however much data turned up.
+    //
+    // Re-rendered only when availability actually changes, not on every poll: the
+    // pills are buttons, and rebuilding them every few seconds throws away focus
+    // and hover mid-click.
+    const sig = JSON.stringify(measAvail());
+    if(sig !== PILLSIG){ PILLSIG = sig; renderPills(); }
     render();
   }catch(e){/* keep last frame; age timer will flag staleness */}
 }
@@ -778,9 +822,11 @@ function render(){
   $("elapsed-lab").textContent = st==="done" ? "Finish time" : "Elapsed";
 
   // Progress
-  const pct = (km!=null && TOTKM) ? clamp(km/TOTKM,0,1)*100 : 0;
+  const goal = chartKm();
+  const pct = (km!=null && goal) ? clamp(km/goal,0,1)*100 : 0;
   $("prog-fill").style.width = pct.toFixed(1)+"%";
-  $("cur-km").textContent = km!=null ? String(Math.round(km)) : "0";
+  $("cur-km").textContent = km!=null ? (Math.abs(km) >= 100 ? String(Math.round(km)) : km.toFixed(1)) : "0";
+  $("tot-km").textContent = goal ? (goal >= 100 ? String(Math.round(goal)) : goal.toFixed(1)) : "0";
   $("pct").textContent = Math.round(pct);
 
   // Derived. Detect a restart (km jumped backwards) and clear per-run accumulators so
@@ -868,7 +914,11 @@ function render(){
   // Whole kilometres: the decimal made the busiest row on the page harder to
   // read for precision nobody watching from the roadside is acting on. The
   // checkpoint card keeps its decimal — "next in 2.3 km" is a real answer.
-  const kmFmt = (v)=> v==null ? "—" : String(Math.round(v));
+  // One decimal, not a whole number. `Math.round` turned a measured 6.5458 km
+  // into "7" — half a kilometre discarded by a formatter, on the one card whose
+  // whole job is to report distance. Beyond 100 km the decimal stops earning its
+  // place next to three digits.
+  const kmFmt = (v)=> v==null ? "—" : (Math.abs(v) >= 100 ? String(Math.round(v)) : v.toFixed(1));
   const primary = [
     // Current pace as the headline with the run average in the corner, matching
     // every sensor card and the app's live header. Falls back to the average for the
@@ -880,7 +930,7 @@ function render(){
     st==="done" ? statCard("Total", fmtDur(elapsed), "", null, "accent")
                 : statCard("Projected finish", totalSec!=null?fmtDur(totalSec):"—", "", remainSec!=null?`${fmtDurShort(remainSec)} to go`:null, "accent")
   ];
-  if(TOTKM) primary.push(statCard("Distance", `${kmFmt(km!=null?km:0)}/${kmFmt(TOTKM)}`, "km", null, "accent"));
+  if(TOTKM) primary.push(statCard("Distance", `${kmFmt(km!=null?km:0)}/${kmFmt(chartKm())}`, "km", null, "accent"));
   if(cpsAll.length){
     const cpsSorted = cpsAll.slice().sort((a,b)=>a.km-b.km);
     const nextCp = cpsSorted.find(cp => !cpIsDone(cp));
@@ -1035,17 +1085,29 @@ function showMapsMenu(ev, loc){
 
 /* --------------------------------------------------------------- profile   */
 function drawProfile(km){
-  const svg=$("profile"); if(!PTS.length){ svg.innerHTML=""; return; }
+  const svg=$("profile");
   const W=1000,H=150,pad=14;
   const span = Math.max(MAXE-MINE, 1);
-  const X = (d)=> (clamp(d/Math.max(TOTKM,1e-6),0,1))*W;
+  const X = (d)=> (clamp(d/Math.max(chartKm(),1e-6),0,1))*W;
   const Y = (e)=> H-pad - ((e-MINE)/span)*(H-2*pad);
-  // downsample for path
-  const step = Math.max(1, Math.floor(PTS.length/900));
-  let line=`M ${X(PTS[0].distanceKm).toFixed(1)} ${Y(PTS[0].elevationM).toFixed(1)}`;
-  for(let i=step;i<PTS.length;i+=step){ line+=` L ${X(PTS[i].distanceKm).toFixed(1)} ${Y(PTS[i].elevationM).toFixed(1)}`; }
-  const last=PTS[PTS.length-1]; line+=` L ${X(last.distanceKm).toFixed(1)} ${Y(last.elevationM).toFixed(1)}`;
-  const area = `${line} L ${W} ${H} L 0 ${H} Z`;
+
+  // The elevation profile needs a course. **Everything else on this chart does
+  // not** — heart rate, temperature, humidity and glucose are measurements
+  // against distance, and none of them cares whether a GPX was uploaded.
+  //
+  // This used to open `if(!PTS.length){ svg.innerHTML=""; return; }`, so a
+  // workout run without a course blanked the whole card: four traces with 120,
+  // 15 and 24 points behind them, deleted by a guard belonging to a fifth. The
+  // pills stayed on screen offering to toggle nothing.
+  let line="", area="";
+  if(PTS.length){
+    const step = Math.max(1, Math.floor(PTS.length/900));
+    const ele = (p)=> num(p.elevationM) ?? MINE;
+    line=`M ${X(PTS[0].distanceKm).toFixed(1)} ${Y(ele(PTS[0])).toFixed(1)}`;
+    for(let i=step;i<PTS.length;i+=step){ line+=` L ${X(PTS[i].distanceKm).toFixed(1)} ${Y(ele(PTS[i])).toFixed(1)}`; }
+    const last=PTS[PTS.length-1]; line+=` L ${X(last.distanceKm).toFixed(1)} ${Y(ele(last)).toFixed(1)}`;
+    area = `${line} L ${W} ${H} L 0 ${H} Z`;
+  }
 
   // checkpoint ticks
   const states = PLAN.checkpointStates||{};
@@ -1062,9 +1124,11 @@ function drawProfile(km){
   // you-are-here
   let me="";
   if(km!=null){
-    const p=posAt(km);
-    me = `<line x1="${X(km).toFixed(1)}" y1="0" x2="${X(km).toFixed(1)}" y2="${H}" stroke="rgba(255,75,87,.35)" stroke-width="1"/>
-          <circle class="me" cx="${X(km).toFixed(1)}" cy="${Y(p.elevationM).toFixed(1)}" r="5"/>`;
+    // Without a course there is no elevation line to sit the dot on, but the
+    // vertical rule still says where you are across every other trace.
+    const p = PTS.length ? posAt(km) : null;
+    me = `<line x1="${X(km).toFixed(1)}" y1="0" x2="${X(km).toFixed(1)}" y2="${H}" stroke="rgba(255,75,87,.35)" stroke-width="1"/>`;
+    if(p) me += `<circle class="me" cx="${X(km).toFixed(1)}" cy="${Y(num(p.elevationM) ?? MINE).toFixed(1)}" r="5"/>`;
   }
 
   // Measurement overlays (toggled by the pills). Each series is normalized to its
@@ -1086,7 +1150,7 @@ function drawProfile(km){
     const hp = hrPoints();
     if(hp.length>1){
       let d="",on=false;
-      for(const h of hp){ d+=(on?" L ":" M ")+(clamp(h.km/Math.max(TOTKM,1e-6),0,1)*W).toFixed(1)+" "+Ym(h.bpm,autoRange("hr")).toFixed(1); on=true; }
+      for(const h of hp){ d+=(on?" L ":" M ")+(clamp(h.km/Math.max(chartKm(),1e-6),0,1)*W).toFixed(1)+" "+Ym(h.bpm,autoRange("hr")).toFixed(1); on=true; }
       ov+=`<path d="${d}" fill="none" stroke="var(--hr)" stroke-width="2" stroke-linejoin="round" opacity=".9"/>`;
     }
   }
@@ -1143,6 +1207,7 @@ function drawProfile(km){
 let BIGMAP=null, BIGYOU=null;
 function openBigMap(){
   const modal=$("map-modal"); if(!modal) return;
+  document.documentElement.classList.add("map-expanded");
   modal.classList.remove("hidden");
   $("map-modal-title").textContent = PLAN?.raceName || "Location";
   const latlngs = PTS.map(p=>[p.latitude,p.longitude]);
@@ -1183,7 +1248,10 @@ function openBigMap(){
   // than expected — fit again once it is unambiguously real.
   setTimeout(()=>{ if(BIGMAP.getZoom() <= 2) fit(); }, 400);
 }
-function closeBigMap(){ $("map-modal")?.classList.add("hidden"); }
+function closeBigMap(){
+  $("map-modal")?.classList.add("hidden");
+  document.documentElement.classList.remove("map-expanded");
+}
 
 /* Keep the runner's dot on the expanded map in step with the small one. */
 function syncBigYou(){
@@ -1199,23 +1267,32 @@ function initMap(){
   $("map-expand")?.addEventListener("click", openBigMap);
   $("map-close")?.addEventListener("click", closeBigMap);
   document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeBigMap(); });
-  if(!window.L || !PTS.length){ $("map-card").classList.add("hidden"); return; }
+  // The map used to be hidden outright whenever there was no course, which meant
+  // a workout recorded without a GPX showed a crew no map at all — while the
+  // runner's latitude and longitude were arriving on every single tick. A route
+  // is worth drawing when we have one; a position is worth showing regardless.
+  if(!window.L){ $("map-card").classList.add("hidden"); return; }
   const latlngs = PTS.map(p=>[p.latitude,p.longitude]);
   MAP = L.map("map",{zoomControl:true, attributionControl:true, scrollWheelZoom:false});
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
     maxZoom:18, attribution:'&copy; OpenStreetMap'
   }).addTo(MAP);
-  ROUTE = L.polyline(latlngs,{color:"#4f9dff",weight:4,opacity:.9}).addTo(MAP);
-  // start / finish
-  L.circleMarker(latlngs[0],{radius:5,color:"#33d69f",fillColor:"#33d69f",fillOpacity:1}).addTo(MAP);
-  L.circleMarker(latlngs[latlngs.length-1],{radius:5,color:"#fff",fillColor:"#2f7df6",fillOpacity:1}).addTo(MAP);
+  if(latlngs.length){
+    ROUTE = L.polyline(latlngs,{color:"#4f9dff",weight:4,opacity:.9}).addTo(MAP);
+    // start / finish
+    L.circleMarker(latlngs[0],{radius:5,color:"#33d69f",fillColor:"#33d69f",fillOpacity:1}).addTo(MAP);
+    L.circleMarker(latlngs[latlngs.length-1],{radius:5,color:"#fff",fillColor:"#2f7df6",fillOpacity:1}).addTo(MAP);
+  } else {
+    // No route yet: open on the world and let the first fix bring us in.
+    MAP.setView([0,0], 2);
+  }
   // checkpoints
   (PLAN.checkpoints||[]).forEach(cp=>{
     const p=posAt(cp.km); if(!p) return;
     CPMARKS.push(L.circleMarker([p.latitude,p.longitude],{radius:4,color:"#9fb0cc",fillColor:"#131f36",fillOpacity:1,weight:2}).addTo(MAP)
       .bindTooltip(`CP · ${cp.km.toFixed(1)} km`));
   });
-  MAP.fitBounds(ROUTE.getBounds().pad(0.12), {maxZoom:15});
+  if(ROUTE) MAP.fitBounds(ROUTE.getBounds().pad(0.12), {maxZoom:15});
   // Some renderers give below-the-fold elements zero width, so a load-time fit
   // lands at zoom 0. Re-fit the first time the map actually enters the viewport,
   // when it's guaranteed real layout.
@@ -1238,12 +1315,38 @@ function fitMap(tries){
 }
 function updateMap(km){
   if(!MAP) return;
-  if(km==null){ if(MEMARK){MAP.removeLayer(MEMARK);MEMARK=null;} return; }
-  const p=posAt(km); if(!p) return;
-  const ll=[p.latitude,p.longitude];
+  // Where the runner is. With a course this is interpolated along it; without
+  // one, the transmitted fix is the position — and it is published on every tick
+  // whether or not anybody uploaded a GPX.
+  let ll=null;
+  const p = (km!=null && PTS.length) ? posAt(km) : null;
+  if(p) ll=[p.latitude,p.longitude];
+  else if(LAST && num(LAST.lat)!=null && num(LAST.lon)!=null) ll=[LAST.lat,LAST.lon];
+
+  if(!ll){ if(MEMARK){MAP.removeLayer(MEMARK);MEMARK=null;} return; }
+
   if(!MEMARK){
     MEMARK = L.marker(ll,{icon:L.divIcon({className:"",html:'<div class="pin"></div>',iconSize:[16,16],iconAnchor:[8,8]})}).addTo(MAP);
+    // First fix on a routeless run: nothing has framed the map yet.
+    if(!ROUTE) MAP.setView(ll, 15);
   } else MEMARK.setLatLng(ll);
+
+  // With no route to draw, stitch one from the fixes as they arrive so the crew
+  // sees the shape of the run rather than a lone dot wandering a blank map.
+  if(!PTS.length){
+    const last = LIVETRAIL[LIVETRAIL.length-1];
+    // ~10 m, matching what the phone itself keeps. Anything finer is GPS jitter
+    // drawn at full size.
+    if(!last || Math.abs(last[0]-ll[0])>1e-4 || Math.abs(last[1]-ll[1])>1e-4){
+      LIVETRAIL.push(ll);
+      if(LIVELINE) LIVELINE.setLatLngs(LIVETRAIL);
+      else if(LIVETRAIL.length>1) LIVELINE = L.polyline(LIVETRAIL,{color:"#4f9dff",weight:4,opacity:.9}).addTo(MAP);
+      if(BIGMAP){
+        if(BIGLIVELINE) BIGLIVELINE.setLatLngs(LIVETRAIL);
+        else if(LIVETRAIL.length>1) BIGLIVELINE = L.polyline(LIVETRAIL,{color:"#4f9dff",weight:4,opacity:.9}).addTo(BIGMAP);
+      }
+    }
+  }
 }
 
 /* --------------------------------------------------------------- age       */
@@ -1261,7 +1364,7 @@ function updateAge(){
   // signal, and still catches a genuinely dead feed quickly.
   const stale = st==="live" && sec>100;
   $("app").classList.toggle("stale", stale);
-  if(st==="done") $("age").textContent = "Race complete";
+  if(st==="done") $("age").textContent = (IS_WORKOUT ? "Workout" : "Race") + " complete";
   else if(st==="pending") $("age").textContent = "Waiting for the start";
   else $("age").innerHTML = stale ? `Signal paused · last update ${fmtDurShort(sec)} ago`
                                   : `Live · updated ${sec<5?"just now":Math.round(sec)+"s ago"}`;
@@ -1274,7 +1377,17 @@ function measAvail(){
   const fc=!!(PLAN&&Array.isArray(PLAN.hourlyWeather)&&PLAN.hourlyWeather.length>1);
   // Glucose is available whenever the runner is actually publishing readings —
   // it was pinned to simulator-only back when there was no real source.
-  return { hr:true, temp: sim||fc||num(PLAN&&PLAN.temperatureC)!=null, humid: sim||fc,
+  // Conditions the runner actually measured count as available.
+  //
+  // This asked only "was a forecast fetched?" — written before Oxygon could
+  // measure temperature and humidity itself. A workout created without a weather
+  // lookup, then run with a sensor on the vest, published 15 real readings and
+  // still had both pills rendered `off` **and `disabled`**: the traces drew,
+  // because drawing reads cond_series, while the controls that turn them off
+  // insisted there was no such data.
+  const measured = condPoints().length > 0;
+  return { hr:true, temp: sim||fc||measured||num(PLAN&&PLAN.temperatureC)!=null,
+           humid: sim||fc||measured,
            gluc: sim || glucPoints().length > 0 };
 }
 function renderPills(){
@@ -1344,13 +1457,39 @@ function isAdmin(){
 
 /* Self-contained synthetic plan so the demo works even without a real token. */
 function syntheticPlan(){
-  const N=80, pts=[];
-  for(let i=0;i<=N;i++){ const f=i/N;
-    pts.push({distanceKm:f*42.2, latitude:37.98+f*0.12, longitude:23.72+Math.sin(f*3)*0.03,
-      elevationM:60+180*(0.5-0.5*Math.cos(f*Math.PI*3))+30*Math.sin(f*9)}); }
-  const cps=[]; for(let i=1;i<=8;i++) cps.push({id:"scp"+i, km:i*42.2/9, pinned:i%2===0});
-  return { raceName:"Demo Marathon", distanceKm:42.2, simulatorMode:true,
-    startHour:8, startMinute:0, predictedHours:3, predictedMinutes:30, predictedSeconds:0,
+  const waypoints=[
+    [38.156,23.962],[38.141,23.972],[38.118,23.980],[38.087,23.979],
+    [38.060,23.994],[38.030,23.995],[38.008,23.951],[38.006,23.912],
+    [38.000,23.868],[37.993,23.828],[37.988,23.795],[37.976,23.762],[37.968,23.741]
+  ];
+  const route=[];
+  for(let i=0;i<waypoints.length-1;i++){
+    for(let j=0;j<7;j++){
+      const f=j/7, a=waypoints[i], b=waypoints[i+1];
+      route.push([a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f]);
+    }
+  }
+  route.push(waypoints[waypoints.length-1]);
+  const rawKm=[0];
+  for(let i=1;i<route.length;i++){
+    const a=route[i-1], b=route[i], lat=(a[0]+b[0])/2*Math.PI/180;
+    const dx=(b[1]-a[1])*Math.cos(lat)*111.32, dy=(b[0]-a[0])*110.57;
+    rawKm.push(rawKm[i-1]+Math.sqrt(dx*dx+dy*dy));
+  }
+  const courseKm=42.195, rawTotal=rawKm[rawKm.length-1];
+  const profile=[[0,12],[3,25],[6,22],[10,35],[13,30],[17,56],[21,90],[24,120],[27,160],[31,247],[34,215],[37,170],[40,140],[42.195,128]];
+  const elevationAt=km=>{
+    let i=1; while(i<profile.length-1&&profile[i][0]<km)i++;
+    const a=profile[i-1],b=profile[i],f=(km-a[0])/Math.max(.001,b[0]-a[0]);
+    return a[1]+(b[1]-a[1])*f;
+  };
+  const pts=route.map((p,i)=>{
+    const km=rawKm[i]/rawTotal*courseKm;
+    return {distanceKm:km,latitude:p[0],longitude:p[1],elevationM:elevationAt(km)};
+  });
+  const cps=[]; for(let i=1;i<=8;i++) cps.push({id:"scp"+i, km:i*courseKm/9, pinned:i%2===0});
+  return { raceName:"Athens Marathon the Authentic", distanceKm:courseKm, simulatorMode:true,
+    startHour:9, startMinute:0, predictedHours:3, predictedMinutes:30, predictedSeconds:0,
     track:{points:pts}, checkpoints:cps, checkpointStates:{} };
 }
 
