@@ -532,9 +532,21 @@ function hrStats(){
    plenty of one and none of the other. */
 function glucPoints(){
   const s = LAST && LAST.gluc_series;
-  if(!Array.isArray(s) || s.length < 1) return [];
-  return s.map(p => ({ km:+p[0], gluc:+p[1] }))
-          .filter(g => isFinite(g.km) && isFinite(g.gluc));
+  if(!Array.isArray(s)) return [];
+  const pts = s.map(p => ({ km:+p[0], gluc:+p[1] }))
+               .filter(g => isFinite(g.km) && isFinite(g.gluc));
+  // **Two points or it is not a line.**
+  //
+  // A single reading gets held across the whole distance and drawn as a
+  // perfectly flat trace — which reads as "the sensor died mid-run" when the
+  // truth is "there was one reading, or none". A run whose CGM never wrote to
+  // Health published exactly one early sample and the page drew a confident
+  // horizontal line the length of an 8 km run.
+  //
+  // With none, the pill says "No glucose source connected", which is the
+  // honest answer and the one that sends you to look at the CGM rather than at
+  // the app.
+  return pts.length >= 2 ? pts : [];
 }
 function glucAtKm(km){
   const gp = glucPoints(); if(!gp.length) return null;
