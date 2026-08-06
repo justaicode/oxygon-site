@@ -253,6 +253,7 @@
 
     <div class="grid primary" id="stats-primary"></div>
     <div class="grid metrics" id="stats-metrics"></div>
+    <div class="card" id="energy-card" style="display:none"></div>
 
     <div class="card" id="map-card">
       <h2>Location
@@ -1035,6 +1036,7 @@ function render(){
                  (running && avgAll) ? `<b>avg</b>${one(avgAll.temp)}° ${Math.round(avgAll.humid)}%` : null)
   ];
   $("stats-metrics").innerHTML = metrics.join("");
+  renderEnergy();
 
   // Accumulate an HR-vs-distance trace for the profile overlay.
   if(st==="live" && km!=null && hr!=null){
@@ -1093,6 +1095,54 @@ function showMapsMenu(ev, loc){
   m.style.top = (r.bottom + 6) + "px";
   m.style.left = Math.max(8, Math.min(window.innerWidth - m.offsetWidth - 8, r.right - m.offsetWidth)) + "px";
   setTimeout(()=>document.addEventListener("click", closeMapsMenu, {once:true}), 0);
+}
+
+/* --------------------------------------------------------------- energy    */
+/* Energy burned and the carbohydrate/fat split.
+   Its own full-width card rather than a ninth cell in the grid: eight tiles are
+   four tidy pairs and a ninth would orphan itself, but this was never a ninth
+   reading. It carries a split — two numbers and a bar — and wants the room, the
+   same reasoning as the tile in the app.
+   Everything here is computed on the runner's phone and sent; this page has no
+   idea what they weigh. */
+function renderEnergy(){
+  const card = $("energy-card");
+  const e = LAST && LAST.energy;
+  if(!e || !isFinite(+e.kcal) || +e.kcal <= 0){ card.style.display="none"; return; }
+  card.style.display = "";
+
+  const kcal = Math.round(+e.kcal), carb = Math.round(+e.carbG), fat = Math.round(+e.fatG);
+  const inG = Math.round(+e.carbInG || 0);
+  const total = Math.max(+e.carbG + +e.fatG, 1);
+  const carbShare = Math.max(0, Math.min(1, +e.carbG / total)) * 100;
+  // A population average is not this runner's physiology; say so by dimming it.
+  const dim = e.tier === "estimated";
+  const rate = (LAST.elapsed_sec > 60) ? Math.round(kcal / (LAST.elapsed_sec/3600)) : null;
+
+  // Burned against eaten — the comparison the whole card exists for. Only once
+  // there is enough of both for it to mean anything.
+  let gap = "";
+  if(inG > 0 && carb >= 30){
+    const d = carb - inG;
+    gap = d > 0
+      ? `<span style="color:var(--warn,#ffb454)">took in ${inG} g · <b>−${d} g</b></span>`
+      : `<span style="color:var(--ok,#33d69f)">fuelled to plan</span>`;
+  }
+
+  card.innerHTML = `
+    <h2>Energy burned ${rate!=null?`<span class="r">${rate} kcal/h</span>`:""}</h2>
+    <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:2px 0 10px">
+      <span style="font-size:26px;font-weight:500">${kcal.toLocaleString()}<span style="font-size:12px;color:var(--muted);margin-left:5px">kcal</span></span>
+      <span style="font-size:13px;color:var(--temp)">carbs <b>${carb} g</b></span>
+      <span style="font-size:13px;color:var(--humid)">fat ${fat} g</span>
+      <span style="flex:1"></span>
+      <span style="font-size:12px">${gap}</span>
+    </div>
+    <div style="display:flex;height:7px;border-radius:99px;overflow:hidden;opacity:${dim?0.45:1}">
+      <div style="width:${carbShare.toFixed(1)}%;background:var(--temp)"></div>
+      <div style="flex:1;background:var(--humid)"></div>
+    </div>
+    ${dim?`<p style="font-size:11px;color:var(--muted);margin:8px 0 0">Split estimated — no threshold test on file.</p>`:""}`;
 }
 
 /* --------------------------------------------------------------- profile   */
