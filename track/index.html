@@ -253,7 +253,19 @@
 
     <div class="grid primary" id="stats-primary"></div>
     <div class="grid metrics" id="stats-metrics"></div>
-    <div class="card" id="energy-card" style="display:none"></div>
+    <!-- Present in the markup, not conjured by script: the card is there from the
+         first paint whether or not any telemetry has arrived. Zero is the honest
+         reading before a run, and a card that materialises later makes a crew
+         wonder what else is still missing. -->
+    <div class="card" id="energy-card">
+      <h2>Energy burned</h2>
+      <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:2px 0 10px">
+        <span style="font-size:26px;font-weight:500">0<span style="font-size:12px;color:var(--muted);margin-left:5px">kcal</span></span>
+        <span style="font-size:13px;color:var(--temp)">carbs 0 g</span>
+        <span style="font-size:13px;color:var(--humid)">fat 0 g</span>
+      </div>
+      <div style="display:flex;height:7px;border-radius:99px;overflow:hidden;background:var(--inset)"></div>
+    </div>
 
     <div class="card" id="map-card">
       <h2>Location
@@ -1152,7 +1164,32 @@ function showMapsMenu(ev, loc){
 function renderEnergy(){
   const card = $("energy-card");
   const e = LAST && LAST.energy;
-  if(!e || !isFinite(+e.kcal) || +e.kcal <= 0){ card.style.display="none"; return; }
+  const kcalValid = e && isFinite(+e.kcal) && +e.kcal > 0;
+
+  // Present from the start, not conjured when the first number arrives.
+  //
+  // A card that appears mid-run makes the crew wonder what else is missing; one
+  // that reads zero on the start line is simply telling the truth, because zero
+  // is what has been burned so far. That is only true *before* the gun though —
+  // once running, a missing figure means something could not be computed (no
+  // body weight on file), and printing 0 there would be a fabricated reading
+  // rather than an honest one. Say which.
+  if(!kcalValid){
+    const pending = raceState()==="pending";
+    card.style.display = "";
+    card.innerHTML = `
+      <h2>Energy burned</h2>
+      <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:2px 0 10px">
+        <span style="font-size:26px;font-weight:500">0<span style="font-size:12px;color:var(--muted);margin-left:5px">kcal</span></span>
+        <span style="font-size:13px;color:var(--temp)">carbs 0 g</span>
+        <span style="font-size:13px;color:var(--humid)">fat 0 g</span>
+      </div>
+      <div style="display:flex;height:7px;border-radius:99px;overflow:hidden;background:var(--inset)"></div>
+      <p style="font-size:11px;color:var(--muted);margin:8px 0 0">${
+        pending ? "Counts up once the activity starts."
+                : "No body weight on file — every figure here scales with it."}</p>`;
+    return;
+  }
   card.style.display = "";
 
   const kcal = Math.round(+e.kcal), carb = Math.round(+e.carbG), fat = Math.round(+e.fatG);
