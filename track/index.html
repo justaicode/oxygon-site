@@ -456,6 +456,55 @@ function autoRange(key){
   return [lo-pad, hi+pad];
 }
 
+/* Metres between two [lat,lon] pairs. */
+function metresBetween(a, b){
+  const R=6371000, rad=Math.PI/180;
+  const dLat=(b[0]-a[0])*rad, dLon=(b[1]-a[1])*rad, la=a[0]*rad, lb=b[0]*rad;
+  const h=Math.sin(dLat/2)**2 + Math.cos(la)*Math.cos(lb)*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+
+/* The recorded route, split wherever the line jumps somewhere it cannot have
+   run, as an array of segments for Leaflet.
+
+   **A drawn line is a claim about where someone went.** The 8 Aug St. Moritz run
+   put ten consecutive fixes ~470 m off the path, out over the Moritzersee, and
+   this drew them joined to the rest — a confident blue line straight across open
+   water, twice. The phone now discards fixes that fast, but tracks already
+   recorded still carry them, and those are the ones being looked at.
+
+   Recorded tracks are downsampled to an even spacing, so segment length is
+   near-uniform and a large multiple of the median is a jump rather than a bend.
+   Breaking the line instead of bridging it is also the honest rendering of a real
+   signal gap: a tunnel becomes a gap, which is what it was.
+
+   Orphan segments — a handful of points marooned between two breaks, covering a
+   fraction of a percent of the run — are the excursion itself, so they go too.
+   Nothing here is invented or moved; the only question is what gets joined. */
+function routeSegments(pts){
+  const ll = pts.map(p=>[p.latitude,p.longitude]);
+  if(ll.length < 3) return ll.length ? [ll] : [];
+  const gaps = [];
+  for(let i=1;i<ll.length;i++) gaps.push(metresBetween(ll[i-1], ll[i]));
+  const sorted = gaps.slice().sort((a,b)=>a-b);
+  const median = sorted[Math.floor(sorted.length/2)] || 0;
+  const limit = Math.max(150, median*8);
+
+  const segs = [];
+  let cur = [ll[0]];
+  for(let i=1;i<ll.length;i++){
+    if(gaps[i-1] > limit){ segs.push(cur); cur = [ll[i]]; }
+    else cur.push(ll[i]);
+  }
+  segs.push(cur);
+  if(segs.length === 1) return segs;
+
+  const spanOf = s => s.reduce((a,_,i)=> i ? a+metresBetween(s[i-1],s[i]) : 0, 0);
+  const total = segs.reduce((a,s)=>a+spanOf(s), 0) || 1;
+  const kept = segs.filter(s => s.length > 1 && spanOf(s)/total >= 0.02);
+  return kept.length ? kept : [ll];
+}
+
 /* How many real values a measure has. `autoRange` needs two before it can range
    anything; below that it hands back the placeholder in MRANGE. */
 function seriesCount(key){
@@ -1371,13 +1420,14 @@ function openBigMap(){
   document.documentElement.classList.add("map-expanded");
   modal.classList.remove("hidden");
   $("map-modal-title").textContent = PLAN?.raceName || "Location";
-  const latlngs = PTS.map(p=>[p.latitude,p.longitude]);
+  const segs = routeSegments(PTS);
+  const latlngs = segs.flat();
   if(!BIGMAP){
     BIGMAP = L.map("map-big",{zoomControl:true, scrollWheelZoom:true});
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
                 {maxZoom:19, attribution:'&copy; OpenStreetMap'}).addTo(BIGMAP);
     if(latlngs.length){
-      L.polyline(latlngs,{color:"#4f9dff",weight:4,opacity:.9}).addTo(BIGMAP);
+      L.polyline(segs,{color:"#4f9dff",weight:4,opacity:.9}).addTo(BIGMAP);
       L.circleMarker(latlngs[0],{radius:6,color:"#33d69f",fillColor:"#33d69f",fillOpacity:1}).addTo(BIGMAP);
       L.circleMarker(latlngs[latlngs.length-1],{radius:6,color:"#fff",fillColor:"#2f7df6",fillOpacity:1}).addTo(BIGMAP);
     }
@@ -1433,13 +1483,14 @@ function initMap(){
   // runner's latitude and longitude were arriving on every single tick. A route
   // is worth drawing when we have one; a position is worth showing regardless.
   if(!window.L){ $("map-card").classList.add("hidden"); return; }
-  const latlngs = PTS.map(p=>[p.latitude,p.longitude]);
+  const segs = routeSegments(PTS);
+  const latlngs = segs.flat();
   MAP = L.map("map",{zoomControl:true, attributionControl:true, scrollWheelZoom:false});
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
     maxZoom:18, attribution:'&copy; OpenStreetMap'
   }).addTo(MAP);
   if(latlngs.length){
-    ROUTE = L.polyline(latlngs,{color:"#4f9dff",weight:4,opacity:.9}).addTo(MAP);
+    ROUTE = L.polyline(segs,{color:"#4f9dff",weight:4,opacity:.9}).addTo(MAP);
     // start / finish
     L.circleMarker(latlngs[0],{radius:5,color:"#33d69f",fillColor:"#33d69f",fillOpacity:1}).addTo(MAP);
     L.circleMarker(latlngs[latlngs.length-1],{radius:5,color:"#fff",fillColor:"#2f7df6",fillOpacity:1}).addTo(MAP);
