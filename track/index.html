@@ -973,7 +973,19 @@ function render(){
                (nowPace!=null && secPerKm!=null) ? `<b>avg</b>${fmtPace(secPerKm)}` : null);
     })(),
     st==="done" ? statCard("Total", fmtDur(elapsed), "", null, "accent")
-                : statCard("Projected finish", totalSec!=null?fmtDur(totalSec):"—", "", remainSec!=null?`${fmtDurShort(remainSec)} to go`:null, "accent")
+                : (() => {
+                    // Before the gun there is no projection, but there is a plan.
+                    // The label changes with it: "Projected finish" is a forecast
+                    // from a pace being run, "Target finish" is the time the runner
+                    // set out to beat. Showing the first with the second's number
+                    // would claim a prediction nothing has predicted.
+                    const target = (TOTMIN > 0) ? TOTMIN * 60 : null;
+                    const pending = raceState()==="pending";
+                    const shown = totalSec ?? (pending ? target : null);
+                    return statCard(totalSec!=null ? "Projected finish" : "Target finish",
+                                    shown!=null?fmtDur(shown):"—", "",
+                                    remainSec!=null?`${fmtDurShort(remainSec)} to go`:null, "accent");
+                  })()
   ];
   if(TOTKM) primary.push(statCard("Distance", `${kmFmt(km!=null?km:0)}/${kmFmt(chartKm())}`, "km", null, "accent"));
   if(cpsAll.length){
