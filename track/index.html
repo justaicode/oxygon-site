@@ -547,8 +547,19 @@ function glucPoints(){
   // With none, the pill says "No glucose source connected", which is the
   // honest answer and the one that sends you to look at the CGM rather than at
   // the app.
-  return pts.length >= 2 ? pts : [];
+  //
+  // **But a single point is still a reading.** Dropping it here took the *value*
+  // out too, not just the line — and standby publishes exactly one sample before
+  // the gun, so a runner on the start line with a working CGM had their crew told
+  // "waiting for start" while the number sat in `LAST`. One point cannot be
+  // drawn; it can certainly be read. The ≥2 rule belongs to the trace, and now
+  // lives there.
+  return pts;
 }
+
+/// Whether there is enough to draw a line rather than hold one value flat across
+/// the whole distance — which is what made a dead CGM look like a live one.
+function canTrace(points){ return points.length >= 2; }
 function glucAtKm(km){
   const gp = glucPoints(); if(!gp.length) return null;
   if(km <= gp[0].km) return gp[0].gluc;
@@ -770,7 +781,20 @@ function batteryChip(){
 }
 
 function sensorNote(missingText){
+  // "Waiting for start" belongs to a *missing* reading, and this is only ever
+  // called when one is missing — but it was overwriting the note on cards that
+  // had data, because the caller decides the note before deciding the value.
+  // A runner standing on the line with a strap and a tag is publishing both;
+  // telling their crew to wait for the gun while the numbers sit in `LAST` is
+  // the page discarding what it was sent.
   return raceState()==="pending" ? "waiting for start" : missingText;
+}
+
+/* The pace the plan asks for, before there is a real one to show.
+   Matches the app's own live header, which shows TARGET PACE until the runner
+   moves. A dash there says "broken"; the target says "this is the plan". */
+function targetPaceSecPerKm(){
+  return (TOTMIN > 0 && TOTKM > 0) ? (TOTMIN * 60) / TOTKM : null;
 }
 
 /* Cardiac drift bands — the same three the app uses, and deliberately the same
@@ -936,10 +960,18 @@ function render(){
     // Current pace as the headline with the run average in the corner, matching
     // every sensor card and the app's live header. Falls back to the average for the
     // headline until the window has enough ticks — better than a dash on arrival.
-    statCard(nowPace!=null ? "Last km" : "Pace",
-             (nowPace ?? secPerKm)!=null ? fmtPace(nowPace ?? secPerKm) : "—", "/km",
-             secPerKm!=null ? `${(3600/secPerKm).toFixed(1)} km/h` : null, "accent", null, null,
-             (nowPace!=null && secPerKm!=null) ? `<b>avg</b>${fmtPace(secPerKm)}` : null),
+    (() => {
+      const live = nowPace ?? secPerKm;
+      const target = targetPaceSecPerKm();
+      // Before the gun there is no pace to report, so report the one being aimed
+      // at — the same thing the runner's own screen shows.
+      const shown = live ?? (raceState()==="pending" ? target : null);
+      const label = live!=null ? (nowPace!=null ? "Last km" : "Pace") : "Target pace";
+      return statCard(label,
+               shown!=null ? fmtPace(shown) : "—", "/km",
+               shown!=null ? `${(3600/shown).toFixed(1)} km/h` : null, "accent", null, null,
+               (nowPace!=null && secPerKm!=null) ? `<b>avg</b>${fmtPace(secPerKm)}` : null);
+    })(),
     st==="done" ? statCard("Total", fmtDur(elapsed), "", null, "accent")
                 : statCard("Projected finish", totalSec!=null?fmtDur(totalSec):"—", "", remainSec!=null?`${fmtDurShort(remainSec)} to go`:null, "accent")
   ];
@@ -1205,9 +1237,10 @@ function drawProfile(km){
     return d?`<path d="${d}" fill="none" stroke="var(${MCOLOR[key]})" stroke-width="2" stroke-linejoin="round" opacity=".9"/>`:"";
   };
   let ov="";
-  if(SHOW.temp)  ov+=sampledTrace("temp",  f=>measAt(f).temp);
-  if(SHOW.humid) ov+=sampledTrace("humid", f=>measAt(f).humid);
-  if(SHOW.gluc)  ov+=sampledTrace("gluc",  f=>measAt(f).gluc);
+  const canCond = canTrace(condPoints()), canGluc = canTrace(glucPoints());
+  if(SHOW.temp  && canCond) ov+=sampledTrace("temp",  f=>measAt(f).temp);
+  if(SHOW.humid && canCond) ov+=sampledTrace("humid", f=>measAt(f).humid);
+  if(SHOW.gluc  && canGluc) ov+=sampledTrace("gluc",  f=>measAt(f).gluc);
   if(SHOW.hr){
     const hp = hrPoints();
     if(hp.length>1){
