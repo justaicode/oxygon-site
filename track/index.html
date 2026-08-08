@@ -456,11 +456,28 @@ function autoRange(key){
   return [lo-pad, hi+pad];
 }
 
+/* How many real values a measure has. `autoRange` needs two before it can range
+   anything; below that it hands back the placeholder in MRANGE. */
+function seriesCount(key){
+  if(key==="hr")   return hrPoints().length;
+  if(key==="gluc") return glucPoints().filter(g=>g.gluc!=null).length;
+  const f = key==="temp" ? "temp" : "humid";
+  return condPoints().filter(c=>c[f]!=null && isFinite(c[f])).length;
+}
+
 /* Which series own the two axes. Left goes to the first thing selected, right to
    the second; with three or four on, the rest still auto-range and are told apart
-   by colour, because a chart with four numbered axes is unreadable. */
+   by colour, because a chart with four numbered axes is unreadable.
+
+   **Only measures that have data may claim an axis.** A selected-but-empty
+   series took the left axis and printed `MRANGE`'s placeholder — temperature
+   showed `45.0°` and `-5.0°`, which are not measurements of anything and read
+   exactly like measurements. Worse, it displaced the series that did have
+   numbers: an activity with heart rate and glucose flowing was labelled in
+   degrees. An axis nobody selected is an axis nobody reads; an axis with nothing
+   behind it is an axis that lies. */
 function axisKeys(){
-  return ["hr","temp","humid","gluc"].filter(k=>SHOW[k]);
+  return ["hr","temp","humid","gluc"].filter(k=>SHOW[k] && seriesCount(k) >= 2);
 }
 const MCOLOR={temp:"--temp",humid:"--humid",gluc:"--gluc",hr:"--hr"};
 const PILLDEFS=[{k:"hr",l:"HR",c:"--hr"},{k:"temp",l:"Temp",c:"--temp"},{k:"humid",l:"Humidity",c:"--humid"},{k:"gluc",l:"Glucose",c:"--gluc"}];
