@@ -92,7 +92,9 @@
   .prog{margin:0 2px 22px}
   .prog .track{height:12px;border-radius:999px;background:var(--inset);border:1px solid var(--line);overflow:hidden;position:relative}
   .prog .fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:999px;width:0;transition:width .6s ease}
-  .prog .meta{display:flex;justify-content:space-between;margin-top:8px;color:var(--dim);font-size:13px;font-variant-numeric:tabular-nums}
+  .prog.no-target .track{opacity:.25}
+.prog.no-target #pct-wrap,.prog.no-target #tot-wrap{visibility:hidden}
+.prog .meta{display:flex;justify-content:space-between;margin-top:8px;color:var(--dim);font-size:13px;font-variant-numeric:tabular-nums}
   .prog .meta b{color:var(--text)}
 
   /* Stat grid */
@@ -242,12 +244,12 @@
       <span class="lab" id="elapsed-lab">Elapsed</span>
     </div>
 
-    <div class="prog">
+    <div class="prog" id="prog-wrap">
       <div class="track"><div class="fill" id="prog-fill"></div></div>
       <div class="meta">
         <span><b id="cur-km">0</b> km</span>
-        <span><b id="pct">0</b>%</span>
-        <span>of <b id="tot-km">0</b> km</span>
+        <span id="pct-wrap"><b id="pct">0</b>%</span>
+        <span id="tot-wrap">of <b id="tot-km">0</b> km</span>
       </div>
     </div>
 
@@ -531,6 +533,10 @@ function axisKeys(){
 const MCOLOR={temp:"--temp",humid:"--humid",gluc:"--gluc",hr:"--hr"};
 const PILLDEFS=[{k:"hr",l:"HR",c:"--hr"},{k:"temp",l:"Temp",c:"--temp"},{k:"humid",l:"Humidity",c:"--humid"},{k:"gluc",l:"Glucose",c:"--gluc"}];
 let IS_WORKOUT=false;
+/* No distance or time target — press start and go. The page cannot infer this:
+   distanceKm is 0 for such a run, and 0 is also what a plan looks like before
+   anyone fills it in. */
+let OPEN_ENDED=false;
 /* Positions seen while polling, so a run with no course still draws the line it
    is making. The recorded route only arrives at the finish; until then this is
    the only trail there is. */
@@ -762,6 +768,7 @@ function setupPlan(plan){
              : plan.recordedTrack;
   PTS = (line && Array.isArray(line.points)) ? line.points.filter(p=>num(p.distanceKm)!=null) : [];
   IS_WORKOUT = (plan.kind === "workout");
+  OPEN_ENDED = plan.isOpenEnded === true;
   // Not everything shared here is a race. The page called every activity one,
   // in the footer and at the finish, regardless of what the athlete declared.
   const kindWord = IS_WORKOUT ? "workout" : "race";
@@ -936,13 +943,27 @@ function render(){
   syncBigYou();   // the expanded map, if it's open
   $("elapsed-lab").textContent = st==="done" ? "Finish time" : "Elapsed";
 
-  // Progress
+  // Progress.
+  //
+  // **A run with no target has nothing to be a fraction of.** An open run is an
+  // ordinary workout started without a distance or a time — press start and go —
+  // and the bar, the percentage and the "of X km" all divide by a number nobody
+  // chose. Drawing them anyway produced "0% of 0 km" above an empty track, which
+  // reads as a broken page rather than as a run without a plan. Distance keeps
+  // its place; it is the one figure here that still means something.
   const goal = chartKm();
-  const pct = (km!=null && goal) ? clamp(km/goal,0,1)*100 : 0;
-  $("prog-fill").style.width = pct.toFixed(1)+"%";
-  $("cur-km").textContent = km!=null ? (Math.abs(km) >= 100 ? String(Math.round(km)) : km.toFixed(1)) : "0";
-  $("tot-km").textContent = goal ? (goal >= 100 ? String(Math.round(goal)) : goal.toFixed(1)) : "0";
-  $("pct").textContent = Math.round(pct);
+  const prog = $("prog-wrap") || document.querySelector(".prog");
+  if(OPEN_ENDED){
+    if(prog) prog.classList.add("no-target");
+    $("cur-km").textContent = km!=null ? (Math.abs(km) >= 100 ? String(Math.round(km)) : km.toFixed(1)) : "0";
+  } else {
+    if(prog) prog.classList.remove("no-target");
+    const pct = (km!=null && goal) ? clamp(km/goal,0,1)*100 : 0;
+    $("prog-fill").style.width = pct.toFixed(1)+"%";
+    $("cur-km").textContent = km!=null ? (Math.abs(km) >= 100 ? String(Math.round(km)) : km.toFixed(1)) : "0";
+    $("tot-km").textContent = goal ? (goal >= 100 ? String(Math.round(goal)) : goal.toFixed(1)) : "0";
+    $("pct").textContent = Math.round(pct);
+  }
 
   // Derived. Detect a restart (km jumped backwards) and clear per-run accumulators so
   // stale pace/HR from the previous run don't bleed into the new one.
