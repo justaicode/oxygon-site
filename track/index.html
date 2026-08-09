@@ -916,6 +916,11 @@ function liveElapsed(){
   if(st==="pending") return 0;
   const e = num(LAST.elapsed_sec);
   if(st==="done") return e;                    // frozen at the finish time
+  // **A held clock is not ticking.** `elapsed_sec` is already pause-aware on the
+  // phone, so extrapolating on top of it invents time nobody is measuring: on a
+  // run paused at 12 s this climbed to ~42 before the next row landed and snapped
+  // it back, over and over. The runner's own screen sat still at 12 the whole time.
+  if(LAST.paused) return e;
   if(e!=null && LAST.updated_at){
     const since = (Date.now() - Date.parse(LAST.updated_at))/1000;
     return e + Math.max(0, since);             // last elapsed + time since it arrived
