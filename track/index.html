@@ -1099,8 +1099,20 @@ function render(){
                                     remainSec!=null?`${fmtDurShort(remainSec)} to go`:null, "accent");
                   })()
   ];
+  // **Distance covered, with nothing to be a fraction of.**
+  //
+  // A targeted run reads "9.2/9.2 km" because the second number is the thing the
+  // runner set out to cover. An open run has no such number, so it reads plainly:
+  // how far, full stop. Written as its own branch rather than a conditional
+  // suffix, because "9.2/0 km" and "9.2/9.2 km" on a run with no target are both
+  // inventions — one absurd, one worse for being plausible.
   if(TOTKM) primary.push(statCard("Distance", `${kmFmt(km!=null?km:0)}/${kmFmt(chartKm())}`, "km", null, "accent"));
-  if(cpsAll.length){
+  else if(OPEN_ENDED) primary.push(statCard("Distance", kmFmt(km!=null?km:0), "km", null, "accent"));
+  // Checkpoints are a course's furniture, and an open run has no course. What it
+  // does have is the start line, ticked automatically the moment the clock runs —
+  // so the card read "0/1 · next at 0.0 km", counting a checkpoint the runner
+  // never placed towards a total that only existed because the app adds one.
+  if(!OPEN_ENDED && cpsAll.length){
     const cpsSorted = cpsAll.slice().sort((a,b)=>a.km-b.km);
     const nextCp = cpsSorted.find(cp => !cpIsDone(cp));
     const cpSub = nextCp
