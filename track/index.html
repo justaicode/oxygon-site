@@ -1061,11 +1061,17 @@ function render(){
     // headline until the window has enough ticks — better than a dash on arrival.
     (() => {
       const live = nowPace ?? secPerKm;
-      const target = targetPaceSecPerKm();
       // Before the gun there is no pace to report, so report the one being aimed
       // at — the same thing the runner's own screen shows.
+      //
+      // An open run aims at nothing, so there is no such number, and the label
+      // must not claim one: "Target pace" over a dash reads as a target that
+      // failed to load rather than a run that never had one. It says "Pace" and
+      // waits for the runner to move, which is what the app's own header does.
+      const target = OPEN_ENDED ? null : targetPaceSecPerKm();
       const shown = live ?? (raceState()==="pending" ? target : null);
-      const label = live!=null ? (nowPace!=null ? "Last km" : "Pace") : "Target pace";
+      const label = (live!=null || OPEN_ENDED) ? (nowPace!=null ? "Last km" : "Pace")
+                                               : "Target pace";
       return statCard(label,
                shown!=null ? fmtPace(shown) : "—", "/km",
                shown!=null ? `${(3600/shown).toFixed(1)} km/h` : null, "accent", null, null,
@@ -1078,6 +1084,13 @@ function render(){
                     // from a pace being run, "Target finish" is the time the runner
                     // set out to beat. Showing the first with the second's number
                     // would claim a prediction nothing has predicted.
+                    //
+                    // An open run has neither. It set out to beat nothing, so there
+                    // is no target — and a finish cannot be projected without a
+                    // distance to project onto, so there is no forecast either. The
+                    // card is dropped rather than shown as "Target finish —", which
+                    // is a target claiming to exist and merely be unknown.
+                    if(OPEN_ENDED) return "";
                     const target = (TOTMIN > 0) ? TOTMIN * 60 : null;
                     const pending = raceState()==="pending";
                     const shown = totalSec ?? (pending ? target : null);
