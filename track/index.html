@@ -537,6 +537,10 @@ let IS_WORKOUT=false;
    distanceKm is 0 for such a run, and 0 is also what a plan looks like before
    anyone fills it in. */
 let OPEN_ENDED=false;
+/* Run indoors on a belt. GPS is switched off on the phone, so no position is ever
+   published — and an empty map waiting for a dot that is never coming is the same
+   ambiguity the app designs against everywhere else. The card is dropped instead. */
+let TREADMILL=false;
 /* Positions seen while polling, so a run with no course still draws the line it
    is making. The recorded route only arrives at the finish; until then this is
    the only trail there is. */
@@ -769,6 +773,7 @@ function setupPlan(plan){
   PTS = (line && Array.isArray(line.points)) ? line.points.filter(p=>num(p.distanceKm)!=null) : [];
   IS_WORKOUT = (plan.kind === "workout");
   OPEN_ENDED = plan.isOpenEnded === true;
+  TREADMILL = plan.isTreadmill === true;
   // Not everything shared here is a race. The page called every activity one,
   // in the footer and at the finish, regardless of what the athlete declared.
   const kindWord = IS_WORKOUT ? "workout" : "race";
@@ -1533,6 +1538,11 @@ function initMap(){
   // a workout recorded without a GPX showed a crew no map at all — while the
   // runner's latitude and longitude were arriving on every single tick. A route
   // is worth drawing when we have one; a position is worth showing regardless.
+  // **Indoors there is no map to draw and never will be.** Unlike a missing GPX —
+  // where the transmitted fix still gives a dot worth showing — a treadmill run
+  // publishes no position at all, by design. Dropping the card says "not
+  // applicable"; leaving it says "waiting", and only one of those is true.
+  if(TREADMILL){ $("map-card").classList.add("hidden"); return; }
   if(!window.L){ $("map-card").classList.add("hidden"); return; }
   const segs = routeSegments(PTS);
   const latlngs = segs.flat();
