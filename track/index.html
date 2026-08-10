@@ -541,6 +541,29 @@ let OPEN_ENDED=false;
    published — and an empty map waiting for a dot that is never coming is the same
    ambiguity the app designs against everywhere else. The card is dropped instead. */
 let TREADMILL=false;
+/* **The chart's x-axis is distance, until there isn't one.**
+   Every series used to be keyed on kilometres, which held right up until GPS
+   became optional. A treadmill run has no course, no recorded route and no km on
+   any sample, so a distance axis has nothing to place anything on — the 10 Aug run
+   drew an empty chart over 68 perfectly good glucose readings.
+   Points now carry both: `km` (-1 when unknown) and `t`, seconds from the start.
+   `axisPos` picks whichever this run is drawn against, so every interpolation and
+   overlay below works unchanged in both modes. */
+function timeAxis(){
+  if(TREADMILL) return true;
+  return !(chartKm() > 0);
+}
+function axisMax(){
+  if(!timeAxis()) return chartKm();
+  const e = LAST ? num(LAST.elapsed_sec) : null;
+  return (e && e > 0) ? e : 1;
+}
+function axisPos(p){ return timeAxis() ? p.t : p.km; }
+/* A point is usable if the axis it will be drawn on has a value for it. */
+function onAxis(p){
+  return timeAxis() ? isFinite(p.t) && p.t >= 0
+                    : isFinite(p.km) && p.km >= 0;
+}
 /* Positions seen while polling, so a run with no course still draws the line it
    is making. The recorded route only arrives at the finish; until then this is
    the only trail there is. */
@@ -593,14 +616,20 @@ function posAt(km){
 function condPoints(){
   const s = LAST && LAST.cond_series;
   if(!Array.isArray(s) || s.length < 1) return [];
-  return s.map(p => ({ km:+p[0], temp:+p[1], humid:+p[2] }))
-          .filter(c => isFinite(c.km) && isFinite(c.temp) && isFinite(c.humid));
+  // [km, °C, %rh, t] — km is -1 when the reading has no position. Older rows have
+  // three elements and no time, which still read correctly on a distance axis.
+  return s.map(p => ({ km:+p[0], temp:+p[1], humid:+p[2], t:+(p[3] ?? NaN) }))
+          .filter(c => isFinite(c.temp) && isFinite(c.humid) && onAxis(c));
 }
-function condAtKm(km, key){
+/* Interpolate at an axis coordinate — kilometres or seconds, whichever this run
+   is drawn against. The three interpolators below are the same walk; only the
+   coordinate they compare on changed. */
+function condAt(x, key){
   const cp = condPoints(); if(!cp.length) return null;
-  if(km <= cp[0].km) return cp[0][key];
+  if(x <= axisPos(cp[0])) return cp[0][key];
   for(let i=1;i<cp.length;i++){
-    if(km <= cp[i].km){ const a=cp[i-1], b=cp[i], g=(km-a.km)/Math.max(b.km-a.km,1e-6);
+    const bx = axisPos(cp[i]);
+    if(x <= bx){ const a=cp[i-1], b=cp[i], ax=axisPos(a), g=(x-ax)/Math.max(bx-ax,1e-6);
       return a[key] + (b[key]-a[key])*g; }
   }
   return cp[cp.length-1][key];
@@ -622,8 +651,9 @@ function hrStats(){
 function glucPoints(){
   const s = LAST && LAST.gluc_series;
   if(!Array.isArray(s)) return [];
-  const pts = s.map(p => ({ km:+p[0], gluc:+p[1] }))
-               .filter(g => isFinite(g.km) && isFinite(g.gluc));
+  // [km, mgdl, t] — see condPoints.
+  const pts = s.map(p => ({ km:+p[0], gluc:+p[1], t:+(p[2] ?? NaN) }))
+               .filter(g => isFinite(g.gluc) && onAxis(g));
   // **Two points or it is not a line.**
   //
   // A single reading gets held across the whole distance and drawn as a
@@ -648,11 +678,12 @@ function glucPoints(){
 /// Whether there is enough to draw a line rather than hold one value flat across
 /// the whole distance — which is what made a dead CGM look like a live one.
 function canTrace(points){ return points.length >= 2; }
-function glucAtKm(km){
+function glucAt(x){
   const gp = glucPoints(); if(!gp.length) return null;
-  if(km <= gp[0].km) return gp[0].gluc;
+  if(x <= axisPos(gp[0])) return gp[0].gluc;
   for(let i=1;i<gp.length;i++){
-    if(km <= gp[i].km){ const a=gp[i-1], b=gp[i], g=(km-a.km)/Math.max(b.km-a.km,1e-6);
+    const bx = axisPos(gp[i]);
+    if(x <= bx){ const a=gp[i-1], b=gp[i], ax=axisPos(a), g=(x-ax)/Math.max(bx-ax,1e-6);
       return a.gluc + (b.gluc-a.gluc)*g; }
   }
   return gp[gp.length-1].gluc;
@@ -675,15 +706,15 @@ function condAverages(){
 function measAt(f){
   if(SIM || (PLAN && PLAN.simulatorMode)) return { temp:Sim.temperature(f), humid:Sim.humidity(f), gluc:Sim.glucose(f) };
   if(condPoints().length > 1){
-    const km = f * TOTKM;
-    return { temp:condAtKm(km,"temp"), humid:condAtKm(km,"humid"), gluc:glucAtKm(km) };
+    const x = f * axisMax();
+    return { temp:condAt(x,"temp"), humid:condAt(x,"humid"), gluc:glucAt(x) };
   }
   const base = (LAST && LAST.started_at) ? Date.parse(LAST.started_at)/1000 : Date.now()/1000;
   const t = base + f*(TOTMIN*60);
   // No measured conditions yet, but glucose may still be flowing — the two come
   // from unrelated sources, so one being absent says nothing about the other.
   return { temp:forecastAt(PLAN.hourlyWeather,t,"tempC"), humid:forecastAt(PLAN.hourlyWeather,t,"humidity"),
-           gluc:glucAtKm(f*TOTKM) };
+           gluc:glucAt(f*axisMax()) };
 }
 
 /* HR overlay points: the app-published series (the source device's full recorded
@@ -691,17 +722,19 @@ function measAt(f){
 function hrPoints(){
   const s = LAST && LAST.hr_series;
   if(Array.isArray(s) && s.length>1){
-    return s.map(p => Array.isArray(p) ? {km:+p[0], bpm:+p[1]} : {km:+(p&&p.km), bpm:+(p&&p.bpm)})
-            .filter(h => isFinite(h.km) && isFinite(h.bpm));
+    return s.map(p => Array.isArray(p) ? {km:+p[0], bpm:+p[1], t:+(p[2] ?? NaN)}
+                                       : {km:+(p&&p.km), bpm:+(p&&p.bpm), t:+(p&&p.t)})
+            .filter(h => isFinite(h.bpm) && onAxis(h));
   }
   return HRHIST;
 }
 
 /* HR (bpm) interpolated at a course km, for the scrubber tooltip. */
-function hrAtKm(km){
+function hrAt(x){
   const hp=hrPoints(); if(!hp.length) return null;
-  if(km<=hp[0].km) return hp[0].bpm;
-  for(let i=1;i<hp.length;i++){ if(km<=hp[i].km){ const a=hp[i-1],b=hp[i],g=(km-a.km)/Math.max(b.km-a.km,1e-6); return a.bpm+(b.bpm-a.bpm)*g; } }
+  if(x<=axisPos(hp[0])) return hp[0].bpm;
+  for(let i=1;i<hp.length;i++){ const bx=axisPos(hp[i]);
+    if(x<=bx){ const a=hp[i-1],b=hp[i],ax=axisPos(a),g=(x-ax)/Math.max(bx-ax,1e-6); return a.bpm+(b.bpm-a.bpm)*g; } }
   return hp[hp.length-1].bpm;
 }
 
@@ -716,13 +749,13 @@ function wireScrub(){
     const frac = clamp((cx-rect.left)/Math.max(rect.width,1), 0, 1);
     SCRUB = frac;
     drawProfile(currentKm());
-    const km=frac*TOTKM, sp=posAt(km), md=measAt(frac);
-    const parts=[`<b>${km.toFixed(1)} km</b>`];
+    const x=frac*axisMax(), km=frac*TOTKM, sp=posAt(km), md=measAt(frac);
+    const parts=[timeAxis() ? `<b>${fmtDurShort(x)}</b>` : `<b>${km.toFixed(1)} km</b>`];
     if(sp) parts.push(`${Math.round(sp.elevationM)} m`);
     if(SHOW.temp && md.temp!=null)  parts.push(`<span style="color:var(--temp)">${Math.round(md.temp)}°</span>`);
     if(SHOW.humid && md.humid!=null) parts.push(`<span style="color:var(--humid)">${Math.round(md.humid)}%</span>`);
     if(SHOW.gluc && md.gluc!=null)  parts.push(`<span style="color:var(--gluc)">${Math.round(md.gluc)}</span>`);
-    if(SHOW.hr){ const hh=hrAtKm(km); if(hh!=null) parts.push(`<span style="color:var(--hr)">${Math.round(hh)} bpm</span>`); }
+    if(SHOW.hr){ const hh=hrAt(x); if(hh!=null) parts.push(`<span style="color:var(--hr)">${Math.round(hh)} bpm</span>`); }
     tip.innerHTML = parts.join(" · ");
     tip.style.left = Math.min(92, Math.max(8, frac*100)) + "%";
     tip.classList.remove("hidden");
@@ -1416,7 +1449,7 @@ function drawProfile(km){
     const hp = hrPoints();
     if(hp.length>1){
       let d="",on=false;
-      for(const h of hp){ d+=(on?" L ":" M ")+(clamp(h.km/Math.max(chartKm(),1e-6),0,1)*W).toFixed(1)+" "+Ym(h.bpm,autoRange("hr")).toFixed(1); on=true; }
+      for(const h of hp){ d+=(on?" L ":" M ")+(clamp(axisPos(h)/Math.max(axisMax(),1e-6),0,1)*W).toFixed(1)+" "+Ym(h.bpm,autoRange("hr")).toFixed(1); on=true; }
       ov+=`<path d="${d}" fill="none" stroke="var(--hr)" stroke-width="2" stroke-linejoin="round" opacity=".9"/>`;
     }
   }
@@ -1430,7 +1463,7 @@ function drawProfile(km){
     if(SHOW.temp && md.temp!=null)  scr+=`<circle cx="${sx.toFixed(1)}" cy="${Ym(md.temp,autoRange("temp")).toFixed(1)}" r="3" fill="var(--temp)"/>`;
     if(SHOW.humid && md.humid!=null) scr+=`<circle cx="${sx.toFixed(1)}" cy="${Ym(md.humid,autoRange("humid")).toFixed(1)}" r="3" fill="var(--humid)"/>`;
     if(SHOW.gluc && md.gluc!=null)  scr+=`<circle cx="${sx.toFixed(1)}" cy="${Ym(md.gluc,autoRange("gluc")).toFixed(1)}" r="3" fill="var(--gluc)"/>`;
-    if(SHOW.hr){ const hh=hrAtKm(SCRUB*TOTKM); if(hh!=null) scr+=`<circle cx="${sx.toFixed(1)}" cy="${Ym(hh,autoRange("hr")).toFixed(1)}" r="3" fill="var(--hr)"/>`; }
+    if(SHOW.hr){ const hh=hrAt(SCRUB*axisMax()); if(hh!=null) scr+=`<circle cx="${sx.toFixed(1)}" cy="${Ym(hh,autoRange("hr")).toFixed(1)}" r="3" fill="var(--hr)"/>`; }
   }
 
   svg.innerHTML = `
@@ -1461,7 +1494,9 @@ function drawProfile(km){
   // Every label carries km, not just the last. "7.6" alone is a number without
   // a subject when you're glancing at a phone on a roadside.
   if(xax) xax.innerHTML = [0,.25,.5,.75,1]
-      .map(f => `<span>${(f*TOTKM).toFixed(f===0?0:1)} km</span>`).join("");
+      .map(f => timeAxis()
+                ? `<span>${fmtDurShort(f*axisMax())}</span>`
+                : `<span>${(f*TOTKM).toFixed(f===0?0:1)} km</span>`).join("");
 }
 
 /* ----------------------------------------------------------------- map     */
