@@ -749,7 +749,9 @@ function wireScrub(){
     const frac = clamp((cx-rect.left)/Math.max(rect.width,1), 0, 1);
     SCRUB = frac;
     drawProfile(currentKm());
-    const x=frac*axisMax(), km=frac*TOTKM, sp=posAt(km), md=measAt(frac);
+    // `chartKm()`, not TOTKM: the readout has to agree with the axis it is
+    // reading off, and on an open run the planned distance is zero.
+    const x=frac*axisMax(), km=frac*chartKm(), sp=posAt(km), md=measAt(frac);
     const parts=[timeAxis() ? `<b>${fmtDurShort(x)}</b>` : `<b>${km.toFixed(1)} km</b>`];
     if(sp) parts.push(`${Math.round(sp.elevationM)} m`);
     if(SHOW.temp && md.temp!=null)  parts.push(`<span style="color:var(--temp)">${Math.round(md.temp)}°</span>`);
@@ -1496,7 +1498,7 @@ function drawProfile(km){
   if(xax) xax.innerHTML = [0,.25,.5,.75,1]
       .map(f => timeAxis()
                 ? `<span>${fmtDurShort(f*axisMax())}</span>`
-                : `<span>${(f*TOTKM).toFixed(f===0?0:1)} km</span>`).join("");
+                : `<span>${(f*chartKm()).toFixed(f===0?0:1)} km</span>`).join("");
 }
 
 /* ----------------------------------------------------------------- map     */
