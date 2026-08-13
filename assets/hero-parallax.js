@@ -45,6 +45,8 @@
   var listenersAttached = false;
   var lastObservedScrollY = -1;
   var scrollTimer = 0;
+  var heroObserver = null;
+  var heroSyncFrame = 0;
 
   function addStyles() {
     if (!document.head || document.getElementById(STYLE_ID)) return;
@@ -62,7 +64,9 @@
       ".ox-page-parallax-layer--foreground{opacity:.1}" +
       ".ox-page-parallax-layer--mobile-static{opacity:.48;will-change:auto}" +
       ".ox-page-parallax-shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(11,15,25,.34),rgba(11,15,25,.18) 52%,rgba(11,15,25,.3)),linear-gradient(180deg,rgba(11,15,25,.2),rgba(11,15,25,.4))}" +
-      "#top>.ox-hero-screenshot-target,#top>div[style*=\"justify-self:center\"]{width:292px!important;height:auto!important;aspect-ratio:1320/2868;background:url(\"assets/site/live-activity-sensors-iphone-optimized.webp\") center/100% 100% no-repeat!important;border-radius:38px;overflow:visible;border:1px solid rgba(84,84,88,.6);box-shadow:0 40px 80px rgba(0,0,0,.55);perspective:900px;transform-style:preserve-3d}" +
+      ".ox-hero-decoration{display:none!important}" +
+      "@media(min-width:1024px){#top{box-sizing:border-box!important;min-height:clamp(820px,86vh,920px)}}" +
+      "#top>.ox-hero-screenshot-target,#top>div[style*=\"justify-self:center\"]{width:292px!important;height:auto!important;aspect-ratio:1320/2868;background:url(\"assets/site/appstore/iphone-dark/01-live-activity.webp\") center/100% 100% no-repeat!important;border-radius:38px;overflow:visible;border:1px solid rgba(84,84,88,.6);box-shadow:0 40px 80px rgba(0,0,0,.55);perspective:900px;transform-style:preserve-3d}" +
       "#top>.ox-hero-screenshot-target>:first-child,#top>div[style*=\"justify-self:center\"]>:first-child{display:none!important}" +
       "#top>.ox-hero-screenshot-target>:not(:first-child),#top>div[style*=\"justify-self:center\"]>:not(:first-child){display:block!important;pointer-events:auto!important;will-change:transform;transform-style:preserve-3d;cursor:default;transition:border-color .25s ease,box-shadow .25s ease}" +
       "#top>.ox-hero-screenshot-target>:nth-child(2){left:-118px!important;right:auto!important;top:165px!important;bottom:auto!important}" +
@@ -160,7 +164,20 @@
     }
 
     var mode = tabletViewport.matches ? "mobile" : "desktop";
-    if (video.__oxygonVideoMode === mode) return;
+    video.style.display = "block";
+    video.muted = true;
+    video.defaultMuted = true;
+    video.autoplay = true;
+    video.loop = true;
+    video.playsInline = true;
+    video.setAttribute("autoplay", "");
+    video.setAttribute("muted", "");
+    video.setAttribute("loop", "");
+    video.setAttribute("playsinline", "");
+    if (video.__oxygonVideoMode === mode && video.querySelector("source")) {
+      playVideo(video);
+      return;
+    }
     video.__oxygonVideoMode = mode;
 
     while (video.firstChild) video.removeChild(video.firstChild);
@@ -175,13 +192,6 @@
       video.appendChild(source);
     });
 
-    video.style.display = "block";
-    video.muted = true;
-    video.loop = true;
-    video.playsInline = true;
-    video.setAttribute("muted", "");
-    video.setAttribute("loop", "");
-    video.setAttribute("playsinline", "");
     video.addEventListener("canplay", function () { playVideo(video); }, { once: true });
     video.load();
     playVideo(video);
@@ -203,6 +213,10 @@
       return child.style && child.style.justifySelf === "center" && !child.querySelector("h1");
     });
     if (!wrapper) return;
+    Array.prototype.forEach.call(hero.children, function (child) {
+      if (child === wrapper || child.querySelector("h1") || child.querySelector("video")) return;
+      if (child.children.length >= 2) child.classList.add("ox-hero-decoration");
+    });
     if (!wrapper.querySelector(".ox-next-fuel-card")) {
       var nextFuel = document.createElement("div");
       nextFuel.className = "ox-next-fuel-card";
@@ -239,6 +253,25 @@
     if (playback && playback.catch) playback.catch(function () {});
   }
 
+  function syncHeroMedia() {
+    heroSyncFrame = 0;
+    var hero = document.getElementById("top");
+    if (!hero) return;
+    configureHeroScreenshot(hero);
+    var video = hero.querySelector("video");
+    if (video) setVideoSources(video);
+  }
+
+  function scheduleHeroMediaSync() {
+    if (!heroSyncFrame) heroSyncFrame = window.requestAnimationFrame(syncHeroMedia);
+  }
+
+  function observeHeroMedia() {
+    if (heroObserver || !window.MutationObserver) return;
+    heroObserver = new MutationObserver(scheduleHeroMediaSync);
+    heroObserver.observe(document.documentElement, { childList: true, subtree: true });
+  }
+
   function attachListeners(shell) {
     if (listenersAttached) return;
     listenersAttached = true;
@@ -273,6 +306,7 @@
     sceneMode = getSceneMode();
     scene = shell.querySelector(".ox-page-parallax") || createPageScene(shell);
     attachListeners(shell);
+    observeHeroMedia();
     configureHeroScreenshot(hero);
 
     var video = hero.querySelector("video");

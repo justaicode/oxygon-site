@@ -3,9 +3,9 @@
 
   var IMAGE_REPLACEMENTS = {
     "549ec65cce65d40f.png": {
-      file: "549ec65cce65d40f-optimized.webp",
-      width: 1400,
-      height: 2032
+      file: "../site/appstore/ipad-dark/01-race-library.webp",
+      width: 1032,
+      height: 1376
     },
     "526f1e3c52771eb9.png": {
       file: "526f1e3c52771eb9-optimized.webp",
@@ -13,14 +13,14 @@
       height: 1440
     },
     "3b0b7386ccbb1063.png": {
-      file: "3b0b7386ccbb1063-optimized.webp",
-      width: 720,
-      height: 1566
+      file: "../site/appstore/iphone-dark/01-live-activity.webp",
+      width: 660,
+      height: 1434
     },
     "b22450971251c564.png": {
-      file: "b22450971251c564-optimized.webp",
-      width: 720,
-      height: 1566
+      file: "../site/appstore/iphone-dark/11-coach-calendar.webp",
+      width: 660,
+      height: 1434
     },
     "5863566aab9e8458.png": {
       file: "5863566aab9e8458-optimized.webp",
@@ -35,16 +35,16 @@
     "c1e1545da59a3f72.png": { width: 512, height: 512 }
   };
 
-  var CALCULATOR_REPLACEMENTS = [
-    "pace",
-    "cs",
-    "predictor",
-    "vo2",
-    "hr",
-    "training",
-    "gap",
-    "calories"
-  ];
+  var CALCULATOR_REPLACEMENTS = {
+    pace: "15-tools.webp",
+    cs: "16-tool-critical-speed.webp",
+    predictor: "17-tool-race-predictor.webp",
+    vo2: "18-tool-vo2max.webp",
+    hr: "19-tool-hr-zones.webp",
+    training: "20-tool-training-paces.webp",
+    gap: "21-tool-grade-adjusted-pace.webp",
+    calories: "22-tool-calories.webp"
+  };
 
   function escapeRegExp(value) {
     return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -158,10 +158,10 @@
       );
     });
 
-    CALCULATOR_REPLACEMENTS.forEach(function (name) {
+    Object.keys(CALCULATOR_REPLACEMENTS).forEach(function (name) {
       template = template.replaceAll(
         "assets/site/calc-" + name + ".png",
-        "assets/site/calc-" + name + "-optimized.webp"
+        "assets/site/appstore/iphone-dark/" + CALCULATOR_REPLACEMENTS[name]
       );
     });
 

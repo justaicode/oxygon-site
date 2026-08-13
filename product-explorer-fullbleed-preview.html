@@ -1,0 +1,1057 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Oxygon Full-bleed Product Explorer</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ox-bg: #0b0f19;
+      --ox-text: #fff;
+      --ox-muted: rgba(235,235,245,.64);
+      --ox-quiet: rgba(235,235,245,.38);
+      --ox-line: rgba(84,84,88,.48);
+      --ox-blue: #0a84ff;
+      --ox-green: #30d158;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      overflow-x: hidden;
+      color: var(--ox-text);
+      background: var(--ox-bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .site-nav {
+      position: fixed;
+      inset: 0 0 auto;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      min-height: 62px;
+      padding: 12px max(22px, calc((100vw - 1240px) / 2));
+      border-bottom: 1px solid rgba(84,84,88,.35);
+      background: rgba(11,15,25,.86);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .brand { display: inline-flex; align-items: center; gap: 9px; color: #fff; font-size: 17px; font-weight: 700; text-decoration: none; }
+    .brand img { width: 27px; height: 27px; border-radius: 7px; }
+    .preview-label { margin-left: auto; color: var(--ox-quiet); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+
+    .prelude {
+      position: relative;
+      display: grid;
+      place-items: end start;
+      min-height: 72vh;
+      padding: 130px max(34px, calc((100vw - 1180px) / 2)) 76px;
+      overflow: hidden;
+    }
+
+    .prelude::before {
+      content: "";
+      position: absolute;
+      inset: -5%;
+      z-index: -2;
+      background:
+        linear-gradient(180deg, rgba(11,15,25,.35), rgba(11,15,25,.9)),
+        url("assets/img/oxygon-parallax-far.webp") center / cover no-repeat;
+      filter: saturate(.76) brightness(.72);
+      transform: scale(1.05);
+    }
+
+    .prelude::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: radial-gradient(circle at 72% 42%, rgba(10,132,255,.12), transparent 34%);
+    }
+
+    .prelude-copy { width: min(760px,100%); }
+    .eyebrow { margin-bottom: 12px; color: var(--ox-blue); font-size: 13px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+    .prelude h1 { margin: 0; font-size: clamp(48px,6.4vw,84px); line-height: .98; letter-spacing: -.045em; text-wrap: balance; }
+    .prelude p { margin: 22px 0 0; max-width: 650px; color: var(--ox-muted); font-size: 18px; line-height: 1.6; }
+    .scroll-cue { display: inline-flex; align-items: center; gap: 10px; margin-top: 30px; color: var(--ox-quiet); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+    .scroll-cue::before { content: "↓"; display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid var(--ox-line); border-radius: 50%; color: #fff; }
+
+    .story { position: relative; height: 1000vh; }
+
+    .showcase {
+      position: sticky;
+      top: 62px;
+      height: calc(100vh - 62px);
+      min-height: 690px;
+      overflow: hidden;
+      border-top: 1px solid rgba(84,84,88,.5);
+      border-bottom: 1px solid rgba(84,84,88,.5);
+      background: #090d16;
+      isolation: isolate;
+    }
+
+    .showcase::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      background:
+        radial-gradient(circle at 80% 35%, rgba(10,132,255,.12), transparent 32%),
+        linear-gradient(115deg,#0a0f19 0%,#101725 48%,#090d16 100%);
+    }
+
+    .showcase-topbar {
+      position: relative;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      min-height: 74px;
+      padding: 14px max(32px, calc((100vw - 1240px) / 2));
+      border-bottom: 1px solid rgba(84,84,88,.42);
+      background: rgba(9,13,22,.76);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .topbar-label { color: var(--ox-quiet); font-size: 12px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+    .tabs { display: flex; align-items: center; gap: 5px; margin-left: auto; }
+    .tab {
+      appearance: none;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      padding: 10px 15px;
+      color: rgba(235,235,245,.47);
+      background: transparent;
+      font: 650 13px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      cursor: pointer;
+      transition: color .2s ease, background .2s ease, border-color .2s ease;
+    }
+
+    .tab:hover { color: rgba(255,255,255,.9); }
+    .tab[aria-selected="true"] { color: #fff; border-color: rgba(255,255,255,.14); background: rgba(255,255,255,.09); }
+    .tab:focus-visible, .arrow:focus-visible, .tool-picker:focus-visible, .activity-step:focus-visible, .activity-arrow:focus-visible { outline: 2px solid var(--ox-blue); outline-offset: 2px; }
+
+    .panels { position: absolute; inset: 74px 0 0; }
+    .panel {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: minmax(0,460px) minmax(0,620px);
+      gap: clamp(40px,5vw,72px);
+      align-items: center;
+      justify-content: center;
+      padding: 34px clamp(32px,4vw,64px) 50px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translate3d(0,22px,0);
+      transition: opacity .5s ease, transform .65s cubic-bezier(.2,.8,.2,1), visibility .5s;
+      pointer-events: none;
+    }
+
+    .panel.active { opacity: 1; visibility: visible; transform: none; pointer-events: auto; }
+    .copy { position: relative; z-index: 4; max-width: 480px; }
+    .copy h2 { margin: 0; font-size: clamp(42px,5.2vw,70px); line-height: 1; letter-spacing: -.04em; text-wrap: balance; }
+    .copy p { margin: 20px 0 0; color: var(--ox-muted); font-size: clamp(15px,1.35vw,18px); line-height: 1.65; text-wrap: pretty; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+    .chip { display: inline-flex; align-items: center; gap: 7px; padding: 7px 11px; border: 1px solid rgba(84,84,88,.68); border-radius: 999px; color: rgba(235,235,245,.65); font-size: 12px; background: rgba(8,12,20,.3); }
+    .chip::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--ox-blue); }
+
+    .visual {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      height: min(72vh,720px);
+      isolation: isolate;
+    }
+
+    .visual::before { content: ""; position: absolute; width: 80%; aspect-ratio: 1; z-index: -2; border-radius: 50%; background: radial-gradient(circle,rgba(10,132,255,.17),transparent 65%); filter: blur(18px); }
+    .asset { display: block; max-width: 100%; height: auto; border: 1px solid rgba(84,84,88,.6); background: #070a10; box-shadow: 0 34px 80px rgba(0,0,0,.55); }
+
+    .coach-screen { position: absolute; display: block; width: auto; border-radius: 32px; }
+    .coach-calendar { right: 30%; left: auto; bottom: 0; height: min(69vh,680px); transform: rotate(-2deg); }
+    .coach-chat { right: 0; bottom: 1%; height: min(60vh,590px); z-index: 3; transform: rotate(2deg); }
+
+    .activities-overview,
+    .library-overview {
+      position: absolute;
+      top: clamp(22px,3.4vh,40px);
+      left: max(56px,calc((100vw - 1280px) / 2));
+      z-index: 8;
+      max-width: 700px;
+      pointer-events: none;
+    }
+    .activities-overview .eyebrow,
+    .library-overview .eyebrow { margin-bottom: 7px; }
+    .activities-overview h2,
+    .library-overview h2 { margin: 0; color: #fff; font-size: clamp(28px,2.5vw,42px); line-height: 1; letter-spacing: -.035em; text-wrap: balance; }
+    .activities-overview p,
+    .library-overview p { margin: 9px 0 0; color: var(--ox-quiet); font-size: 12px; letter-spacing: .025em; }
+    .activities-copy > .eyebrow,
+    .library-copy > .eyebrow { display: none; }
+    .activities-copy { max-width: 520px; }
+    .activity-copy-stack {
+      position: relative;
+      display: grid;
+      min-height: 330px;
+    }
+    .activity-copy-panel {
+      position: relative;
+      grid-area: 1 / 1;
+      align-self: start;
+      opacity: 0;
+      visibility: hidden;
+      transform: translate3d(0,15px,0);
+      transition: none;
+    }
+
+    .activity-copy-panel.active {
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+      transition: opacity .28s ease, transform .42s cubic-bezier(.2,.8,.2,1);
+    }
+    .activity-copy-panel h2 { font-size: clamp(40px,4.6vw,64px); }
+    .activity-steps { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); margin-top: 20px; border-top: 1px solid var(--ox-line); }
+    .activity-step {
+      appearance: none;
+      position: relative;
+      min-width: 0;
+      padding: 17px 4px 10px 0;
+      border: 0;
+      color: var(--ox-quiet);
+      background: transparent;
+      font: 650 12px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      text-align: left;
+      cursor: pointer;
+      transition: color .2s ease;
+    }
+
+    .activity-step::before { content: ""; position: absolute; top: -1px; left: 0; width: 0; height: 2px; background: var(--ox-blue); transition: width .35s ease; }
+    .activity-step:hover { color: rgba(255,255,255,.88); }
+    .activity-step[aria-selected="true"] { color: #fff; }
+    .activity-step[aria-selected="true"]::before { width: calc(100% - 8px); }
+    .activity-step-number { display: block; margin-bottom: 5px; color: inherit; font-size: 9px; letter-spacing: .1em; }
+    .activity-controls { display: flex; align-items: center; gap: 8px; margin-top: 17px; }
+    .activity-arrow { display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border: 1px solid var(--ox-line); border-radius: 50%; color: #fff; background: rgba(28,36,48,.72); font-size: 16px; cursor: pointer; transition: border-color .2s ease, background .2s ease, transform .2s ease; }
+    .activity-arrow:hover:not(:disabled) { border-color: rgba(10,132,255,.65); background: rgba(10,132,255,.14); transform: translateY(-2px); }
+    .activity-arrow:disabled { opacity: .3; cursor: default; }
+    .activity-counter { margin-left: 4px; color: var(--ox-quiet); font-size: 11px; font-variant-numeric: tabular-nums; letter-spacing: .08em; }
+    .activity-scroll-hint { display: inline-flex; align-items: center; gap: 7px; margin-left: 8px; color: rgba(255,255,255,.58); font-size: 11px; letter-spacing: .04em; }
+    .activity-scroll-hint::before { content: "↓"; display: grid; place-items: center; width: 22px; height: 22px; border: 1px solid rgba(255,255,255,.16); border-radius: 50%; color: var(--ox-blue); }
+
+    .activities-visual { perspective: 1200px; }
+    .activities-visual::after { content: "Actual in-app screens"; position: absolute; right: 4%; bottom: 2%; color: var(--ox-quiet); font-size: 11px; letter-spacing: .04em; }
+    .activity-device-deck {
+      position: relative;
+      width: min(100%,620px);
+      height: min(72vh,720px);
+      flex: none;
+      perspective: 1200px;
+    }
+    .activity-device {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      height: min(69vh,690px);
+      max-height: 100%;
+      aspect-ratio: 540 / 1174;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: clamp(27px,4vh,43px);
+      background: #080d17;
+      box-shadow: 0 38px 90px rgba(0,0,0,.6),0 0 0 7px rgba(255,255,255,.025);
+      transform: translateY(-50%) rotateX(var(--activity-tilt-x,0deg)) rotateY(var(--activity-tilt-y,0deg));
+      transition: transform .18s ease-out;
+      will-change: transform;
+    }
+
+    .activity-device-main { z-index: 2; }
+    .activity-device-peek {
+      right: 14px;
+      left: auto;
+      z-index: 1;
+      height: min(61vh,610px);
+      opacity: .48;
+      filter: saturate(.82) brightness(.78);
+      transform: translateY(-48%) rotate(2.5deg);
+      pointer-events: none;
+    }
+
+    .activity-screen,
+    .activity-peek-screen { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; opacity: 0; transform: translate3d(14px,0,0) scale(.988); transition: opacity .42s ease, transform .5s cubic-bezier(.2,.8,.2,1); }
+    .activity-screen.active,
+    .activity-peek-screen.active { z-index: 2; opacity: 1; transform: none; }
+    .activity-screen.before { transform: translate3d(-14px,0,0) scale(.988); }
+
+    .library-window {
+      position: relative;
+      width: min(100%,920px);
+      height: auto;
+      aspect-ratio: 4 / 3;
+      overflow: hidden;
+      border: 1px solid rgba(84,84,88,.62);
+      border-radius: 24px;
+      background: #070a10;
+      box-shadow: 0 34px 80px rgba(0,0,0,.55);
+    }
+
+    .library-window img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: center; }
+    .library-window::after { content: ""; position: absolute; inset: auto 0 0; height: 24%; pointer-events: none; background: linear-gradient(transparent,rgba(7,10,16,.9)); }
+
+    .tools-visual { align-items: stretch; gap: 22px; }
+    .tool-picker-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); align-content: center; gap: 8px; width: 274px; flex: none; }
+    .tool-picker {
+      appearance: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: 48px;
+      padding: 10px 12px;
+      border: 1px solid rgba(84,84,88,.56);
+      border-radius: 12px;
+      color: var(--ox-muted);
+      background: rgba(24,31,43,.72);
+      font: 650 12px/1.25 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .tool-picker::after { content: "→"; color: var(--ox-quiet); }
+    .tool-picker[aria-pressed="true"] { color: #fff; border-color: rgba(10,132,255,.6); background: rgba(10,132,255,.12); }
+    .tool-picker[aria-pressed="true"]::after { color: var(--ox-blue); }
+    .tool-screen { position: relative; display: flex; flex: 1; align-items: center; justify-content: center; min-width: 0; }
+    .tool-image { position: absolute; height: min(69vh,690px); width: auto; max-width: 100%; border-radius: 30px; opacity: 0; transform: translate3d(18px,0,0) scale(.98); transition: opacity .35s ease, transform .45s cubic-bezier(.2,.8,.2,1); }
+    .tool-image.active { opacity: 1; transform: none; }
+
+    .telemetry-window {
+      position: relative;
+      width: min(100%,900px);
+      height: min(70vh,680px);
+      overflow: hidden;
+      padding: 0;
+      border: 1px solid rgba(84,84,88,.62);
+      border-radius: 24px;
+      background: #080d17;
+      box-shadow: 0 34px 80px rgba(0,0,0,.55);
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .telemetry-window img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top center; transition: transform .45s cubic-bezier(.2,.8,.2,1),filter .3s ease; }
+    .telemetry-window:hover img { transform: scale(1.018); filter: brightness(.78); }
+    .telemetry-window:focus-visible { outline: 2px solid var(--ox-blue); outline-offset: 4px; }
+    .telemetry-discovery {
+      position: absolute;
+      left: 50%;
+      top: 60%;
+      z-index: 3;
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 10px 14px 10px 10px;
+      border: 1px solid rgba(255,255,255,.22);
+      border-radius: 999px;
+      color: rgba(255,255,255,.92);
+      background: rgba(9,13,22,.86);
+      box-shadow: 0 12px 34px rgba(0,0,0,.38),0 0 0 0 rgba(10,132,255,.32);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .01em;
+      pointer-events: none;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transform: translate(-50%,-50%);
+      transition: opacity .22s ease,transform .28s ease;
+      animation: telemetry-hint-float 2.8s ease-in-out infinite,telemetry-hint-pulse 2.8s ease-out infinite;
+    }
+    .telemetry-discovery-icon {
+      display: grid;
+      place-items: center;
+      width: 25px;
+      height: 25px;
+      flex: none;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--ox-blue);
+      font-size: 14px;
+      box-shadow: 0 0 18px rgba(10,132,255,.5);
+    }
+    .telemetry-touch-copy { display: none; }
+    .telemetry-window:hover .telemetry-discovery,.telemetry-window:focus-visible .telemetry-discovery { opacity: 0; transform: translate(-50%,-45%) scale(.96); }
+    .telemetry-launch-label { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(7,11,18,.14); opacity: 0; transition: opacity .25s ease; }
+    .telemetry-window:hover .telemetry-launch-label,.telemetry-window:focus-visible .telemetry-launch-label { opacity: 1; }
+    .telemetry-launch-label span { display: inline-flex; align-items: center; gap: 9px; padding: 12px 18px; border: 1px solid rgba(255,255,255,.22); border-radius: 999px; background: rgba(9,13,22,.9); box-shadow: 0 14px 36px rgba(0,0,0,.42); font-size: 13px; font-weight: 700; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+
+    @keyframes telemetry-hint-float {
+      0%,100% { transform: translate(-50%,-50%); }
+      50% { transform: translate(-50%,calc(-50% - 5px)); }
+    }
+    @keyframes telemetry-hint-pulse {
+      0%,38% { box-shadow: 0 12px 34px rgba(0,0,0,.38),0 0 0 0 rgba(10,132,255,.3); }
+      76%,100% { box-shadow: 0 12px 34px rgba(0,0,0,.38),0 0 0 12px rgba(10,132,255,0); }
+    }
+
+    @media (hover: none) {
+      .telemetry-hover-copy { display: none; }
+      .telemetry-touch-copy { display: inline; }
+    }
+
+    .telemetry-dialog {
+      width: min(94vw,1320px);
+      height: min(92vh,920px);
+      max-width: none;
+      max-height: none;
+      margin: auto;
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 24px;
+      color: #fff;
+      background: #080d17;
+      box-shadow: 0 44px 120px rgba(0,0,0,.72);
+      outline: 0;
+    }
+
+    .telemetry-dialog::backdrop { background: rgba(2,5,10,.82); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+    .dialog-shell { position: relative; height: 100%; }
+    .dialog-header { display: none; }
+    .dialog-live-dot { width: 8px; height: 8px; border-radius: 50%; background: #ff375f; box-shadow: 0 0 12px rgba(255,55,95,.7); }
+    .dialog-title { font-size: 14px; font-weight: 700; }
+    .dialog-subtitle { color: var(--ox-quiet); font-size: 12px; }
+    .dialog-close { display: none; }
+    .dialog-close:hover { background: rgba(255,255,255,.12); }
+    .dialog-close:focus-visible { outline: 2px solid var(--ox-blue); outline-offset: 2px; }
+    .telemetry-frame { display: block; width: 100%; height: 100%; border: 0; background: #0b0f19; }
+
+    .progress {
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      z-index: 35;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 11px;
+      transform: translateY(-38%);
+      color: var(--ox-quiet);
+      font-size: 11px;
+      pointer-events: none;
+    }
+
+    .progress-count { color: rgba(255,255,255,.78); font-weight: 700; font-variant-numeric: tabular-nums; }
+    .progress-track { position: relative; width: 2px; height: 120px; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.1); }
+    .progress-fill { position: absolute; inset: 0 0 auto; height: 20%; border-radius: inherit; background: var(--ox-blue); box-shadow: 0 0 12px rgba(10,132,255,.65); transition: transform .5s cubic-bezier(.2,.8,.2,1); }
+    .progress-text { writing-mode: vertical-rl; transform: rotate(180deg); letter-spacing: .14em; text-transform: uppercase; }
+
+    .navigation {
+      position: absolute;
+      right: max(26px, calc((100vw - 1320px) / 2));
+      bottom: 20px;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .nav-count { margin-right: 3px; color: var(--ox-quiet); font-size: 12px; font-variant-numeric: tabular-nums; }
+    .arrow { display: grid; place-items: center; width: 42px; height: 42px; padding: 0; border: 1px solid rgba(84,84,88,.68); border-radius: 50%; color: #fff; background: rgba(28,36,48,.92); font-size: 19px; cursor: pointer; transition: background .2s ease, transform .2s ease; }
+    .arrow:hover:not(:disabled) { background: var(--ox-blue); transform: translateY(-2px); }
+    .arrow:disabled { opacity: .3; cursor: default; }
+
+    .outro { display: grid; place-items: center; min-height: 42vh; padding: 80px 28px; color: var(--ox-quiet); text-align: center; background: linear-gradient(180deg,#0b0f19,#080b12); }
+
+    @media (max-width: 1320px) {
+      .progress { display: none; }
+    }
+
+    @media (min-width: 1400px) and (min-height: 820px) {
+      .panel {
+        grid-template-columns: minmax(0,500px) minmax(0,700px);
+        gap: 80px;
+        padding-inline: 64px;
+      }
+      .library-copy { max-width: 560px; }
+      .library-copy h2 { font-size: clamp(66px,5vw,84px); }
+      .library-copy p { max-width: 540px; font-size: clamp(17px,1.25vw,20px); }
+      .panel[aria-label="Library"] .visual { height: min(77vh,840px); }
+      .library-window { width: min(100%,980px); }
+
+      .panel[aria-label="Coach"] .visual { height: min(79vh,860px); }
+      .coach-calendar { right: 30%; left: auto; height: min(72vh,720px); }
+      .coach-chat { right: 0; height: min(64vh,620px); }
+
+      .panel[aria-label="Activities"] .activities-visual {
+        justify-content: flex-end;
+        padding-left: 0;
+      }
+      .panel[aria-label="Activities"] .activities-visual::after {
+        right: 0;
+        left: auto;
+      }
+
+      .panel[aria-label="Tools"] .copy { max-width: 560px; }
+      .panel[aria-label="Tools"] .copy h2 { font-size: clamp(66px,5vw,84px); }
+      .panel[aria-label="Tools"] .copy p { max-width: 540px; font-size: clamp(17px,1.25vw,20px); }
+      .panel[aria-label="Tools"] .visual { height: min(79vh,860px); }
+      .tools-visual { gap: clamp(26px,2.4vw,40px); }
+      .tool-picker-list { width: 340px; gap: 11px; }
+      .tool-picker { min-height: 60px; padding: 13px 16px; border-radius: 15px; font-size: 14px; }
+      .tool-image { height: min(77vh,780px); border-radius: 34px; }
+    }
+
+    @media (max-width: 1120px) {
+      .panel { grid-template-columns: minmax(0,400px) minmax(0,520px); gap: 38px; padding-inline: 32px; justify-content: center; }
+      .copy h2 { font-size: 50px; }
+      .coach-calendar { right: 30%; left: auto; height: 570px; }
+      .coach-chat { right: 0; height: 490px; }
+      .activity-copy-stack { min-height: 330px; }
+      .activity-device { height: min(67vh,620px); }
+      .tools-visual { gap: 14px; }
+      .tool-picker-list { width: 230px; }
+    }
+
+    @media (max-width: 850px) {
+      .story { height: 1000vh; }
+      .showcase { min-height: 820px; }
+      .showcase-topbar { align-items: flex-start; flex-direction: column; gap: 10px; padding: 13px 22px; }
+      .tabs { margin-left: 0; flex-wrap: wrap; }
+      .panels { inset-block-start: 108px; }
+      .panel { grid-template-columns: 1fr; align-content: start; gap: 22px; padding: 34px 28px 62px; }
+      .panel[aria-label="Activities"], .panel[aria-label="Library"] { padding-top: 118px; }
+      .activities-overview, .library-overview { top: 25px; left: 28px; right: 28px; }
+      .activities-overview h2, .library-overview h2 { font-size: 32px; }
+      .copy { max-width: 690px; }
+      .copy h2 { font-size: 42px; }
+      .copy p { margin-top: 14px; font-size: 15px; }
+      .chips { margin-top: 16px; }
+      .visual { height: 470px; }
+      .coach-calendar { left: 12%; height: 445px; }
+      .coach-chat { right: 10%; height: 385px; }
+      .activity-copy-stack { min-height: 270px; }
+      .activity-copy-panel h2 { font-size: 42px; }
+      .activity-steps { margin-top: 8px; }
+      .activities-visual { height: 455px; }
+      .activity-device-deck { width: min(100%,510px); height: 455px; }
+      .activity-device { height: 445px; }
+      .activity-device-peek { height: 390px; }
+      .library-window { width: min(100%,700px); height: auto; }
+      .telemetry-window { width: min(100%,700px); height: 465px; }
+      .tool-image { height: 455px; }
+    }
+
+    @media (max-width: 600px) {
+      .preview-label { display: none; }
+      .site-nav { padding-inline: 16px; }
+      .prelude { min-height: 78vh; padding: 120px 20px 62px; }
+      .prelude h1 { font-size: 50px; }
+      .prelude p { font-size: 16px; }
+      .story { height: 1000vh; }
+      .showcase { top: 62px; min-height: 800px; }
+      .showcase-topbar { padding-inline: 16px; }
+      .tab { padding: 8px 10px; }
+      .panels { inset-block-start: 108px; }
+      .panel { padding: 28px 18px 66px; gap: 18px; }
+      .panel[aria-label="Activities"], .panel[aria-label="Library"] { padding-top: 88px; }
+      .activities-overview, .library-overview { top: 17px; left: 18px; right: 18px; }
+      .activities-overview .eyebrow, .library-overview .eyebrow { margin-bottom: 5px; }
+      .activities-overview h2, .library-overview h2 { font-size: 25px; }
+      .activities-overview p, .library-overview p { display: none; }
+      .copy h2 { font-size: 36px; }
+      .copy p { font-size: 14px; line-height: 1.55; }
+      .visual { height: 430px; align-items: flex-start; }
+      .coach-screen { border-radius: 22px; }
+      .coach-calendar { left: 6%; height: 390px; }
+      .coach-chat { right: 5%; height: 325px; }
+      .activity-copy-stack { min-height: 220px; }
+      .activity-copy-panel h2 { font-size: 34px; }
+      .activity-copy-panel .chips { display: none; }
+      .activity-step { padding-top: 12px; font-size: 10px; }
+      .activity-step-number { display: none; }
+      .activity-controls { margin-top: 10px; }
+      .activity-arrow, .activity-counter { display: none; }
+      .activity-scroll-hint { margin-left: 0; }
+      .activities-visual { height: 405px; }
+      .activity-device-deck { width: 182px; height: 405px; }
+      .activity-device { height: 395px; border-radius: 28px; }
+      .activity-device-peek { display: none; }
+      .activities-visual::after { display: none; }
+      .library-window { height: auto; border-radius: 17px; }
+      .telemetry-window { height: 425px; border-radius: 17px; }
+      .tools-visual { align-items: center; flex-direction: column; gap: 10px; }
+      .tool-picker-list { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); width: 100%; overflow: hidden; }
+      .tool-picker { justify-content: center; min-width: 0; min-height: 40px; padding: 7px 5px; text-align: center; }
+      .tool-picker::after { display: none; }
+      .tool-screen { width: 100%; flex: 1; }
+      .tool-image { height: 350px; border-radius: 23px; }
+      .navigation { right: 14px; bottom: 14px; }
+      .telemetry-dialog { width: 96vw; height: 92vh; border-radius: 18px; }
+      .dialog-subtitle { display: none; }
+    }
+
+    @media (max-height: 760px) and (min-width: 851px) {
+      .showcase { min-height: 650px; }
+      .activities-overview, .library-overview { top: 16px; }
+      .activities-overview h2, .library-overview h2 { font-size: 28px; }
+      .activities-overview p, .library-overview p { display: none; }
+      .visual { height: 550px; }
+      .coach-calendar { height: 515px; }
+      .coach-chat { height: 445px; }
+      .activity-copy-stack { min-height: 330px; }
+      .activity-device { height: 520px; }
+      .library-window { height: auto; }
+      .telemetry-window { height: 520px; }
+      .tool-image { height: 520px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .panel, .tab, .progress-fill, .arrow, .tool-image, .activity-copy-panel, .activity-step::before, .activity-device, .activity-screen { transition: none; }
+      .activity-device { transform: none !important; }
+      .telemetry-discovery { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="site-nav">
+    <a class="brand" href="#showcase"><img src="assets/img/960d998b07336a60.png" alt="">Oxygon</a>
+    <span class="preview-label">Full-bleed product explorer · v2</span>
+  </nav>
+
+  <header class="prelude">
+    <div class="prelude-copy">
+      <div class="eyebrow">Explore Oxygon</div>
+      <h1>See the product at its real scale.</h1>
+      <p>One pinned section. Five focused stories. The interface stays large enough to read while the product area changes around it.</p>
+      <span class="scroll-cue">Scroll into the section</span>
+    </div>
+  </header>
+
+  <div class="story" id="story">
+    <section class="showcase" id="showcase" aria-label="Oxygon product areas">
+      <header class="showcase-topbar">
+        <span class="topbar-label">Inside the app</span>
+        <div class="tabs" role="tablist" aria-label="Product areas">
+          <button class="tab" type="button" role="tab" aria-selected="true" data-index="0">Coach</button>
+          <button class="tab" type="button" role="tab" aria-selected="false" data-index="1">Activities</button>
+          <button class="tab" type="button" role="tab" aria-selected="false" data-index="2">Library</button>
+          <button class="tab" type="button" role="tab" aria-selected="false" data-index="3">Tools</button>
+          <button class="tab" type="button" role="tab" aria-selected="false" data-index="4">Live telemetry</button>
+        </div>
+      </header>
+
+      <div class="panels">
+        <article class="panel active" data-panel="0" aria-label="Coach">
+          <div class="copy">
+            <div class="eyebrow">Coach</div>
+            <h2>A training block that adapts.</h2>
+            <p>A guided interview builds your dated plan. Fitness, fatigue, form and durability keep it current, while every proposed change remains under your control.</p>
+            <div class="chips"><span class="chip">Apple Health</span><span class="chip">Strava</span><span class="chip">Coach chat</span></div>
+          </div>
+          <div class="visual">
+            <img class="asset coach-screen coach-calendar" src="assets/site/appstore/iphone-dark/11-coach-calendar.webp" alt="Oxygon Coach calendar in dark mode with orange accent" width="660" height="1434">
+            <img class="asset coach-screen coach-chat" src="assets/site/appstore/iphone-dark/13-coach-chat.webp" alt="Oxygon AI coach chat in dark mode with orange accent" width="660" height="1434" loading="lazy">
+          </div>
+        </article>
+
+        <article class="panel" data-panel="1" aria-label="Activities">
+          <header class="activities-overview">
+            <div class="eyebrow">Activities</div>
+            <h2>Plan it. Fuel it. Live it.</h2>
+            <p>One connected workflow, before, during and after every effort.</p>
+          </header>
+          <div class="copy activities-copy">
+            <div class="eyebrow">Activities</div>
+            <div class="activity-copy-stack" aria-live="polite">
+              <article class="activity-copy-panel active" data-activity-copy="0">
+                <h2>Start with the effort.</h2>
+                <p>Choose a race or workout, add a GPX route or set the distance, then define the result you are training for.</p>
+                <div class="chips"><span class="chip">Race or workout</span><span class="chip">GPX course</span><span class="chip">Target time</span></div>
+              </article>
+              <article class="activity-copy-panel" data-activity-copy="1">
+                <h2>Set the engine.</h2>
+                <p>Turn your profile and the expected conditions into practical hourly targets for water, carbohydrates and sodium.</p>
+                <div class="chips"><span class="chip">Water</span><span class="chip">Carbohydrates</span><span class="chip">Sodium</span></div>
+              </article>
+              <article class="activity-copy-panel" data-activity-copy="2">
+                <h2>Review every input.</h2>
+                <p>Check the route, prediction, fuelling method and checkpoints before Oxygon generates anything. Nothing changes silently.</p>
+                <div class="chips"><span class="chip">Prediction</span><span class="chip">Checkpoints</span><span class="chip">Full control</span></div>
+              </article>
+              <article class="activity-copy-panel" data-activity-copy="3">
+                <h2>A plan for every checkpoint.</h2>
+                <p>Get a clear schedule of what to take and when. Adjust individual items or notes without losing the calculated baseline.</p>
+                <div class="chips"><span class="chip">Timed schedule</span><span class="chip">Editable items</span><span class="chip">Race-ready</span></div>
+              </article>
+              <article class="activity-copy-panel" data-activity-copy="4">
+                <h2>Execute it while you move.</h2>
+                <p>See elapsed time, distance, sensors, conditions and the next checkpoint at a glance—without losing focus on the effort.</p>
+                <div class="chips"><span class="chip">Live sensors</span><span class="chip">Next up</span><span class="chip">Live guidance</span></div>
+              </article>
+              <article class="activity-copy-panel" data-activity-copy="5">
+                <h2>Help, while it matters.</h2>
+                <p>Tell the in-app assistant what you are feeling during the effort. It uses the live race context to turn symptoms such as dark urine into practical, safety-aware guidance.</p>
+                <div class="chips"><span class="chip">Race context</span><span class="chip">Hydration guidance</span><span class="chip">Safety flags</span></div>
+              </article>
+            </div>
+
+            <div class="activity-steps" role="tablist" aria-label="Activities workflow">
+              <button class="activity-step" type="button" role="tab" aria-selected="true" data-activity-step="0"><span class="activity-step-number">01</span>Event</button>
+              <button class="activity-step" type="button" role="tab" aria-selected="false" data-activity-step="1"><span class="activity-step-number">02</span>Fuel</button>
+              <button class="activity-step" type="button" role="tab" aria-selected="false" data-activity-step="2"><span class="activity-step-number">03</span>Review</button>
+              <button class="activity-step" type="button" role="tab" aria-selected="false" data-activity-step="3"><span class="activity-step-number">04</span>Plan</button>
+              <button class="activity-step" type="button" role="tab" aria-selected="false" data-activity-step="4"><span class="activity-step-number">05</span>Live</button>
+              <button class="activity-step" type="button" role="tab" aria-selected="false" data-activity-step="5"><span class="activity-step-number">06</span>Assistant</button>
+            </div>
+            <div class="activity-controls">
+              <button class="activity-arrow activity-previous" type="button" aria-label="Previous Activities step" disabled>←</button>
+              <button class="activity-arrow activity-next" type="button" aria-label="Next Activities step">→</button>
+              <span class="activity-counter"><strong class="activity-current">01</strong> / 06</span>
+              <span class="activity-scroll-hint">Scroll to continue</span>
+            </div>
+          </div>
+          <div class="visual activities-visual">
+            <div class="activity-device-deck">
+            <div class="activity-device activity-device-main">
+              <img class="activity-screen active" data-activity-screen="0" src="assets/site/appstore/iphone-dark/07-wizard-event.webp" alt="Oxygon event setup in dark mode with orange accent" width="660" height="1434">
+              <img class="activity-screen" data-activity-screen="1" src="assets/site/appstore/iphone-dark/08-wizard-fuel.webp" alt="Oxygon fuelling targets in dark mode with orange accent" width="660" height="1434" loading="lazy">
+              <img class="activity-screen" data-activity-screen="2" src="assets/site/appstore/iphone-dark/09-wizard-review.webp" alt="Oxygon activity review in dark mode with orange accent" width="660" height="1434" loading="lazy">
+              <img class="activity-screen" data-activity-screen="3" src="assets/site/appstore/iphone-dark/04-plan-schedule.webp" alt="Oxygon generated checkpoint plan in dark mode with orange accent" width="660" height="1434" loading="lazy">
+              <img class="activity-screen" data-activity-screen="4" src="assets/site/appstore/iphone-dark/01-live-activity.webp" alt="Oxygon live activity in dark mode with orange accent" width="660" height="1434" loading="lazy">
+              <img class="activity-screen" data-activity-screen="5" src="assets/site/appstore/iphone-dark/03-race-assistant.webp" alt="Oxygon race assistant using live fuelling and sensor context in dark mode with orange accent" width="660" height="1434" loading="lazy">
+            </div>
+            <div class="activity-device activity-device-peek" aria-hidden="true">
+              <img class="activity-peek-screen" data-activity-peek-screen="0" src="assets/site/appstore/iphone-dark/07-wizard-event.webp" alt="" width="660" height="1434">
+              <img class="activity-peek-screen active" data-activity-peek-screen="1" src="assets/site/appstore/iphone-dark/08-wizard-fuel.webp" alt="" width="660" height="1434" loading="lazy">
+              <img class="activity-peek-screen" data-activity-peek-screen="2" src="assets/site/appstore/iphone-dark/09-wizard-review.webp" alt="" width="660" height="1434" loading="lazy">
+              <img class="activity-peek-screen" data-activity-peek-screen="3" src="assets/site/appstore/iphone-dark/04-plan-schedule.webp" alt="" width="660" height="1434" loading="lazy">
+              <img class="activity-peek-screen" data-activity-peek-screen="4" src="assets/site/appstore/iphone-dark/01-live-activity.webp" alt="" width="660" height="1434" loading="lazy">
+              <img class="activity-peek-screen" data-activity-peek-screen="5" src="assets/site/appstore/iphone-dark/03-race-assistant.webp" alt="" width="660" height="1434" loading="lazy">
+            </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel" data-panel="2" aria-label="Library">
+          <header class="library-overview">
+            <div class="eyebrow">Library</div>
+            <h2>Find it. Study it. Race it.</h2>
+            <p>Verified courses and your own GPX files, ready in one place.</p>
+          </header>
+          <div class="copy library-copy">
+            <div class="eyebrow">Library</div>
+            <h2>The real course, ready before race day.</h2>
+            <p>Browse verified races with their actual route, distance, elevation and cut-offs. Start from the library or bring your own GPX.</p>
+            <div class="chips"><span class="chip">90+ races</span><span class="chip">Verified GPX</span><span class="chip">Your routes</span></div>
+          </div>
+          <div class="visual">
+            <div class="library-window"><img src="assets/site/appstore/ipad-dark/02-library-sidebar-landscape.webp" alt="Oxygon race library on iPad in dark mode with orange accent" width="1600" height="1200" loading="lazy"></div>
+          </div>
+        </article>
+
+        <article class="panel" data-panel="3" aria-label="Tools">
+          <div class="copy">
+            <div class="eyebrow">Tools</div>
+            <h2>Eight tools, one clear view.</h2>
+            <p>Start from the complete toolkit, then open any calculator at a readable scale—pace, prediction, zones, effort and more.</p>
+            <div class="chips"><span class="chip">No login</span><span class="chip">8 calculators</span><span class="chip">Create plan</span></div>
+          </div>
+          <div class="visual tools-visual">
+            <div class="tool-picker-list" aria-label="Calculator preview">
+              <button class="tool-picker" type="button" aria-pressed="true" data-tool="0">Overview</button>
+              <button class="tool-picker" type="button" aria-pressed="false" data-tool="1">Critical speed</button>
+              <button class="tool-picker" type="button" aria-pressed="false" data-tool="2">Predictor</button>
+              <button class="tool-picker" type="button" aria-pressed="false" data-tool="3">VO₂max</button>
+              <button class="tool-picker" type="button" aria-pressed="false" data-tool="4">HR zones</button>
+              <button class="tool-picker" type="button" aria-pressed="false" data-tool="5">Training paces</button>
+              <button class="tool-picker" type="button" aria-pressed="false" data-tool="6">Grade pace</button>
+              <button class="tool-picker" type="button" aria-pressed="false" data-tool="7">Calories</button>
+            </div>
+            <div class="tool-screen">
+              <img class="asset tool-image active" src="assets/site/appstore/iphone-dark/15-tools.webp?v=20260803-175844" alt="Oxygon tools overview in dark mode with orange accent" width="660" height="1434" loading="lazy">
+              <img class="asset tool-image" src="assets/site/appstore/iphone-dark/16-tool-critical-speed.webp" alt="Oxygon critical speed calculator in dark mode with orange accent" width="660" height="1434" loading="lazy">
+              <img class="asset tool-image" src="assets/site/appstore/iphone-dark/17-tool-race-predictor.webp" alt="Oxygon race predictor in dark mode with orange accent" width="660" height="1434" loading="lazy">
+              <img class="asset tool-image" src="assets/site/appstore/iphone-dark/18-tool-vo2max.webp" alt="Oxygon VO2max estimator in dark mode with orange accent" width="660" height="1434" loading="lazy">
+              <img class="asset tool-image" src="assets/site/appstore/iphone-dark/19-tool-hr-zones.webp" alt="Oxygon heart rate zones calculator in dark mode with orange accent" width="660" height="1434" loading="lazy">
+              <img class="asset tool-image" src="assets/site/appstore/iphone-dark/20-tool-training-paces.webp" alt="Oxygon training paces calculator in dark mode with orange accent" width="660" height="1434" loading="lazy">
+              <img class="asset tool-image" src="assets/site/appstore/iphone-dark/21-tool-grade-adjusted-pace.webp" alt="Oxygon grade-adjusted pace calculator in dark mode with orange accent" width="660" height="1434" loading="lazy">
+              <img class="asset tool-image" src="assets/site/appstore/iphone-dark/22-tool-calories.webp" alt="Oxygon calories burned calculator in dark mode with orange accent" width="660" height="1434" loading="lazy">
+            </div>
+          </div>
+        </article>
+
+        <article class="panel" data-panel="4" aria-label="Live telemetry">
+          <div class="copy">
+            <div class="eyebrow">Live telemetry</div>
+            <h2>The people who care can watch.</h2>
+            <p>Share one link. Crew sees position, pace, checkpoint progress, heart rate, glucose and conditions in one readable live dashboard—no app and no login.</p>
+            <div class="chips"><span class="chip">Live map</span><span class="chip">Sensors</span><span class="chip">Crew link</span></div>
+          </div>
+          <div class="visual">
+            <button class="telemetry-window" type="button" aria-label="Open interactive live telemetry demo" aria-haspopup="dialog" aria-controls="telemetry-dialog">
+              <img src="assets/img/526f1e3c52771eb9-optimized.webp" alt="Oxygon live telemetry dashboard" width="1600" height="1440" loading="lazy">
+              <span class="telemetry-discovery" aria-hidden="true">
+                <span class="telemetry-discovery-icon">↗</span>
+                <span class="telemetry-hover-copy">Hover to explore</span>
+                <span class="telemetry-touch-copy">Tap to explore</span>
+              </span>
+              <span class="telemetry-launch-label"><span>Open the live demo ↗</span></span>
+            </button>
+          </div>
+        </article>
+      </div>
+
+      <aside class="progress" aria-label="Section progress">
+        <span class="progress-count">01 / 05</span>
+        <span class="progress-track" aria-hidden="true"><span class="progress-fill"></span></span>
+        <span class="progress-text">Pinned scroll</span>
+      </aside>
+
+      <div class="navigation">
+        <span class="nav-count">01 / 05</span>
+        <button class="arrow previous" type="button" aria-label="Previous product area" disabled>←</button>
+        <button class="arrow next" type="button" aria-label="Next product area">→</button>
+      </div>
+    </section>
+  </div>
+
+  <footer class="outro">The section releases after the fifth panel · standalone preview only</footer>
+
+  <dialog class="telemetry-dialog" id="telemetry-dialog" aria-labelledby="telemetry-dialog-title" tabindex="-1">
+    <div class="dialog-shell">
+      <header class="dialog-header">
+        <span class="dialog-live-dot" aria-hidden="true"></span>
+        <span class="dialog-title" id="telemetry-dialog-title">Oxygon · Live telemetry</span>
+        <span class="dialog-subtitle">The existing interactive crew experience, unchanged</span>
+        <button class="dialog-close" type="button" aria-label="Close live telemetry">×</button>
+      </header>
+      <iframe class="telemetry-frame" aria-label="Interactive Oxygon live telemetry demo" data-src="track/index.html?embed=1"></iframe>
+    </div>
+  </dialog>
+
+  <script>
+    (function () {
+      var story = document.getElementById("story");
+      var panels = Array.prototype.slice.call(document.querySelectorAll(".panel"));
+      var tabs = Array.prototype.slice.call(document.querySelectorAll(".tab"));
+      var progressCount = document.querySelector(".progress-count");
+      var navCount = document.querySelector(".nav-count");
+      var fill = document.querySelector(".progress-fill");
+      var previous = document.querySelector(".previous");
+      var next = document.querySelector(".next");
+      var toolPickers = Array.prototype.slice.call(document.querySelectorAll(".tool-picker"));
+      var toolImages = Array.prototype.slice.call(document.querySelectorAll(".tool-image"));
+      var activityCopies = Array.prototype.slice.call(document.querySelectorAll(".activity-copy-panel"));
+      var activitySteps = Array.prototype.slice.call(document.querySelectorAll(".activity-step"));
+      var activityScreens = Array.prototype.slice.call(document.querySelectorAll(".activity-screen"));
+      var activityPrevious = document.querySelector(".activity-previous");
+      var activityNext = document.querySelector(".activity-next");
+      var activityCurrentLabel = document.querySelector(".activity-current");
+      var activityScrollHint = document.querySelector(".activity-scroll-hint");
+      var activityVisual = document.querySelector(".activities-visual");
+      var activityDevice = document.querySelector(".activity-device");
+      var telemetryLaunch = document.querySelector(".telemetry-window");
+      var telemetryDialog = document.getElementById("telemetry-dialog");
+      var telemetryFrame = document.querySelector(".telemetry-frame");
+      var telemetryClose = document.querySelector(".dialog-close");
+      var current = 0;
+      var activityCurrent = 0;
+      var ticking = false;
+      var telemetryPrepared = false;
+      var panelCount = panels.length;
+      var activityPanelIndex = panels.findIndex(function (panel) { return panel.getAttribute("aria-label") === "Activities"; });
+      var scrollMomentCount = activitySteps.length + panelCount - 1;
+      var programmaticPanel = null;
+      var panelScrollTimer = 0;
+
+      function label(index) {
+        return String(index + 1).padStart(2,"0") + " / " + String(panelCount).padStart(2,"0");
+      }
+
+      function momentForPanel(index) {
+        if (index < activityPanelIndex) return index;
+        if (index === activityPanelIndex) return activityPanelIndex;
+        return index + activitySteps.length - 1;
+      }
+
+      function scrollToMoment(moment) {
+        var start = story.offsetTop;
+        var range = story.offsetHeight - window.innerHeight;
+        var target = start + range * ((moment + .5) / scrollMomentCount);
+        programmaticPanel = current;
+        window.clearTimeout(panelScrollTimer);
+        window.scrollTo({ top: target, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+        panelScrollTimer = window.setTimeout(function () {
+          programmaticPanel = null;
+          updateFromScroll();
+        },900);
+      }
+
+      function setPanel(index, updateScroll) {
+        current = Math.max(0,Math.min(panelCount - 1,index));
+        panels.forEach(function (panel,panelIndex) { panel.classList.toggle("active",panelIndex === current); });
+        tabs.forEach(function (tab,tabIndex) { tab.setAttribute("aria-selected",String(tabIndex === current)); });
+        progressCount.textContent = label(current);
+        navCount.textContent = label(current);
+        fill.style.transform = "translate3d(0," + (current * 100) + "%,0)";
+        previous.disabled = current === 0;
+        next.disabled = current === panelCount - 1;
+
+        if (updateScroll) {
+          scrollToMoment(momentForPanel(current));
+        }
+      }
+
+      function updateFromScroll() {
+        if (programmaticPanel !== null) {
+          setPanel(programmaticPanel,false);
+          ticking = false;
+          return;
+        }
+        var range = story.offsetHeight - window.innerHeight;
+        var progress = Math.max(0,Math.min(1,(window.scrollY - story.offsetTop) / Math.max(1,range)));
+        var moment = Math.min(scrollMomentCount - 1,Math.floor(progress * scrollMomentCount));
+        if (moment < activityPanelIndex) {
+          setPanel(moment,false);
+        } else if (moment < activityPanelIndex + activitySteps.length) {
+          setActivityStep(moment - activityPanelIndex);
+          setPanel(activityPanelIndex,false);
+        } else {
+          setPanel(moment - activitySteps.length + 1,false);
+        }
+        ticking = false;
+      }
+
+      window.addEventListener("scroll",function () {
+        if (!ticking) {
+          ticking = true;
+          window.requestAnimationFrame(updateFromScroll);
+        }
+      },{ passive:true });
+
+      tabs.forEach(function (tab) { tab.addEventListener("click",function () {
+        var index = Number(tab.dataset.index);
+        if (index === activityPanelIndex) setActivityStep(0);
+        setPanel(index,true);
+      }); });
+      previous.addEventListener("click",function () { setPanel(current - 1,true); });
+      next.addEventListener("click",function () { setPanel(current + 1,true); });
+
+      function setActivityStep(index) {
+        activityCurrent = Math.max(0,Math.min(activitySteps.length - 1,index));
+        activityCopies.forEach(function (copy,copyIndex) { copy.classList.toggle("active",copyIndex === activityCurrent); });
+        activityScreens.forEach(function (screen,screenIndex) {
+          screen.classList.toggle("active",screenIndex === activityCurrent);
+          screen.classList.toggle("before",screenIndex < activityCurrent);
+        });
+        activitySteps.forEach(function (step,stepIndex) { step.setAttribute("aria-selected",String(stepIndex === activityCurrent)); });
+        activityPrevious.disabled = activityCurrent === 0;
+        activityNext.disabled = activityCurrent === activitySteps.length - 1;
+        activityCurrentLabel.textContent = String(activityCurrent + 1).padStart(2,"0");
+        activityScrollHint.textContent = activityCurrent === activitySteps.length - 1 ? "Scroll to Library" : "Scroll to continue";
+      }
+
+      function navigateActivity(index) {
+        setActivityStep(index);
+        setPanel(activityPanelIndex,false);
+        scrollToMoment(activityPanelIndex + activityCurrent);
+      }
+
+      activitySteps.forEach(function (step) { step.addEventListener("click",function () { navigateActivity(Number(step.dataset.activityStep)); }); });
+      activityPrevious.addEventListener("click",function () { navigateActivity(activityCurrent - 1); });
+      activityNext.addEventListener("click",function () { navigateActivity(activityCurrent + 1); });
+      activityVisual.addEventListener("pointermove",function (event) {
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || window.innerWidth < 851) return;
+        var rect = activityVisual.getBoundingClientRect();
+        var x = (event.clientX - rect.left) / rect.width - .5;
+        var y = (event.clientY - rect.top) / rect.height - .5;
+        activityDevice.style.setProperty("--activity-tilt-y",(x * 5) + "deg");
+        activityDevice.style.setProperty("--activity-tilt-x",(y * -4) + "deg");
+      });
+      activityVisual.addEventListener("pointerleave",function () {
+        activityDevice.style.setProperty("--activity-tilt-y","0deg");
+        activityDevice.style.setProperty("--activity-tilt-x","0deg");
+      });
+
+      toolPickers.forEach(function (picker) {
+        picker.addEventListener("click",function () {
+          var selected = Number(picker.dataset.tool);
+          toolPickers.forEach(function (item,index) { item.setAttribute("aria-pressed",String(index === selected)); });
+          toolImages.forEach(function (image,index) { image.classList.toggle("active",index === selected); });
+        });
+      });
+
+      function prepareTelemetryFrame() {
+        if (telemetryPrepared) return;
+        var attempts = 0;
+        var timer = window.setInterval(function () {
+          attempts += 1;
+          var frameDocument;
+          try { frameDocument = telemetryFrame.contentDocument; } catch (error) { frameDocument = null; }
+          var telemetryApp = frameDocument && frameDocument.getElementById("app");
+          if (!telemetryApp || telemetryApp.classList.contains("hidden")) {
+            if (attempts > 120) window.clearInterval(timer);
+            return;
+          }
+
+          if (!frameDocument.getElementById("telemetry-embed-styles")) {
+            var style = frameDocument.createElement("style");
+            style.id = "telemetry-embed-styles";
+            style.textContent =
+              "html,body{min-height:100%!important;overflow-x:hidden!important;background:var(--bg)!important}" +
+              "html{scrollbar-color:var(--line) var(--bg);scrollbar-width:thin}" +
+              "html::-webkit-scrollbar,body::-webkit-scrollbar{width:10px;background:var(--bg)}" +
+              "html::-webkit-scrollbar-track,body::-webkit-scrollbar-track{background:var(--bg)}" +
+              "html::-webkit-scrollbar-thumb,body::-webkit-scrollbar-thumb{background:var(--line);border:3px solid var(--bg);border-radius:999px}" +
+              ".wrap{padding-top:24px!important}" +
+              ".adminbar{display:none!important}" +
+              ".telemetry-embed-close{position:fixed;top:20px;right:24px;z-index:3500;border:1px solid var(--line);background:var(--card);color:var(--text);font:700 12px/1 inherit;padding:8px 12px;border-radius:999px;cursor:pointer;transition:border-color .15s,background .15s}" +
+              ".telemetry-embed-close:hover{border-color:var(--accent);background:var(--card2)}" +
+              ".telemetry-embed-close:focus-visible{outline:2px solid var(--accent);outline-offset:2px}" +
+              "@media(max-width:820px){.telemetry-embed-close{position:static;margin-left:0}}";
+            frameDocument.head.appendChild(style);
+          }
+
+          if (!frameDocument.getElementById("telemetry-embed-close")) {
+            var closeButton = frameDocument.createElement("button");
+            closeButton.id = "telemetry-embed-close";
+            closeButton.className = "telemetry-embed-close";
+            closeButton.type = "button";
+            closeButton.textContent = "Close";
+            closeButton.setAttribute("aria-label","Close live telemetry");
+            closeButton.addEventListener("click",function () { telemetryDialog.close(); });
+            var telemetryTopbar = telemetryApp.querySelector(".top");
+            if (telemetryTopbar) telemetryTopbar.appendChild(closeButton);
+          }
+          window.clearInterval(timer);
+          telemetryPrepared = true;
+        },100);
+      }
+
+      telemetryFrame.addEventListener("load",prepareTelemetryFrame);
+      telemetryLaunch.addEventListener("click",function () {
+        if (!telemetryFrame.getAttribute("src")) telemetryFrame.setAttribute("src",telemetryFrame.dataset.src);
+        telemetryDialog.showModal();
+        telemetryDialog.focus({ preventScroll:true });
+        prepareTelemetryFrame();
+      });
+      telemetryClose.addEventListener("click",function () { telemetryDialog.close(); });
+      telemetryDialog.addEventListener("click",function (event) {
+        if (event.target === telemetryDialog) telemetryDialog.close();
+      });
+
+      window.addEventListener("resize",function () { setPanel(current,false); });
+      setActivityStep(0);
+      setPanel(0,false);
+    })();
+  </script>
+</body>
+</html>
