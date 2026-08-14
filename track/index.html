@@ -81,7 +81,6 @@
   .mapmodal{position:fixed;inset:0;z-index:4000;background:var(--bg);
             display:flex;flex-direction:column}
   .mapmodal.hidden{display:none}
-  :root.map-expanded,:root.map-expanded body{overflow:hidden}
   .mapmodal-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;
                 border-bottom:1px solid var(--line);font-weight:800}
   #map-big{flex:1;min-height:0}
@@ -326,7 +325,6 @@ const SUPABASE_URL = "https://dtpmhkjrmdssfejvoror.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0cG1oa2pybWRzc2ZlanZvcm9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxODQzMDEsImV4cCI6MjA5OTc2MDMwMX0.MkbvgHUKD7Un9E6ia44-rObxaLtEsnxVM_LH1HLmtE8";
 const TELEMETRY_MS = 4000;   // live position/HR poll
 const PLAN_MS = 30000;       // plan refresh (checkpoint ticks / edits)
-const EMBED_MODE = new URL(location.href).searchParams.get("embed") === "1";
 
 /* --------------------------------------------------------------- utilities */
 const $ = (id) => document.getElementById(id);
@@ -770,7 +768,6 @@ function wireScrub(){
 
 /* ------------------------------------------------------------ init / load  */
 async function boot(){
-  if(EMBED_MODE){ setSim(true); return; }
   const token = getToken();
   if(!token){ return showError("No race selected","Open the tracking link you were given — it should end with ?id=…"); }
   try{
@@ -846,13 +843,62 @@ async function refreshPlan(){
   }catch(e){/* keep last */}
 }
 
+/* --------------------------------------------------------- series cursor  */
+/* The newest `t` this page holds, across all three series. Null until the first
+   poll, which is what asks the server for everything.
+
+   One cursor rather than three: the series arrive together in one row, so a
+   per-series cursor would only matter if one could run ahead of another between
+   polls, and they cannot. Advancing it to the *smallest* of the three maxima
+   would be the cautious choice; the largest is correct, because a series with
+   nothing new returns an empty array rather than a stale point, so there is
+   nothing to miss. */
+let SERIES_T = null;
+let SERIES = { hr: [], cond: [], gluc: [] };
+
+/* Fold a delta into what we already hold, and leave the row holding the whole
+   series so every reader below is unchanged — the charts, the pills and the
+   availability check all still just read `LAST.hr_series`. */
+function mergeSeries(row){
+  const take = (key, name, tIdx) => {
+    const incoming = Array.isArray(row[key]) ? row[key] : null;
+    // A full reply (first poll, or a reload) replaces; a delta appends. Told
+    // apart by the cursor, not by the size of what came back — a delta can
+    // legitimately be larger than what we hold after a long gap.
+    if(SERIES_T == null) SERIES[name] = incoming || [];
+    else if(incoming && incoming.length) SERIES[name] = SERIES[name].concat(incoming);
+    row[key] = SERIES[name].length ? SERIES[name] : null;
+    // The newest timestamp this series carries, ignoring points from before the
+    // series carried time at all.
+    let newest = null;
+    for(const e of SERIES[name]){
+      if(Array.isArray(e) && e.length > tIdx && isFinite(e[tIdx])){
+        if(newest == null || e[tIdx] > newest) newest = e[tIdx];
+      }
+    }
+    return newest;
+  };
+  const a = take("hr_series", "hr", 2);
+  const b = take("cond_series", "cond", 3);
+  const c = take("gluc_series", "gluc", 2);
+  const newest = [a,b,c].filter(v => v != null);
+  if(newest.length) SERIES_T = Math.max(...newest);
+}
+
 /* ----------------------------------------------------------------- tick    */
 async function tick(){
   if(SIM) return;   // simulation drives LAST locally; don't clobber it with real telemetry
   try{
     const token=getToken();
-    const rows = await rpc("public_telemetry", {token});
+    // Ask only for what this page has not already drawn. The runner's phone sends
+    // one heart-rate point every ten seconds at any distance now, so over a long
+    // race the series is far too big to re-download every few seconds — and the
+    // 120-point cap that used to make that affordable is what turned Spartathlon
+    // into a point every 12.5 minutes. First poll (and every reload) passes null
+    // and gets the whole run.
+    const rows = await rpc("public_telemetry", {token, since: SERIES_T});
     const row = Array.isArray(rows) ? rows[0] : rows;
+    if(row) mergeSeries(row);
     LAST = row || LAST;
     // Which measures exist is decided by the telemetry, but the pills were built
     // once in setupPlan — before a single row had arrived, when every series was
@@ -1214,7 +1260,13 @@ function render(){
         isDone ? "Cardiac drift" : "Drift",
         d!=null ? `<span style="color:${b.color}">${d>=0?"+":""}${d.toFixed(1)}</span>` : "—",
         d!=null ? "%" : "",
-        d!=null ? (sim?"demo":null) : sensorNote("needs heart rate"),
+        // **Say which of the two is missing.** Drift is heart rate measured against
+        // pace, so indoors it is unavailable for a reason that has nothing to do
+        // with the strap — and this said "needs heart rate" to a crew watching a
+        // treadmill run where the heart rate was arriving perfectly. The app says
+        // "Needs distance" on the same run; the two surfaces now agree, which is
+        // the same rule the drift bands already follow.
+        d!=null ? (sim?"demo":null) : sensorNote(TREADMILL ? "needs distance" : "needs heart rate"),
         "", "--drift", null,
         b ? b.word : null);
     })(),
@@ -1246,7 +1298,13 @@ function render(){
                    ? `${Math.round(temp)}°${humid!=null?`<span style="font-size:15px;color:var(--humid);margin-left:6px">${Math.round(humid)}%</span>`:""}`
                    : "—",
                  "", temp!=null ? (sim?"demo":null) : sensorNote("no forecast"), "", "--temp", null,
-                 (running && avgAll) ? `<b>avg</b>${one(avgAll.temp)}° ${Math.round(avgAll.humid)}%` : null)
+                 // Tag battery takes the corner once it's low enough to matter,
+                 // exactly as the strap's does on the heart-rate card: a flat tag
+                 // is why the temperature stops being measured and quietly reverts
+                 // to the forecast, and the crew can see that coming.
+                 (LAST && LAST.env_battery != null && LAST.env_battery <= 25)
+                   ? `<b>sensor</b>${Math.round(LAST.env_battery)}%`
+                   : (running && avgAll) ? `<b>avg</b>${one(avgAll.temp)}° ${Math.round(avgAll.humid)}%` : null)
   ];
   $("stats-metrics").innerHTML = metrics.join("");
   renderEnergy();
@@ -1510,7 +1568,6 @@ function drawProfile(km){
 let BIGMAP=null, BIGYOU=null;
 function openBigMap(){
   const modal=$("map-modal"); if(!modal) return;
-  document.documentElement.classList.add("map-expanded");
   modal.classList.remove("hidden");
   $("map-modal-title").textContent = PLAN?.raceName || "Location";
   const segs = routeSegments(PTS);
@@ -1552,10 +1609,7 @@ function openBigMap(){
   // than expected — fit again once it is unambiguously real.
   setTimeout(()=>{ if(BIGMAP.getZoom() <= 2) fit(); }, 400);
 }
-function closeBigMap(){
-  $("map-modal")?.classList.add("hidden");
-  document.documentElement.classList.remove("map-expanded");
-}
+function closeBigMap(){ $("map-modal")?.classList.add("hidden"); }
 
 /* Keep the runner's dot on the expanded map in step with the small one. */
 function syncBigYou(){
@@ -1767,39 +1821,13 @@ function isAdmin(){
 
 /* Self-contained synthetic plan so the demo works even without a real token. */
 function syntheticPlan(){
-  const waypoints=[
-    [38.156,23.962],[38.141,23.972],[38.118,23.980],[38.087,23.979],
-    [38.060,23.994],[38.030,23.995],[38.008,23.951],[38.006,23.912],
-    [38.000,23.868],[37.993,23.828],[37.988,23.795],[37.976,23.762],[37.968,23.741]
-  ];
-  const route=[];
-  for(let i=0;i<waypoints.length-1;i++){
-    for(let j=0;j<7;j++){
-      const f=j/7, a=waypoints[i], b=waypoints[i+1];
-      route.push([a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f]);
-    }
-  }
-  route.push(waypoints[waypoints.length-1]);
-  const rawKm=[0];
-  for(let i=1;i<route.length;i++){
-    const a=route[i-1], b=route[i], lat=(a[0]+b[0])/2*Math.PI/180;
-    const dx=(b[1]-a[1])*Math.cos(lat)*111.32, dy=(b[0]-a[0])*110.57;
-    rawKm.push(rawKm[i-1]+Math.sqrt(dx*dx+dy*dy));
-  }
-  const courseKm=42.195, rawTotal=rawKm[rawKm.length-1];
-  const profile=[[0,12],[3,25],[6,22],[10,35],[13,30],[17,56],[21,90],[24,120],[27,160],[31,247],[34,215],[37,170],[40,140],[42.195,128]];
-  const elevationAt=km=>{
-    let i=1; while(i<profile.length-1&&profile[i][0]<km)i++;
-    const a=profile[i-1],b=profile[i],f=(km-a[0])/Math.max(.001,b[0]-a[0]);
-    return a[1]+(b[1]-a[1])*f;
-  };
-  const pts=route.map((p,i)=>{
-    const km=rawKm[i]/rawTotal*courseKm;
-    return {distanceKm:km,latitude:p[0],longitude:p[1],elevationM:elevationAt(km)};
-  });
-  const cps=[]; for(let i=1;i<=8;i++) cps.push({id:"scp"+i, km:i*courseKm/9, pinned:i%2===0});
-  return { raceName:"Athens Marathon the Authentic", distanceKm:courseKm, simulatorMode:true,
-    startHour:9, startMinute:0, predictedHours:3, predictedMinutes:30, predictedSeconds:0,
+  const N=80, pts=[];
+  for(let i=0;i<=N;i++){ const f=i/N;
+    pts.push({distanceKm:f*42.2, latitude:37.98+f*0.12, longitude:23.72+Math.sin(f*3)*0.03,
+      elevationM:60+180*(0.5-0.5*Math.cos(f*Math.PI*3))+30*Math.sin(f*9)}); }
+  const cps=[]; for(let i=1;i<=8;i++) cps.push({id:"scp"+i, km:i*42.2/9, pinned:i%2===0});
+  return { raceName:"Demo Marathon", distanceKm:42.2, simulatorMode:true,
+    startHour:8, startMinute:0, predictedHours:3, predictedMinutes:30, predictedSeconds:0,
     track:{points:pts}, checkpoints:cps, checkpointStates:{} };
 }
 
