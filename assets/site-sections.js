@@ -2,6 +2,7 @@
   "use strict";
 
   var STYLE_ID = "oxygon-site-sections-styles";
+  var APP_STORE_URL = "https://apps.apple.com/app/oxygon/id6796728801";
   var CONTENT = {
     en: {
       tickerLabel: "Oxygon features",
@@ -322,6 +323,15 @@
     return button;
   }
 
+  function upgradeAppStoreLinks() {
+    Array.prototype.forEach.call(document.querySelectorAll('a[href="#download"]'), function (link) {
+      if (!/app\s*store/i.test(link.textContent.replace(/\u00a0/g, " "))) return;
+      link.href = APP_STORE_URL;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+    });
+  }
+
   function mount() {
     var hero = document.getElementById("top");
     var footer = document.querySelector("footer");
@@ -331,6 +341,7 @@
     var greek = /\/el\.html$/.test(window.location.pathname);
     var content = greek ? CONTENT.el : CONTENT.en;
 
+    upgradeAppStoreLinks();
     upgradeAbout(content.about);
 
     if (!document.querySelector(".ox-feature-ticker")) {
