@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Live Telemetry · Oxygon</title>
-<meta name="description" content="Follow the race live — position, pace, heart rate and conditions, in real time." />
+<meta name="description" content="Follow along live — position, pace, heart rate and conditions, in real time." />
 <meta name="theme-color" content="#0b1220" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
@@ -213,7 +213,7 @@
 <div class="wrap">
   <!-- Loading -->
   <div id="loading" class="center">
-    <div><div class="spin"></div><p>Finding the race…</p></div>
+    <div><div class="spin"></div><p>Finding the activity…</p></div>
   </div>
 
   <!-- Error / not found -->
@@ -221,7 +221,7 @@
     <div>
       <div class="glyph">🏳️</div>
       <h2 id="err-title">Race not found</h2>
-      <p id="err-msg">This tracking link is invalid, private, or the race has ended and sharing was turned off.</p>
+      <p id="err-msg">This tracking link is invalid, private, or the activity has ended and sharing was turned off.</p>
     </div>
   </div>
 
@@ -306,7 +306,7 @@
 
     <div class="foot">
       <span id="age" class="live-age"></span><br/>
-      Powered by <b>Oxygon</b> · Live <span id="foot-kind">race</span> tracking
+      Powered by <b>Oxygon</b> · Live <span id="foot-kind">activity</span> tracking
     </div>
 
     <div class="adminbar hidden" id="adminbar">
@@ -785,7 +785,7 @@ async function boot(){
     setInterval(refreshPlan, PLAN_MS);
     startAgeTimer();
   }catch(e){
-    showError("Can’t reach the race","Check your connection and refresh. "+(e.message||""));
+    showError("Can’t reach the activity","Check your connection and refresh. "+(e.message||""));
   }
 }
 
@@ -811,6 +811,11 @@ function setupPlan(plan){
   TREADMILL = plan.isTreadmill === true;
   // Not everything shared here is a race. The page called every activity one,
   // in the footer and at the finish, regardless of what the athlete declared.
+  //
+  // The strings shown *before* the plan arrives — the loading line, the error,
+  // the meta description, the footer's own default — cannot use this, because at
+  // that moment nothing is known about what is being followed. Those say
+  // "activity", which is true of a race too.
   const kindWord = IS_WORKOUT ? "workout" : "race";
   if($("foot-kind")) $("foot-kind").textContent = kindWord;
   TOTKM = totalKm(plan);
@@ -820,8 +825,8 @@ function setupPlan(plan){
   // spread turns both bounds into NaN — which silently blanks the profile.
   const elevs = PTS.map(p=>num(p.elevationM)).filter(e=>e!=null);
   if(elevs.length){ MINE = Math.min(...elevs); MAXE = Math.max(...elevs); }
-  $("race-name").textContent = plan.raceName || "Race";
-  document.title = (plan.raceName || "Race") + " · Live tracking";
+  $("race-name").textContent = plan.raceName || (IS_WORKOUT ? "Workout" : "Race");
+  document.title = (plan.raceName || (IS_WORKOUT ? "Workout" : "Race")) + " · Live tracking";
   const startTxt = (plan.startHour!=null) ? `Start ${String(plan.startHour).padStart(2,"0")}:${String(plan.startMinute||0).padStart(2,"0")}` : "";
   // Same one-decimal rule as every other distance on the page. Rounding here is
   // what still showed "7 km" in the subtitle after the cards had been fixed.
