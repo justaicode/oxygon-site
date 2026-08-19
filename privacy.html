@@ -76,7 +76,7 @@
 <main>
   <div class="eyebrow">Legal</div>
   <h1>Privacy Policy</h1>
-  <p class="updated">Last updated July 17, 2026</p>
+  <p class="updated">Last updated August 19, 2026</p>
 
   <div class="card summary">
     <h2>The short version</h2>
@@ -91,6 +91,8 @@
       <li>Products you save or scan</li>
       <li>Your saved Favorites (pace, time, and distance combinations)</li>
       <li>Your profile (age, weight, and optional resting/maximum heart rate) and your unit, appearance, and accent colour preferences</li>
+      <li>Activities you record with the app: the route (location, only while an activity is running), pace, and — if you connect them — heart rate from a strap, glucose from a sensor, and temperature/humidity from an environment tag</li>
+      <li>Training sessions you import from Strava or Apple Health (summaries: date, distance, time, heart rate, elevation), and the coach profile and training plan built from them</li>
     </ul>
     <p>Signed out, none of this leaves your device, and deleting the app deletes it.</p>
   </div>
@@ -100,7 +102,7 @@
     <p>Signing in is optional and exists solely to back up your data and sync it between your devices. If you do sign in:</p>
     <ul>
       <li><strong>Your email address</strong> is stored to identify your account and to send you sign-in codes. There is no password.</li>
-      <li><strong>Your race plans, saved products, favorites, and settings</strong> — including the profile fields above (age, weight, heart rate) — are stored on our server so they can be restored on your other devices.</li>
+      <li><strong>Your race plans, recorded activities, imported training-session summaries, coach profile and plan, saved products, favorites, and settings</strong> — including the profile fields above (age, weight, heart rate) — are stored on our server so they can be restored on your other devices.</li>
     </ul>
     <p>This data is hosted on <a href="https://supabase.com">Supabase</a> on servers in the European Union, and is protected by row-level security so that your account is the only one able to read or write your data. It is used only to provide sync. It is never sold, never shared with advertisers, and never used to profile you.</p>
     <p>You can sign out at any time, which stops syncing and leaves your data on the device. To delete your account and everything stored with it, use <strong>Delete Account</strong> in Settings — it removes your account and all synced data permanently, and leaves your plans on this device. You can also email the address below.</p>
@@ -110,7 +112,12 @@
     <h2>Third parties we rely on</h2>
     <ul>
       <li><strong>Supabase</strong> — hosts your account and synced data (EU region). Acts only as our processor.</li>
-      <li><strong>Resend</strong> — delivers your sign-in code emails, and receives your email address to do so.</li>
+      <li><strong>FairyMail</strong> — delivers your sign-in code emails, and receives your email address to do so.</li>
+      <li><strong>Strava</strong> (only if you connect it) — with your permission we read your activities and profile to compute your training metrics and history. Strava data is shown only to you, is never used with the AI assistant, and is never shared with anyone. Strava may collect usage data about this integration under its API Policy. Disconnect any time in Settings → Connected apps, or at strava.com/settings/apps.</li>
+      <li><strong>Apple Health</strong> (only if you allow it) — workouts, heart rate and related samples are read on your device to compute your training metrics. Nothing is written back.</li>
+      <li><strong>Anthropic</strong> — when you ask the coach or the race assistant a question, the question, your plan and your interview answers are sent to Anthropic's API to produce the reply. Strava data is never included. Anthropic does not train on API data.</li>
+      <li><strong>Open-Meteo</strong> — the forecast for a race location is fetched from their public weather API; only coordinates and dates are sent.</li>
+      <li><strong>Crew link</strong> (only if you share one) — while an activity is running, your position, pace, heart rate and glucose are published to a private link you choose to share, so your crew can follow you. Anyone with the link can see it for the duration of the activity.</li>
       <li><strong>Open Food Facts</strong> — when you scan a product barcode, the barcode is sent to their public database to look up its nutrition. No personal data or account information is included in that request.</li>
     </ul>
   </div>
@@ -120,7 +127,7 @@
     <ul>
       <li>No analytics, crash reporting, or usage tracking</li>
       <li>No advertising or ad tracking</li>
-      <li>No access to location, contacts, photos, or Apple Health data</li>
+      <li>No access to contacts or photos; location is used only while you record an activity and is stored with that activity</li>
       <li>No selling or sharing of your data with third parties for their own purposes</li>
       <li>No account required — every feature except sync works signed out</li>
     </ul>
