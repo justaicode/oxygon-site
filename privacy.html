@@ -76,7 +76,7 @@
 <main>
   <div class="eyebrow">Legal</div>
   <h1>Privacy Policy</h1>
-  <p class="updated">Last updated August 19, 2026</p>
+  <p class="updated">Last updated August 22, 2026</p>
 
   <div class="card summary">
     <h2>The short version</h2>
@@ -92,7 +92,7 @@
       <li>Your saved Favorites (pace, time, and distance combinations)</li>
       <li>Your profile (age, weight, and optional resting/maximum heart rate) and your unit, appearance, and accent colour preferences</li>
       <li>Activities you record with the app: the route (location, only while an activity is running), pace, and — if you connect them — heart rate from a strap, glucose from a sensor, and temperature/humidity from an environment tag</li>
-      <li>Training sessions you import from Strava or Apple Health (summaries: date, distance, time, heart rate, elevation), and the coach profile and training plan built from them</li>
+      <li>Training sessions you import from Strava, Apple Health, Health Connect or intervals.icu (summaries: date, distance, time, heart rate, elevation), any lab report you import, and the coach profile and training plan built from them</li>
     </ul>
     <p>Signed out, none of this leaves your device, and deleting the app deletes it.</p>
   </div>
@@ -115,7 +115,9 @@
       <li><strong>FairyMail</strong> — delivers your sign-in code emails, and receives your email address to do so.</li>
       <li><strong>Strava</strong> (only if you connect it) — with your permission we read your activities and profile to compute your training metrics and history. Strava data is shown only to you, is never used with the AI assistant, and is never shared with anyone. Strava may collect usage data about this integration under its API Policy. Disconnect any time in Settings → Connected apps, or at strava.com/settings/apps.</li>
       <li><strong>Apple Health</strong> (only if you allow it) — workouts, heart rate and related samples are read on your device to compute your training metrics. Nothing is written back.</li>
-      <li><strong>Anthropic</strong> — when you ask the coach or the race assistant a question, the question, your plan and your interview answers are sent to Anthropic's API to produce the reply. Strava data is never included. Anthropic does not train on API data.</li>
+      <li><strong>Health Connect</strong> (Android, only if you allow it) — workouts, distance, elevation and heart rate are read on your device to compute your training metrics. Nothing is written back. Oxygon asks for history beyond the last 30 days because a training plan is built against a whole year — thirty days cannot tell a base phase from a taper. Revoke any time in Settings, or in Health Connect itself.</li>
+      <li><strong>intervals.icu</strong> (only if you connect it) — with the API key you provide we read your activity summaries and wellness data to compute your training metrics and history. The key is stored on your device only. Disconnect any time in Settings.</li>
+      <li><strong>Anthropic</strong> — when you ask the coach or the race assistant a question, the question, your plan and your interview answers are sent to Anthropic's API to produce the reply. If you import a lab report, the document itself is sent there too, once, so its stage table can be read; nothing it returns is used until you have checked it on screen. Strava data is never included. Anthropic does not train on API data.</li>
       <li><strong>Open-Meteo</strong> — the forecast for a race location is fetched from their public weather API; only coordinates and dates are sent.</li>
       <li><strong>Crew link</strong> (only if you share one) — while an activity is running, your position, pace, heart rate and glucose are published to a private link you choose to share, so your crew can follow you. Anyone with the link can see it for the duration of the activity.</li>
       <li><strong>Open Food Facts</strong> — when you scan a product barcode, the barcode is sent to their public database to look up its nutrition. No personal data or account information is included in that request.</li>
