@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Support — Oxygon</title>
+<title>Delete your Oxygon account — Oxygon</title>
 <link rel="icon" href="/icons/icon-32.png" sizes="32x32" type="image/png">
 <link rel="icon" href="/icons/icon-192.png" sizes="192x192" type="image/png">
 <link rel="apple-touch-icon" href="/icons/icon-180.png">
-<meta name="description" content="Get help with Oxygon — contact, and answers to common questions about offline use, accounts, sync and account deletion.">
+<meta name="description" content="How to delete your Oxygon account and the data stored with it, what is removed, and what is kept.">
 <meta name="theme-color" content="#0B0F19">
 <style>
   :root{
@@ -42,12 +42,14 @@
 
   main{max-width:800px;margin:0 auto;padding:48px 24px 44px;}
   .eyebrow{display:inline-block;font-weight:700;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);}
-  h1{font-size:clamp(32px,5vw,44px);font-weight:850;margin:12px 0 30px;}
+  h1{font-size:clamp(32px,5vw,44px);font-weight:850;margin:12px 0 6px;}
+  .updated{color:var(--ink-soft);font-size:14px;margin:0 0 30px;}
   .card{background:var(--panel);border:1px solid var(--panel-line);border-radius:var(--radius);padding:24px 26px;margin-bottom:16px;}
+  .card.summary{border-color:color-mix(in srgb,var(--accent) 50%,transparent);background:color-mix(in srgb,var(--accent) 10%,var(--panel));}
   h2{font-size:18px;margin:0 0 10px;font-weight:750;color:var(--ink);}
   p{margin:0 0 12px;color:var(--ink-soft);} p:last-child{margin-bottom:0;}
   .card strong{color:var(--ink);font-weight:650;}
-  ul{margin:0;padding-left:20px;color:var(--ink-soft);} li{margin-bottom:10px;}
+  ul{margin:0;padding-left:20px;color:var(--ink-soft);} li{margin-bottom:7px;}
 
   footer.site{border-top:1px solid rgba(120,124,138,0.26);margin-top:34px;}
   .foot-in{max-width:var(--maxw);margin:0 auto;padding:26px 24px;display:flex;flex-wrap:wrap;align-items:center;gap:20px;font-size:13.5px;color:var(--ink-soft);}
@@ -65,32 +67,61 @@
     </a>
     <nav class="nav-links" aria-label="Primary">
       <a href="/#features" class="hide-sm">Features</a>
-      <a href="privacy.html" class="hide-sm">Privacy</a>
+      <a href="support.html" class="hide-sm">Support</a>
       <a class="nav-cta" href="/">← Back to Oxygon</a>
     </nav>
   </div>
 </header>
 
 <main>
-  <div class="eyebrow">Help</div>
-  <h1>Support</h1>
+  <div class="eyebrow">Account</div>
+  <h1>Delete your Oxygon account</h1>
+  <p class="updated">Last updated August 27, 2026</p>
 
-  <div class="card">
-    <h2>Get in touch</h2>
-    <p>For questions, bug reports, or feature requests, email <a href="mailto:zanon.robert@gmail.com">zanon.robert@gmail.com</a> and I'll get back to you.</p>
+  <div class="card summary">
+    <h2>The short version</h2>
+    <p>Open <strong>Oxygon — Race Fuelling &amp; Coach</strong>, go to <strong>Settings → Delete Account</strong>, and confirm. Your account and everything synced to it are removed from our servers permanently. The plans and activities already on your phone stay on your phone, and deleting the app removes those too.</p>
   </div>
 
   <div class="card">
-    <h2>Frequently asked</h2>
+    <h2>How to delete it, step by step</h2>
     <ul>
-      <li><strong>Does Oxygon need an internet connection?</strong> No — every calculator and the race planner work fully offline. A connection is only used for three things: scanning a barcode to look up its nutrition, and — if you choose to sign in — backing up and syncing your data.</li>
-      <li><strong>Do I need an account?</strong> No. Everything works signed out, and your data stays on your device. Signing in is optional and only exists to back your plans up and sync them to your other devices.</li>
-      <li><strong>How do I sign in?</strong> There's no password. Enter your email and we'll send you a 6-digit code.</li>
-      <li><strong>What gets synced if I sign in?</strong> Your race plans, saved products, favorites, and settings.</li>
-      <li><strong>Where are my Favorites stored?</strong> On your device, and — if you sign in — backed up and synced across your devices like everything else.</li>
-      <li><strong>How do I delete my account?</strong> Settings &rarr; Account &rarr; <strong>Delete Account</strong>. That permanently removes your account and everything synced to the cloud; your plans stay on your device.</li>
-      <li><strong>Is my data shared with anyone?</strong> No. See the <a href="privacy.html">Privacy Policy</a> for details.</li>
+      <li>Open Oxygon on the device you are signed in on.</li>
+      <li>Go to the <strong>Settings</strong> tab.</li>
+      <li>Scroll to the bottom and tap <strong>Delete Account</strong>.</li>
+      <li>Confirm when asked. There is no undo.</li>
     </ul>
+    <p>If you can't reach the app — you've lost the device, or you're already signed out — email <a href="mailto:zanon.robert@gmail.com">zanon.robert@gmail.com</a> from the address the account uses and ask for it to be deleted. We'll confirm once it's done.</p>
+  </div>
+
+  <div class="card">
+    <h2>What is deleted</h2>
+    <p>Everything stored against your account on our servers, permanently and immediately:</p>
+    <ul>
+      <li>Your email address and the account itself</li>
+      <li>Race plans, checkpoints, fuel items and reminders</li>
+      <li>Recorded activities, routes, heart-rate traces and glucose readings</li>
+      <li>Imported training-session summaries, your coach profile and any training plan built from them</li>
+      <li>Saved products, favorites, gear and settings</li>
+      <li>Any crew-tracking link you minted, which stops working at once</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>What is kept, and for how long</h2>
+    <p><strong>Nothing is kept after the deletion completes.</strong> There is no retention window and no archive — the rows are removed rather than flagged.</p>
+    <p>Two things sit outside that, and neither is your account data: ordinary server logs, which contain no plan or activity content and age out on our host's own schedule; and anything you exported or shared yourself, such as a crew link you sent to someone who saved the page.</p>
+    <p>A subscription is separate. Deleting your Oxygon account does <strong>not</strong> cancel it — cancel that in <strong>Google Play → Subscriptions</strong>, or on iPhone in <strong>Settings → your name → Subscriptions</strong>.</p>
+  </div>
+
+  <div class="card">
+    <h2>Deleting only some of your data</h2>
+    <p>You don't have to delete the account to remove things. Individual plans, activities and gear can each be deleted inside the app, and signing out stops syncing while leaving what is on the device alone.</p>
+  </div>
+
+  <div class="card">
+    <h2>Contact</h2>
+    <p>Questions about deletion can be sent to <a href="mailto:zanon.robert@gmail.com">zanon.robert@gmail.com</a>. What Oxygon stores in the first place is set out in the <a href="privacy.html">Privacy Policy</a>.</p>
   </div>
 </main>
 
