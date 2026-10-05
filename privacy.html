@@ -76,11 +76,11 @@
 <main>
   <div class="eyebrow">Legal</div>
   <h1>Privacy Policy</h1>
-  <p class="updated">Last updated August 22, 2026</p>
+  <p class="updated">Last updated October 5, 2026</p>
 
   <div class="card summary">
     <h2>The short version</h2>
-    <p>Oxygon works entirely on your device and does not require an account. If you choose to sign in, your race plans, saved products, and settings are backed up to our server so they sync across your devices — nothing else. There are no analytics, no advertising, and no tracking of any kind, and your data is never sold or shared for marketing.</p>
+    <p>Oxygon works entirely on your device and does not require an account. If you choose to sign in, your race plans, saved products, and settings are backed up to our server so they sync across your devices. Community, if you use it, stores what you choose to share, as set out below. There are no analytics, no advertising, and no tracking of any kind, and your data is never sold or shared for marketing.</p>
   </div>
 
   <div class="card">
@@ -99,13 +99,28 @@
 
   <div class="card">
     <h2>If you create an account</h2>
-    <p>Signing in is optional and exists solely to back up your data and sync it between your devices. If you do sign in:</p>
+    <p>Signing in is optional. It backs up your data and syncs it between your devices, and it is how Community works. If you do sign in:</p>
     <ul>
       <li><strong>Your email address</strong> is stored to identify your account and to send you sign-in codes. There is no password.</li>
       <li><strong>Your race plans, recorded activities, imported training-session summaries, coach profile and plan, saved products, favorites, and settings</strong> — including the profile fields above (age, weight, heart rate) — are stored on our server so they can be restored on your other devices.</li>
     </ul>
     <p>This data is hosted on <a href="https://supabase.com">Supabase</a> on servers in the European Union, and is protected by row-level security so that your account is the only one able to read or write your data. It is used only to provide sync. It is never sold, never shared with advertisers, and never used to profile you.</p>
     <p>You can sign out at any time, which stops syncing and leaves your data on the device. To delete your account and everything stored with it, use <strong>Delete Account</strong> in Settings — it removes your account and all synced data permanently, and leaves your plans on this device. You can also email the address below.</p>
+  </div>
+
+  <div class="card" id="community">
+    <h2>Community</h2>
+    <p>Community is optional. Nothing is shared until you share an activity yourself. People who follow you can read what you share. Any signed-in athlete can follow any other; there is no approval step. Signed-out visitors cannot read Community.</p>
+    <ul>
+      <li><strong>Profile.</strong> When you create a Community profile we store a display name (up to 60 characters) and an @handle. Follow counts (how many people follow you, and how many you follow) can be read by any signed-in athlete. The lists of who follows whom can be read only by the two people in that follow. Every signed-in account can read every Community profile. Signed-out visitors cannot.</li>
+      <li><strong>Profile picture.</strong> Optional. A picture you set is stored in a public bucket, so the file can be read without a sign-in. You can leave it unset.</li>
+      <li><strong>Posts and comments.</strong> A post is a copy of an activity you chose to share: the caption, the summary, an optional map, and the comments other athletes write on it. Followers, and you, can read them. They are user-generated content shared with your followers. A caption is limited to 500 characters. A comment is limited to 1000 characters.</li>
+      <li><strong>Photos.</strong> A post holds up to four photos. They are stored in a private bucket. You and your followers read them through signed links; they are not a public page. A video, where the build allows one, counts as one of those four and is kept in the same private bucket, on the same signed links. Choosing a photo is the only time the app reads your photos.</li>
+      <li><strong>Health figures on a post.</strong> A post summary can include the average heart rate, the highest heart rate, and an average glucose, when the activity has those readings. A chart you leave on can also show heart rate, altitude and glucose to your followers. These are the same kinds of health figures the app already stores with the activity. Community is a second place your followers can see them. A figure the activity does not have is left off the post.</li>
+      <li><strong>Report and block.</strong> You can report a post, a comment, or a profile, and you can block another athlete. A report is kept so we can review it and moderate. Reports are read by us and by the person who sent the report. They are not published. A block records the two accounts so each of you is hidden from the other.</li>
+    </ul>
+    <p><strong>Deletion.</strong> Unsharing a post removes that post and its photos at that moment. Deleting your account removes the Community profile with the account: the profile row is deleted with the account. Delete Account also removes the photo files and the profile picture stored for that account.</p>
+    <p>Community data is hosted on the same Supabase project in the European Union. It is used to run Community. It is never sold and never shared with advertisers.</p>
   </div>
 
   <div class="card">
@@ -119,6 +134,7 @@
       <li><strong>intervals.icu</strong> (only if you connect it) — with the API key you provide we read your activity summaries and wellness data to compute your training metrics and history. The key is stored on your device only. Disconnect any time in Settings.</li>
       <li><strong>Anthropic</strong> — when you ask the coach or the race assistant a question, the question, your plan and your interview answers are sent to Anthropic's API to produce the reply. If you import a lab report, the document itself is sent there too, once, so its stage table can be read; nothing it returns is used until you have checked it on screen. Strava data is never included. Anthropic does not train on API data.</li>
       <li><strong>Open-Meteo</strong> — the forecast for a race location is fetched from their public weather API; only coordinates and dates are sent.</li>
+      <li><strong>MapTiler</strong> — maps are drawn from MapTiler's tiles: a course, the small map on a route card, and a replay. The route card is drawn on our server, and MapTiler then receives only the map area being drawn, from us, not your account. When the app shows a map, your device requests the tiles for the area on screen. A replay may also send the coordinate at the start of the route so the place can be named. MapTiler does not receive your account.</li>
       <li><strong>Crew link</strong> (only if you share one) — while an activity is running, your position, pace, heart rate and glucose are published to a private link you choose to share, so your crew can follow you. Anyone with the link can see it for the duration of the activity.</li>
       <li><strong>Open Food Facts</strong> — when you scan a product barcode, the barcode is sent to their public database to look up its nutrition. No personal data or account information is included in that request.</li>
     </ul>
@@ -129,9 +145,9 @@
     <ul>
       <li>No analytics, crash reporting, or usage tracking</li>
       <li>No advertising or ad tracking</li>
-      <li>No access to contacts or photos; location is used only while you record an activity and is stored with that activity</li>
+      <li>No access to contacts. Photos are used only when you choose them for a Community post or a profile picture. Location is used only while you record an activity and is stored with that activity</li>
       <li>No selling or sharing of your data with third parties for their own purposes</li>
-      <li>No account required — every feature except sync works signed out</li>
+      <li>No account required — every feature except sync and Community works signed out</li>
     </ul>
   </div>
 
