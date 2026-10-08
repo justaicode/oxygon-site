@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Oxygon Product Explorer — Section Preview</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b0f19;
+      --panel: #111722;
+      --panel-strong: #1c2430;
+      --text: #fff;
+      --muted: rgba(235,235,245,.62);
+      --quiet: rgba(235,235,245,.38);
+      --line: rgba(84,84,88,.5);
+      --blue: #0a84ff;
+      --orange: #ff7a00;
+      --green: #30d158;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      overflow-x: hidden;
+      color: var(--text);
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: -6%;
+      z-index: -2;
+      background:
+        linear-gradient(180deg, rgba(11,15,25,.4), rgba(11,15,25,.88)),
+        url("assets/img/oxygon-parallax-far.webp") center / cover no-repeat;
+      filter: saturate(.78) brightness(.72);
+      transform: scale(1.06);
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background: radial-gradient(circle at 72% 34%, rgba(10,132,255,.1), transparent 35%);
+    }
+
+    .preview-nav {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      min-height: 62px;
+      padding: 12px max(22px, calc((100vw - 1180px) / 2));
+      border-bottom: 1px solid rgba(84,84,88,.35);
+      background: rgba(11,15,25,.86);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--text);
+      font-size: 17px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .brand img { width: 27px; height: 27px; border-radius: 7px; }
+    .preview-label { margin-left: auto; color: var(--quiet); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+
+    main { width: min(1260px, 100%); margin: 0 auto; padding: 70px 40px 90px; }
+
+    .section-intro {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 32px;
+      margin: 0 auto 28px;
+      max-width: 1180px;
+    }
+
+    .section-intro-copy { max-width: 720px; }
+    .eyebrow { margin-bottom: 10px; color: var(--blue); font-size: 13px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+    h1 { margin: 0; max-width: 720px; font-size: clamp(38px,5vw,58px); line-height: 1.02; letter-spacing: -.035em; }
+    .section-intro p { margin: 15px 0 0; max-width: 640px; color: var(--muted); font-size: 17px; line-height: 1.6; }
+    .gesture-hint { display: flex; align-items: center; gap: 9px; flex: none; color: var(--quiet); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+    .gesture-hint::before { content: ""; width: 7px; height: 7px; border: 1px solid var(--blue); border-radius: 50%; box-shadow: 0 0 0 5px rgba(10,132,255,.09); }
+
+    .explorer {
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+      min-height: 720px;
+      border: 1px solid rgba(84,84,88,.58);
+      border-radius: 30px;
+      background:
+        radial-gradient(circle at 78% 20%, rgba(10,132,255,.12), transparent 30%),
+        linear-gradient(145deg, rgba(19,26,38,.98), rgba(8,12,20,.99) 57%);
+      box-shadow: 0 34px 90px rgba(0,0,0,.42);
+      outline: none;
+    }
+
+    .explorer-topbar {
+      position: relative;
+      z-index: 8;
+      display: flex;
+      align-items: center;
+      min-height: 70px;
+      padding: 13px 20px 13px 24px;
+      border-bottom: 1px solid rgba(84,84,88,.45);
+      background: rgba(9,13,21,.78);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .explorer-title { color: rgba(235,235,245,.44); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+
+    .tabs { display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-left: auto; }
+    .tab {
+      appearance: none;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      padding: 9px 13px;
+      color: rgba(235,235,245,.48);
+      background: transparent;
+      font: 650 13px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      cursor: pointer;
+      transition: color .2s ease, background .2s ease, border-color .2s ease;
+    }
+
+    .tab:hover { color: rgba(255,255,255,.84); }
+    .tab[aria-selected="true"] { color: #fff; border-color: rgba(255,255,255,.14); background: rgba(255,255,255,.09); }
+    .tab:focus-visible, .control:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+    .explorer-stage { display: grid; grid-template-columns: 84px minmax(0,1fr); height: 650px; }
+    .progress-rail {
+      position: relative;
+      z-index: 7;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      border-right: 1px solid rgba(84,84,88,.42);
+      background: rgba(8,12,20,.22);
+      color: var(--quiet);
+      font-size: 11px;
+    }
+
+    .progress-count { color: rgba(255,255,255,.82); font-weight: 700; font-variant-numeric: tabular-nums; }
+    .progress-line { position: relative; width: 2px; height: 120px; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.1); }
+    .progress-fill { position: absolute; inset: 0 0 auto; height: 20%; border-radius: inherit; background: var(--blue); box-shadow: 0 0 12px rgba(10,132,255,.65); transition: transform .5s cubic-bezier(.2,.8,.2,1); }
+    .progress-label { writing-mode: vertical-rl; transform: rotate(180deg); letter-spacing: .13em; text-transform: uppercase; }
+
+    .viewport { position: relative; min-width: 0; overflow: hidden; }
+    .track { display: flex; width: 500%; height: 100%; transition: transform .6s cubic-bezier(.2,.82,.2,1); will-change: transform; }
+
+    .slide {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(280px,.84fr) minmax(460px,1.16fr);
+      align-items: center;
+      gap: 52px;
+      width: 20%;
+      min-width: 0;
+      padding: 44px 64px 58px 54px;
+    }
+
+    .slide-copy { position: relative; z-index: 3; max-width: 430px; }
+    .slide-copy h2 { margin: 0; font-size: clamp(34px,3.6vw,49px); line-height: 1.05; letter-spacing: -.03em; text-wrap: balance; }
+    .slide-copy p { margin: 17px 0 0; color: var(--muted); font-size: 16px; line-height: 1.65; text-wrap: pretty; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+    .chip { display: inline-flex; align-items: center; gap: 7px; padding: 6px 11px; border: 1px solid rgba(84,84,88,.65); border-radius: 999px; color: rgba(235,235,245,.62); font-size: 12px; background: rgba(8,12,20,.34); }
+    .chip::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--blue); }
+
+    .media-stage {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      height: 540px;
+      isolation: isolate;
+    }
+
+    .media-stage::before { content: ""; position: absolute; width: 80%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgba(10,132,255,.16), transparent 66%); filter: blur(15px); z-index: -1; }
+
+    .shot {
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border: 1px solid rgba(84,84,88,.6);
+      background: #080b12;
+      box-shadow: 0 30px 70px rgba(0,0,0,.55);
+    }
+
+    .shot-landscape { width: 100%; border-radius: 20px; }
+    .shot-phone { height: 510px; width: auto; border-radius: 30px; }
+
+    .coach-ipad { width: 92%; transform: translate(-4%,-5%); }
+    .coach-phone { position: absolute; right: 2%; bottom: -2%; height: 355px; z-index: 2; border-radius: 24px; }
+
+    .activities-phone { height: 525px; transform: translateX(-9%); }
+    .activities-secondary { position: absolute; right: 0; top: 48px; height: 390px; opacity: .86; z-index: -1; border-radius: 24px; }
+
+    .library-shot { width: auto; height: 525px; border-radius: 24px; }
+
+    .tools-stage { align-items: flex-end; }
+    .tool-shot { position: absolute; height: 455px; border-radius: 25px; transform-origin: bottom center; }
+    .tool-shot-one { left: 2%; bottom: 11px; transform: rotate(-5deg) scale(.92); opacity: .82; }
+    .tool-shot-two { left: 50%; bottom: 0; z-index: 3; transform: translateX(-50%); }
+    .tool-shot-three { right: 2%; bottom: 11px; transform: rotate(5deg) scale(.92); opacity: .82; }
+
+    .telemetry-shot { width: min(100%,600px); max-height: 535px; border-radius: 20px; object-position: top; }
+
+    .slide-badge { display: inline-flex; margin-top: 18px; padding: 7px 11px; border-radius: 999px; color: #dff9e8; background: rgba(48,209,88,.13); border: 1px solid rgba(48,209,88,.28); font-size: 12px; font-weight: 650; }
+
+    .controls {
+      position: absolute;
+      right: 22px;
+      bottom: 18px;
+      z-index: 9;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .control-count { margin-right: 3px; color: var(--quiet); font-size: 12px; font-variant-numeric: tabular-nums; }
+    .control { display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 1px solid rgba(84,84,88,.65); border-radius: 50%; color: #fff; background: rgba(28,36,48,.9); font-size: 19px; cursor: pointer; transition: background .2s ease, transform .2s ease; }
+    .control:hover:not(:disabled) { background: var(--blue); transform: translateY(-2px); }
+    .control:disabled { opacity: .3; cursor: default; }
+
+    .preview-note { margin: 22px auto 0; max-width: 1180px; color: var(--quiet); font-size: 12px; text-align: center; }
+
+    @media (max-width: 1023px) {
+      main { padding: 58px 22px 70px; }
+      .section-intro { align-items: flex-start; flex-direction: column; }
+      .gesture-hint { display: none; }
+      .explorer { min-height: 870px; }
+      .explorer-stage { grid-template-columns: 54px minmax(0,1fr); height: 800px; }
+      .slide { grid-template-columns: minmax(0,1fr); align-content: start; gap: 24px; padding: 36px 34px 72px; }
+      .slide-copy { max-width: 680px; }
+      .slide-copy h2 { font-size: 38px; }
+      .media-stage { height: 465px; }
+      .coach-ipad { width: min(90%,650px); }
+      .coach-phone { right: 5%; height: 300px; }
+      .activities-phone { height: 450px; }
+      .activities-secondary { height: 330px; right: 8%; }
+      .library-shot { height: 455px; }
+      .tool-shot { height: 400px; }
+      .telemetry-shot { max-height: 460px; }
+    }
+
+    @media (max-width: 700px) {
+      .preview-nav { padding-inline: 16px; }
+      .preview-label { display: none; }
+      main { padding: 40px 12px 58px; }
+      .section-intro { padding-inline: 6px; }
+      .section-intro p { font-size: 15px; }
+      .explorer { min-height: 930px; border-radius: 23px; }
+      .explorer-topbar { align-items: flex-start; flex-direction: column; gap: 11px; padding: 15px; }
+      .tabs { justify-content: flex-start; width: 100%; margin-left: 0; flex-wrap: wrap; }
+      .tab { padding: 8px 10px; }
+      .explorer-stage { grid-template-columns: 1fr; height: 825px; }
+      .progress-rail { flex-direction: row; justify-content: flex-start; gap: 10px; padding: 10px 16px; border-right: 0; border-bottom: 1px solid rgba(84,84,88,.42); }
+      .progress-line { width: 96px; height: 2px; }
+      .progress-fill { width: 20%; height: 100%; }
+      .progress-label { writing-mode: horizontal-tb; transform: none; }
+      .slide { padding: 28px 18px 72px; gap: 18px; }
+      .slide-copy h2 { font-size: 32px; }
+      .slide-copy p { margin-top: 13px; font-size: 14px; line-height: 1.55; }
+      .chips { margin-top: 15px; }
+      .media-stage { height: 455px; }
+      .coach-ipad { width: 100%; transform: translateY(-6%); }
+      .coach-phone { right: 0; bottom: 0; height: 275px; }
+      .activities-phone { height: 440px; transform: translateX(-8%); }
+      .activities-secondary { right: 0; top: 64px; height: 300px; }
+      .library-shot { max-width: 100%; height: 450px; }
+      .tools-stage { overflow: hidden; }
+      .tool-shot { height: 365px; }
+      .tool-shot-one { left: -14%; }
+      .tool-shot-three { right: -14%; }
+      .telemetry-shot { width: 100%; max-height: 445px; }
+      .controls { right: 14px; bottom: 14px; }
+    }
+
+    @media (max-width: 420px) {
+      h1 { font-size: 39px; }
+      .explorer { min-height: 900px; }
+      .explorer-stage { height: 790px; }
+      .media-stage { height: 420px; }
+      .coach-phone { height: 250px; }
+      .activities-phone { height: 410px; }
+      .activities-secondary { height: 280px; }
+      .library-shot { height: 415px; }
+      .tool-shot { height: 335px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .track, .progress-fill, .tab, .control { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="preview-nav">
+    <a class="brand" href="#explorer"><img src="assets/img/960d998b07336a60.png" alt="">Oxygon</a>
+    <span class="preview-label">Product explorer · standalone preview</span>
+  </nav>
+
+  <main>
+    <header class="section-intro">
+      <div class="section-intro-copy">
+        <div class="eyebrow">Explore Oxygon</div>
+        <h1>Five parts. One connected system.</h1>
+        <p>Move through the product without moving down the page. Each area gets one focused story, using the actual Oxygon interface.</p>
+      </div>
+      <div class="gesture-hint">Scroll, swipe or select</div>
+    </header>
+
+    <section class="explorer" id="explorer" aria-label="Oxygon product areas">
+      <header class="explorer-topbar">
+        <span class="explorer-title">Inside the app</span>
+        <div class="tabs" role="tablist" aria-label="Product areas">
+          <button class="tab" type="button" role="tab" aria-selected="true" data-index="0">Coach</button>
+          <button class="tab" type="button" role="tab" aria-selected="false" data-index="1">Activities</button>
+          <button class="tab" type="button" role="tab" aria-selected="false" data-index="2">Library</button>
+          <button class="tab" type="button" role="tab" aria-selected="false" data-index="3">Tools</button>
+          <button class="tab" type="button" role="tab" aria-selected="false" data-index="4">Live telemetry</button>
+        </div>
+      </header>
+
+      <div class="explorer-stage">
+        <aside class="progress-rail" aria-label="Local section progress">
+          <span class="progress-count">01 / 05</span>
+          <span class="progress-line" aria-hidden="true"><span class="progress-fill"></span></span>
+          <span class="progress-label">Local scroll</span>
+        </aside>
+
+        <div class="viewport">
+          <div class="track">
+            <article class="slide" aria-label="Coach">
+              <div class="slide-copy">
+                <div class="eyebrow">Coach</div>
+                <h2>A training block that adapts.</h2>
+                <p>A guided interview builds your dated plan. Fitness, fatigue, form and durability keep it current, while every proposed change stays under your control.</p>
+                <div class="chips"><span class="chip">Apple Health</span><span class="chip">Strava</span><span class="chip">Coach chat</span></div>
+              </div>
+              <div class="media-stage">
+                <img class="shot shot-landscape coach-ipad" src="assets/img/5863566aab9e8458-optimized.webp" alt="Oxygon Coach calendar on iPad" width="1600" height="1103">
+                <img class="shot coach-phone" src="assets/img/b22450971251c564-optimized.webp" alt="Oxygon Coach calendar on iPhone" width="720" height="1566">
+              </div>
+            </article>
+
+            <article class="slide" aria-label="Activities">
+              <div class="slide-copy">
+                <div class="eyebrow">Activities</div>
+                <h2>Plan it. Fuel it. Execute it live.</h2>
+                <p>Build an event, race or training session; add your own fuelling products; let Oxygon calculate the schedule; then carry the same plan into the live activity.</p>
+                <div class="chips"><span class="chip">Plan</span><span class="chip">Fuelling</span><span class="chip">Live activity</span></div>
+                <span class="slide-badge">Detailed activity flow to design next</span>
+              </div>
+              <div class="media-stage">
+                <img class="shot activities-secondary" src="assets/img/3b0b7386ccbb1063-optimized.webp" alt="Oxygon live activity light appearance" width="720" height="1566" loading="lazy">
+                <img class="shot shot-phone activities-phone" src="assets/site/live-activity-sensors-iphone-optimized.webp" alt="Oxygon live activity with sensors and fuelling" width="720" height="1565" loading="lazy">
+              </div>
+            </article>
+
+            <article class="slide" aria-label="Library">
+              <div class="slide-copy">
+                <div class="eyebrow">Library</div>
+                <h2>The real course, ready before race day.</h2>
+                <p>Browse verified races with their true route, distance, elevation and cut-offs. Start from the library or bring your own GPX.</p>
+                <div class="chips"><span class="chip">90+ races</span><span class="chip">Verified GPX</span><span class="chip">Your routes</span></div>
+              </div>
+              <div class="media-stage">
+                <img class="shot library-shot" src="assets/img/549ec65cce65d40f-optimized.webp" alt="Oxygon race library with course maps" width="1400" height="2032" loading="lazy">
+              </div>
+            </article>
+
+            <article class="slide" aria-label="Tools">
+              <div class="slide-copy">
+                <div class="eyebrow">Tools</div>
+                <h2>Eight calculators. Free, forever.</h2>
+                <p>Answer the practical questions—pace, prediction, zones and effort—then carry the result directly into a plan.</p>
+                <div class="chips"><span class="chip">No login</span><span class="chip">8 calculators</span><span class="chip">Create plan</span></div>
+              </div>
+              <div class="media-stage tools-stage">
+                <img class="shot tool-shot tool-shot-one" src="assets/site/calc-predictor-optimized.webp" alt="Oxygon race predictor" width="420" height="914" loading="lazy">
+                <img class="shot tool-shot tool-shot-two" src="assets/site/calc-pace-optimized.webp" alt="Oxygon pace calculator" width="420" height="913" loading="lazy">
+                <img class="shot tool-shot tool-shot-three" src="assets/site/calc-hr-optimized.webp" alt="Oxygon heart rate zones calculator" width="420" height="914" loading="lazy">
+              </div>
+            </article>
+
+            <article class="slide" aria-label="Live telemetry">
+              <div class="slide-copy">
+                <div class="eyebrow">Live telemetry</div>
+                <h2>The people who care can watch.</h2>
+                <p>Share one link. Crew sees position, pace, checkpoint progress, heart rate, glucose and conditions in a focused live dashboard—no app and no login.</p>
+                <div class="chips"><span class="chip">Live map</span><span class="chip">Sensors</span><span class="chip">Crew link</span></div>
+              </div>
+              <div class="media-stage">
+                <img class="shot telemetry-shot" src="assets/img/526f1e3c52771eb9-optimized.webp" alt="Oxygon live telemetry dashboard" width="1600" height="1440" loading="lazy">
+              </div>
+            </article>
+          </div>
+
+          <div class="controls">
+            <span class="control-count">01 / 05</span>
+            <button class="control previous" type="button" aria-label="Previous product area" disabled>←</button>
+            <button class="control next" type="button" aria-label="Next product area">→</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <p class="preview-note">Standalone concept page · no changes have been made to oxygon.app</p>
+  </main>
+
+  <script>
+    (function () {
+      var explorer = document.getElementById("explorer");
+      var track = explorer.querySelector(".track");
+      var tabs = Array.prototype.slice.call(explorer.querySelectorAll(".tab"));
+      var progressCount = explorer.querySelector(".progress-count");
+      var controlCount = explorer.querySelector(".control-count");
+      var fill = explorer.querySelector(".progress-fill");
+      var previous = explorer.querySelector(".previous");
+      var next = explorer.querySelector(".next");
+      var current = 0;
+      var wheelLocked = false;
+      var touchStartX = 0;
+
+      function count(index) {
+        return String(index + 1).padStart(2, "0") + " / 05";
+      }
+
+      function render(index) {
+        current = Math.max(0, Math.min(4, index));
+        track.style.transform = "translate3d(-" + (current * 20) + "%,0,0)";
+        tabs.forEach(function (tab, tabIndex) {
+          tab.setAttribute("aria-selected", String(tabIndex === current));
+        });
+        progressCount.textContent = count(current);
+        controlCount.textContent = count(current);
+        fill.style.transform = window.matchMedia("(max-width: 700px)").matches
+          ? "translate3d(" + (current * 100) + "%,0,0)"
+          : "translate3d(0," + (current * 100) + "%,0)";
+        previous.disabled = current === 0;
+        next.disabled = current === 4;
+      }
+
+      tabs.forEach(function (tab) {
+        tab.addEventListener("click", function () { render(Number(tab.dataset.index)); });
+      });
+      previous.addEventListener("click", function () { render(current - 1); });
+      next.addEventListener("click", function () { render(current + 1); });
+
+      explorer.addEventListener("wheel", function (event) {
+        if (wheelLocked || Math.abs(event.deltaY) < 16) return;
+        var direction = event.deltaY > 0 ? 1 : -1;
+        if ((direction > 0 && current === 4) || (direction < 0 && current === 0)) return;
+        event.preventDefault();
+        render(current + direction);
+        wheelLocked = true;
+        window.setTimeout(function () { wheelLocked = false; }, 650);
+      }, { passive: false });
+
+      explorer.addEventListener("touchstart", function (event) {
+        touchStartX = event.changedTouches[0].clientX;
+      }, { passive: true });
+      explorer.addEventListener("touchend", function (event) {
+        var distance = touchStartX - event.changedTouches[0].clientX;
+        if (Math.abs(distance) > 45) render(current + (distance > 0 ? 1 : -1));
+      }, { passive: true });
+
+      window.addEventListener("resize", function () { render(current); });
+      render(0);
+    })();
+  </script>
+</body>
+</html>

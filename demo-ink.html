@@ -1,0 +1,43 @@
+<!doctype html><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oxygon — faint Spartathlon ink background (preview)</title>
+<style>
+ :root{--bg:#0B0F19;--ink:#EBEBF5;--soft:rgba(235,235,245,.62);--accent:#0A84FF}
+ *{margin:0;box-sizing:border-box}
+ html{background:var(--bg)}
+ body{background:var(--bg);color:var(--ink);min-height:260vh;
+   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+ /* the faint Spartathlon ink layer — fixed = parallax; edge-masked so it melts into the page */
+ #oxink{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none;opacity:.16;
+   background:url(/assets/img/spart-ridge-ink.png?v=1) center 45% / cover no-repeat;
+   -webkit-mask-image:radial-gradient(145% 115% at 50% 44%,#000 46%,transparent 100%);
+   mask-image:radial-gradient(145% 115% at 50% 44%,#000 46%,transparent 100%)}
+ .wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 40px}
+ nav{height:64px;display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:-.01em}
+ nav .dot{width:24px;height:24px;border-radius:50%;border:2.5px solid var(--accent);display:inline-block;position:relative}
+ nav .dot::after{content:"";position:absolute;inset:7px;border-radius:50%;background:var(--accent)}
+ .hero{padding:86px 0 76px}
+ .eyebrow{color:var(--accent);font-weight:700;font-size:13px;letter-spacing:.14em;text-transform:uppercase}
+ h1{font-size:clamp(40px,6.2vw,74px);font-weight:850;letter-spacing:-.025em;line-height:1.02;margin:18px 0 22px}
+ .sub{color:var(--soft);font-size:19px;max-width:560px;line-height:1.6}
+ .btns{display:flex;gap:14px;margin-top:30px}
+ .btn{padding:13px 22px;border-radius:999px;font-weight:700;font-size:15px}
+ .btn.p{background:#fff;color:#0B0F19}.btn.s{border:1px solid rgba(235,235,245,.25);color:#fff}
+ section{padding:74px 0;border-top:1px solid rgba(120,124,138,.14)}
+ .k{color:var(--accent);font-weight:700;font-size:12.5px;letter-spacing:.12em;text-transform:uppercase}
+ h2{font-size:clamp(28px,3.6vw,40px);font-weight:820;letter-spacing:-.015em;margin:10px 0 16px}
+ section p{color:var(--soft);font-size:17px;max-width:640px;line-height:1.75}
+</style>
+<div id="oxink"></div>
+<div class="wrap">
+  <nav><span class="dot"></span> Oxygon</nav>
+  <div class="hero">
+    <div class="eyebrow">Run · Bike · Swim · Tri</div>
+    <h1>Fuel the distance.<br>Finish the race.</h1>
+    <div class="sub">Training and race execution for endurance athletes — marathon to 250&nbsp;km ultra. Oxygon plans what you eat and drink, checkpoint by checkpoint.</div>
+    <div class="btns"><span class="btn p"> App Store</span><span class="btn s">▶ Google Play</span></div>
+  </div>
+  <section><div class="k">Fuelling</div><h2>A plan for every checkpoint</h2><p>Set hourly targets for water, carbohydrate and sodium — or let Oxygon suggest them from your sweat rate, gut ceiling and the forecast. It spreads the doses across your checkpoints; hand-edit any stop and recalculation never overwrites it.</p></section>
+  <section><div class="k">Coach</div><h2>A training block that adapts</h2><p>A guided interview builds your dated plan — Norwegian threshold or pace-based. Fitness, fatigue, form and durability tracked from Apple Health and Strava. Ask the coach anything; where it proposes a change, you confirm with a button — never applied silently.</p></section>
+  <section><div class="k">Live</div><h2>Built to be read mid-effort</h2><p>Heart rate, glucose, GPS and conditions on one screen, your position on the elevation profile, and the next checkpoint with what to take. Every readout sized for a two-second glance — eighteen hours in, breathing hard.</p></section>
+</div>

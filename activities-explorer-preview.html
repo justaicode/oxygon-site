@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#070a0f">
+  <title>Oxygon Activities — Interactive Preview</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070a0f;
+      --panel: #0e131b;
+      --panel-soft: #121924;
+      --text: #f7f9fc;
+      --muted: #929cab;
+      --line: rgba(255,255,255,.11);
+      --accent: #ff6b00;
+      --accent-soft: rgba(255,107,0,.15);
+      --nav-h: 66px;
+      --max: 1280px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      overflow-x: hidden;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 75% 12%, rgba(255,107,0,.09), transparent 28rem),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button { font: inherit; }
+
+    .nav {
+      position: fixed;
+      z-index: 50;
+      inset: 0 0 auto;
+      height: var(--nav-h);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: rgba(7,10,15,.78);
+      backdrop-filter: blur(18px) saturate(140%);
+    }
+
+    .nav__inner {
+      width: min(calc(100% - 40px), var(--max));
+      height: 100%;
+      margin: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      color: #fff;
+      font-weight: 760;
+      letter-spacing: -.02em;
+    }
+
+    .brand__mark {
+      width: 29px;
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      border-radius: 9px;
+      color: #090b0f;
+      background: var(--accent);
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .preview-pill {
+      padding: 7px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: #a8b0bc;
+      font-size: 12px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .intro {
+      min-height: 82vh;
+      padding: calc(var(--nav-h) + 90px) 20px 90px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+    }
+
+    .intro__inner { max-width: 900px; }
+
+    .eyebrow {
+      margin: 0 0 18px;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 760;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .intro h1 {
+      margin: 0;
+      font-size: clamp(3.5rem, 8.5vw, 7.6rem);
+      line-height: .91;
+      letter-spacing: -.075em;
+    }
+
+    .intro h1 span { color: #8d96a4; }
+
+    .intro__lede {
+      max-width: 660px;
+      margin: 30px auto 0;
+      color: var(--muted);
+      font-size: clamp(1.05rem, 2vw, 1.3rem);
+      line-height: 1.6;
+    }
+
+    .scroll-cue {
+      margin-top: 54px;
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      color: #747e8d;
+      font-size: 13px;
+    }
+
+    .scroll-cue::before {
+      content: "";
+      width: 1px;
+      height: 34px;
+      background: linear-gradient(var(--accent), transparent);
+    }
+
+    .story { min-height: 560vh; }
+
+    .stage {
+      position: sticky;
+      top: var(--nav-h);
+      height: calc(100vh - var(--nav-h));
+      min-height: 650px;
+      overflow: hidden;
+      border-block: 1px solid rgba(255,255,255,.08);
+      background:
+        radial-gradient(circle at 77% 52%, rgba(255,107,0,.12), transparent 27rem),
+        linear-gradient(145deg, #0a0e14, #070a0f 68%);
+    }
+
+    .stage::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: .2;
+      pointer-events: none;
+      background-image: linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+      background-size: 72px 72px;
+      mask-image: radial-gradient(circle at 74% 52%, #000, transparent 60%);
+    }
+
+    .stage__inner {
+      position: relative;
+      width: min(calc(100% - 56px), var(--max));
+      height: 100%;
+      margin: auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(350px, .95fr);
+      align-items: center;
+      gap: clamp(40px, 7vw, 110px);
+    }
+
+    .copy {
+      position: relative;
+      z-index: 2;
+      min-width: 0;
+      padding-block: 34px;
+    }
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .section-label::before {
+      content: "";
+      width: 28px;
+      height: 1px;
+      background: currentColor;
+    }
+
+    .copy-panels {
+      position: relative;
+      min-height: 274px;
+    }
+
+    .copy-panel {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transform: translateY(18px);
+      visibility: hidden;
+      transition: opacity .42s ease, transform .42s cubic-bezier(.2,.7,.2,1), visibility .42s;
+    }
+
+    .copy-panel.is-active {
+      opacity: 1;
+      transform: none;
+      visibility: visible;
+    }
+
+    .copy-panel h2 {
+      max-width: 650px;
+      margin: 0 0 21px;
+      font-size: clamp(2.9rem, 5.3vw, 5.7rem);
+      line-height: .95;
+      letter-spacing: -.065em;
+    }
+
+    .copy-panel p {
+      max-width: 610px;
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 1.45vw, 1.18rem);
+      line-height: 1.65;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 25px;
+    }
+
+    .tag {
+      padding: 7px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: #bdc4ce;
+      font-size: 12px;
+    }
+
+    .steps {
+      margin-top: 42px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .step {
+      position: relative;
+      padding: 20px 8px 12px 0;
+      border: 0;
+      color: #697382;
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+      transition: color .25s ease;
+    }
+
+    .step::before {
+      content: "";
+      position: absolute;
+      top: -1px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--accent);
+      transition: width .4s ease;
+    }
+
+    .step:hover { color: #cbd1da; }
+    .step.is-active { color: #fff; }
+    .step.is-active::before { width: calc(100% - 12px); }
+
+    .step__number {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 10px;
+      letter-spacing: .09em;
+    }
+
+    .step__name { font-size: 13px; font-weight: 690; }
+
+    .controls {
+      margin-top: 28px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .arrow {
+      width: 42px;
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      color: #dce1e8;
+      background: rgba(255,255,255,.025);
+      cursor: pointer;
+      transition: border-color .2s, background .2s, transform .2s;
+    }
+
+    .arrow:hover:not(:disabled) {
+      border-color: rgba(255,107,0,.6);
+      background: var(--accent-soft);
+      transform: translateY(-2px);
+    }
+
+    .arrow:disabled { opacity: .3; cursor: default; }
+
+    .counter {
+      margin-left: 8px;
+      color: #66707f;
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: .08em;
+    }
+
+    .device-column {
+      position: relative;
+      align-self: stretch;
+      display: grid;
+      place-items: center;
+      perspective: 1200px;
+    }
+
+    .device-glow {
+      position: absolute;
+      width: min(38vw, 520px);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      opacity: .38;
+      filter: blur(70px);
+      background: rgba(255,107,0,.25);
+      transform: translate3d(var(--glow-x, 0), var(--glow-y, 0), 0);
+      transition: transform .3s ease-out;
+    }
+
+    .device {
+      position: relative;
+      width: min(39vh, 370px);
+      max-width: 100%;
+      aspect-ratio: 1206 / 2622;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: clamp(31px, 4.2vh, 47px);
+      overflow: hidden;
+      background: #edf1f6;
+      box-shadow: 0 35px 90px rgba(0,0,0,.55), 0 0 0 7px rgba(255,255,255,.025);
+      transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) translateZ(0);
+      transition: transform .18s ease-out;
+      will-change: transform;
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transform: scale(.985) translateX(12px);
+      transition: opacity .48s ease, transform .55s cubic-bezier(.2,.75,.2,1);
+      will-change: opacity, transform;
+    }
+
+    .screen.is-active {
+      z-index: 2;
+      opacity: 1;
+      transform: none;
+    }
+
+    .screen.is-before { transform: scale(.985) translateX(-12px); }
+
+    .device-caption {
+      position: absolute;
+      right: 0;
+      bottom: 22px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: #6e7886;
+      font-size: 11px;
+      letter-spacing: .04em;
+    }
+
+    .device-caption::before {
+      content: "";
+      width: 6px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 12px var(--accent);
+    }
+
+    .outro {
+      min-height: 72vh;
+      padding: 110px 20px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+    }
+
+    .outro__inner { max-width: 760px; }
+
+    .outro h2 {
+      margin: 0;
+      font-size: clamp(2.8rem, 7vw, 6.2rem);
+      line-height: .95;
+      letter-spacing: -.06em;
+    }
+
+    .outro p {
+      max-width: 570px;
+      margin: 25px auto 0;
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.65;
+    }
+
+    @media (max-width: 900px) {
+      .story { min-height: 520vh; }
+
+      .stage {
+        min-height: 680px;
+      }
+
+      .stage__inner {
+        width: min(calc(100% - 34px), 720px);
+        grid-template-columns: minmax(0, 1fr) minmax(280px, .72fr);
+        gap: 22px;
+      }
+
+      .copy-panel h2 { font-size: clamp(2.5rem, 7vw, 4.2rem); }
+      .copy-panels { min-height: 270px; }
+      .step__name { font-size: 11px; }
+      .device { width: min(35vh, 310px); }
+    }
+
+    @media (max-width: 680px) {
+      :root { --nav-h: 58px; }
+
+      .nav__inner { width: calc(100% - 28px); }
+      .preview-pill { display: none; }
+      .intro { min-height: 70vh; padding-top: 110px; }
+      .intro h1 { font-size: clamp(3.1rem, 17vw, 5.1rem); }
+
+      .story { min-height: 570vh; }
+
+      .stage {
+        min-height: 720px;
+      }
+
+      .stage__inner {
+        width: calc(100% - 30px);
+        grid-template-columns: 1fr;
+        grid-template-rows: auto minmax(0, 1fr);
+        align-content: center;
+        gap: 6px;
+        padding-block: 18px 14px;
+      }
+
+      .copy { padding: 0; }
+      .section-label { margin-bottom: 13px; }
+      .copy-panels { min-height: 156px; }
+      .copy-panel h2 { margin-bottom: 10px; font-size: clamp(2rem, 10vw, 3.2rem); }
+      .copy-panel p { font-size: .88rem; line-height: 1.48; }
+      .tags { display: none; }
+      .steps { margin-top: 14px; }
+      .step { padding-top: 13px; }
+      .step__number { display: none; }
+      .step__name { font-size: 10px; }
+      .controls { display: none; }
+
+      .device-column { min-height: 0; }
+      .device { width: min(28.5vh, 258px); border-radius: clamp(25px, 3.6vh, 34px); }
+      .device-caption { display: none; }
+    }
+
+    @media (max-height: 720px) and (min-width: 681px) {
+      .stage { min-height: 580px; }
+      .device { width: min(36vh, 285px); }
+      .copy-panel h2 { font-size: clamp(2.5rem, 5vw, 4.4rem); }
+      .copy-panels { min-height: 230px; }
+      .steps { margin-top: 24px; }
+      .controls { margin-top: 18px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation: none !important; transition-duration: .01ms !important; }
+      .device { transform: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <div class="nav__inner">
+      <div class="brand"><span class="brand__mark">O</span> Oxygon</div>
+      <span class="preview-pill">Activities concept · local preview</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="intro">
+      <div class="intro__inner">
+        <p class="eyebrow">One connected workflow</p>
+        <h1>From intent<br><span>to execution.</span></h1>
+        <p class="intro__lede">Activities brings the whole effort into one continuous flow: define it, fuel it, check it, build it and follow it live.</p>
+        <span class="scroll-cue">Scroll to explore the workflow</span>
+      </div>
+    </section>
+
+    <section class="story" id="activities-story" aria-label="Activities workflow">
+      <div class="stage" id="activities-stage">
+        <div class="stage__inner">
+          <div class="copy">
+            <div class="section-label">Activities</div>
+
+            <div class="copy-panels" aria-live="polite">
+              <article class="copy-panel is-active" data-panel="0">
+                <h2>Start with the effort.</h2>
+                <p>Choose a race or workout, add a GPX route or set the distance, then define the result you are training for.</p>
+                <div class="tags"><span class="tag">Race or workout</span><span class="tag">GPX course</span><span class="tag">Target time</span></div>
+              </article>
+              <article class="copy-panel" data-panel="1">
+                <h2>Set the engine.</h2>
+                <p>Turn your profile and the expected conditions into practical hourly targets for water, carbohydrates and sodium.</p>
+                <div class="tags"><span class="tag">Water</span><span class="tag">Carbohydrates</span><span class="tag">Sodium</span></div>
+              </article>
+              <article class="copy-panel" data-panel="2">
+                <h2>Review every input.</h2>
+                <p>Check the route, prediction, fuelling method and checkpoints before Oxygon generates anything. Nothing changes silently.</p>
+                <div class="tags"><span class="tag">Prediction</span><span class="tag">Checkpoints</span><span class="tag">Full control</span></div>
+              </article>
+              <article class="copy-panel" data-panel="3">
+                <h2>A plan for every checkpoint.</h2>
+                <p>Get a clear schedule of what to take and when. Adjust individual items or notes without losing the calculated baseline.</p>
+                <div class="tags"><span class="tag">Timed schedule</span><span class="tag">Editable items</span><span class="tag">Race-ready</span></div>
+              </article>
+              <article class="copy-panel" data-panel="4">
+                <h2>Execute it while you move.</h2>
+                <p>See elapsed time, distance, sensors, conditions and the next checkpoint at a glance—without losing focus on the effort.</p>
+                <div class="tags"><span class="tag">Live sensors</span><span class="tag">Next up</span><span class="tag">Live guidance</span></div>
+              </article>
+            </div>
+
+            <div class="steps" role="tablist" aria-label="Activities steps">
+              <button class="step is-active" type="button" role="tab" aria-selected="true" data-step="0"><span class="step__number">01</span><span class="step__name">Event</span></button>
+              <button class="step" type="button" role="tab" aria-selected="false" data-step="1"><span class="step__number">02</span><span class="step__name">Fuel</span></button>
+              <button class="step" type="button" role="tab" aria-selected="false" data-step="2"><span class="step__number">03</span><span class="step__name">Review</span></button>
+              <button class="step" type="button" role="tab" aria-selected="false" data-step="3"><span class="step__number">04</span><span class="step__name">Plan</span></button>
+              <button class="step" type="button" role="tab" aria-selected="false" data-step="4"><span class="step__number">05</span><span class="step__name">Live</span></button>
+            </div>
+
+            <div class="controls">
+              <button class="arrow" id="previous-step" type="button" aria-label="Previous step" disabled>←</button>
+              <button class="arrow" id="next-step" type="button" aria-label="Next step">→</button>
+              <span class="counter"><strong id="current-number">01</strong> / 05</span>
+            </div>
+          </div>
+
+          <div class="device-column" id="device-column">
+            <div class="device-glow"></div>
+            <div class="device" id="device">
+              <img class="screen is-active" data-screen="0" src="assets/site/activities/event.webp?v=20260803-dark" alt="Oxygon event setup screen" width="540" height="1174">
+              <img class="screen" data-screen="1" src="assets/site/activities/fuel.webp?v=20260803-dark" alt="Oxygon fuelling targets screen" width="540" height="1174" loading="lazy">
+              <img class="screen" data-screen="2" src="assets/site/activities/review.webp?v=20260803-dark" alt="Oxygon activity review screen" width="540" height="1174" loading="lazy">
+              <img class="screen" data-screen="3" src="assets/site/activities/plan.webp?v=20260803-dark" alt="Oxygon generated activity plan" width="540" height="1174" loading="lazy">
+              <img class="screen" data-screen="4" src="assets/site/activities/live.webp?v=20260803-dark" alt="Oxygon live running activity screen" width="540" height="1174" loading="lazy">
+            </div>
+            <span class="device-caption">Actual in-app screens</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="outro">
+      <div class="outro__inner">
+        <p class="eyebrow">One activity · five connected moments</p>
+        <h2>Built before.<br>Useful during.</h2>
+        <p>The plan does not end when the workout starts. The same decisions follow the athlete into the live activity.</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const story = document.getElementById('activities-story');
+      const stage = document.getElementById('activities-stage');
+      const panels = [...document.querySelectorAll('[data-panel]')];
+      const screens = [...document.querySelectorAll('[data-screen]')];
+      const steps = [...document.querySelectorAll('[data-step]')];
+      const previous = document.getElementById('previous-step');
+      const next = document.getElementById('next-step');
+      const counter = document.getElementById('current-number');
+      const device = document.getElementById('device');
+      const deviceColumn = document.getElementById('device-column');
+      const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+      let active = 0;
+      let ticking = false;
+
+      function setActive(index) {
+        const target = Math.max(0, Math.min(steps.length - 1, index));
+        if (target === active && panels[target].classList.contains('is-active')) return;
+        active = target;
+
+        panels.forEach((panel, i) => panel.classList.toggle('is-active', i === active));
+        screens.forEach((screen, i) => {
+          screen.classList.toggle('is-active', i === active);
+          screen.classList.toggle('is-before', i < active);
+        });
+        steps.forEach((step, i) => {
+          const selected = i === active;
+          step.classList.toggle('is-active', selected);
+          step.setAttribute('aria-selected', String(selected));
+        });
+
+        previous.disabled = active === 0;
+        next.disabled = active === steps.length - 1;
+        counter.textContent = String(active + 1).padStart(2, '0');
+      }
+
+      function indexFromScroll() {
+        const rect = story.getBoundingClientRect();
+        const travel = Math.max(1, story.offsetHeight - innerHeight);
+        const progress = Math.max(0, Math.min(1, -rect.top / travel));
+        return Math.round(progress * (steps.length - 1));
+      }
+
+      function updateFromScroll() {
+        ticking = false;
+        setActive(indexFromScroll());
+      }
+
+      function onScroll() {
+        if (!ticking) {
+          ticking = true;
+          requestAnimationFrame(updateFromScroll);
+        }
+      }
+
+      function scrollToStep(index) {
+        const travel = story.offsetHeight - innerHeight;
+        const storyTop = scrollY + story.getBoundingClientRect().top;
+        const target = storyTop + travel * (index / (steps.length - 1));
+        scrollTo({ top: target, behavior: reduceMotion.matches ? 'auto' : 'smooth' });
+      }
+
+      steps.forEach(step => step.addEventListener('click', () => scrollToStep(Number(step.dataset.step))));
+      previous.addEventListener('click', () => scrollToStep(active - 1));
+      next.addEventListener('click', () => scrollToStep(active + 1));
+
+      stage.addEventListener('keydown', event => {
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') scrollToStep(active + 1);
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') scrollToStep(active - 1);
+      });
+
+      deviceColumn.addEventListener('pointermove', event => {
+        if (reduceMotion.matches || innerWidth < 681) return;
+        const rect = deviceColumn.getBoundingClientRect();
+        const x = (event.clientX - rect.left) / rect.width - .5;
+        const y = (event.clientY - rect.top) / rect.height - .5;
+        device.style.setProperty('--tilt-y', `${x * 5}deg`);
+        device.style.setProperty('--tilt-x', `${y * -4}deg`);
+        deviceColumn.style.setProperty('--glow-x', `${x * 20}px`);
+        deviceColumn.style.setProperty('--glow-y', `${y * 20}px`);
+      });
+
+      deviceColumn.addEventListener('pointerleave', () => {
+        device.style.setProperty('--tilt-y', '0deg');
+        device.style.setProperty('--tilt-x', '0deg');
+        deviceColumn.style.setProperty('--glow-x', '0px');
+        deviceColumn.style.setProperty('--glow-y', '0px');
+      });
+
+      addEventListener('scroll', onScroll, { passive: true });
+      addEventListener('resize', onScroll, { passive: true });
+      setActive(0);
+      updateFromScroll();
+    })();
+  </script>
+</body>
+</html>
