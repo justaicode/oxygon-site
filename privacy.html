@@ -76,11 +76,11 @@
 <main>
   <div class="eyebrow">Legal</div>
   <h1>Privacy Policy</h1>
-  <p class="updated">Last updated October 5, 2026</p>
+  <p class="updated">Last updated 21 October 2026</p>
 
   <div class="card summary">
     <h2>The short version</h2>
-    <p>Oxygon works entirely on your device and does not require an account. If you choose to sign in, your race plans, saved products, and settings are backed up to our server so they sync across your devices. Community, if you use it, stores what you choose to share, as set out below. There are no analytics, no advertising, and no tracking of any kind, and your data is never sold or shared for marketing.</p>
+    <p>Oxygon works entirely on your device and does not require an account. If you choose to sign in, your race plans, saved products, and settings are backed up to our server so they sync across your devices. Community, if you use it, stores what you choose to share, as set out below. Ask Coach, if you use it, is set out below. There are no analytics, no advertising, and no tracking of any kind, and your data is never sold or shared for marketing.</p>
   </div>
 
   <div class="card">
@@ -123,6 +123,25 @@
     <p>Community data is hosted on the same Supabase project in the European Union. It is used to run Community. It is never sold and never shared with advertisers.</p>
   </div>
 
+  <div class="card" id="ask-coach">
+    <h2>Ask Coach</h2>
+    <p>Ask Coach is optional. On iPhone, iPad and the web, a Pro account can ask a question about training. The answer states what stands out in the facts. It does not advise, and it does not build or change a plan.</p>
+    <p>When you ask, the app sends the question to our Supabase edge function, coach-ask. That function sends it on to Anthropic's API. The model is claude-opus-5-5. The function writes nothing down: it has no store for the question or the answer.</p>
+    <p>With the question, the request includes:</p>
+    <ul>
+      <li><strong>Training activities</strong> — activities the app already holds, with their dates and measurements</li>
+      <li><strong>Notes</strong> — notes kept with those activities, and calendar notes</li>
+      <li><strong>Glucose</strong> — glucose readings already stored with an activity, where the activity has them</li>
+      <li><strong>Profile facts</strong> — resting heart rate, maximum heart rate, and sex if you have set it</li>
+      <li><strong>Plans</strong> — the name, sport and day of your plans</li>
+      <li><strong>The question</strong>, and a recent part of this conversation</li>
+    </ul>
+    <p>Notes and glucose can be sensitive. They are included so the answer can use what you already keep in the app. An activity that exists only as Strava data is left out of the request.</p>
+    <p><strong>Conversation history.</strong> The conversation stays on the device. It is not part of account sync. On iPhone and iPad it is a file in the app's documents, ask-coach-history.json. On the web it is in this browser's local storage, under oxygon.ask-coach.v1. A recent part of that history is sent with the next question.</p>
+    <p><strong>Deletion.</strong> In Ask Coach, open History and use <strong>Clear history</strong>. That removes the conversation from the device. Deleting the app removes the iPhone and iPad file. Clearing this site's stored data removes the web copy. <strong>Delete Account</strong> removes the synced account. It does not, by itself, remove a conversation that lives only on the device. Use Clear history for that.</p>
+    <p><strong>Anthropic.</strong> The request is sent so Anthropic can write the answer. The coach-ask function does not set a separate training or retention control, and the Coach scope review does not establish one. This section does not claim that Anthropic refrains from training on the request, and it does not state how long Anthropic keeps it.</p>
+  </div>
+
   <div class="card">
     <h2>Third parties we rely on</h2>
     <ul>
@@ -132,7 +151,7 @@
       <li><strong>Apple Health</strong> (only if you allow it) — workouts, heart rate and related samples are read on your device to compute your training metrics. Nothing is written back.</li>
       <li><strong>Health Connect</strong> (Android, only if you allow it) — workouts, distance, elevation and heart rate are read on your device to compute your training metrics. Nothing is written back. Oxygon asks for history beyond the last 30 days because a training plan is built against a whole year — thirty days cannot tell a base phase from a taper. Revoke any time in Settings, or in Health Connect itself.</li>
       <li><strong>intervals.icu</strong> (only if you connect it) — with the API key you provide we read your activity summaries and wellness data to compute your training metrics and history. The key is stored on your device only. Disconnect any time in Settings.</li>
-      <li><strong>Anthropic</strong> — when you ask the coach or the race assistant a question, the question, your plan and your interview answers are sent to Anthropic's API to produce the reply. If you import a lab report, the document itself is sent there too, once, so its stage table can be read; nothing it returns is used until you have checked it on screen. Strava data is never included. Anthropic does not train on API data.</li>
+      <li><strong>Anthropic</strong> — Ask Coach is described in its own section. When you ask the race assistant a question, the question, your plan and your interview answers are sent to Anthropic's API to produce the reply. If you import a lab report, the document itself is sent there too, once, so its stage table can be read; nothing it returns is used until you have checked it on screen. Strava data is never included. Anthropic does not train on API data.</li>
       <li><strong>Open-Meteo</strong> — the forecast for a race location is fetched from their public weather API; only coordinates and dates are sent.</li>
       <li><strong>MapTiler</strong> — maps are drawn from MapTiler's tiles: a course, the small map on a route card, and a replay. The route card is drawn on our server, and MapTiler then receives only the map area being drawn, from us, not your account. When the app shows a map, your device requests the tiles for the area on screen. A replay may also send the coordinate at the start of the route so the place can be named. MapTiler does not receive your account.</li>
       <li><strong>Crew link</strong> (only if you share one) — while an activity is running, your position, pace, heart rate and glucose are published to a private link you choose to share, so your crew can follow you. Anyone with the link can see it for the duration of the activity.</li>
