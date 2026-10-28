@@ -319,6 +319,13 @@
   </div>
 </div>
 
+<link rel="stylesheet" href="../app/measurement-tiles.css">
+<link rel="stylesheet" href="../app/face-dots.css">
+<link rel="stylesheet" href="telemetry-tiles.css">
+<script src="../app/lib/kotlin-kotlin-stdlib.js"></script>
+<script src="../app/lib/oxygon-engine.js"></script>
+<script src="../app/measurement-tiles.js"></script>
+<script src="../app/face-dots.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
@@ -370,12 +377,15 @@ const PACE_WINDOW_KM = 1.0;
    been covered this reports across everything so far, so it briefly equals the
    overall average; the two agreeing early is correct, not a glitch. */
 function currentPace(){
-  if(PACEHIST.length < 2) return null;
-  const b = PACEHIST[PACEHIST.length-1];
+  // The published time/distance series also covers the kilometre before this viewer arrived.
+  const published=hrPoints().filter(p=>Number.isFinite(p.t)&&Number.isFinite(p.km)).map(p=>[p.t,p.km]);
+  const history=published.length>1?published:PACEHIST;
+  if(history.length < 2) return null;
+  const b = history[history.length-1];
   // The most recent sample at least a kilometre back, else the oldest we have.
-  let a = PACEHIST[0];
-  for(let i=PACEHIST.length-1;i>=0;i--){
-    if(b[1]-PACEHIST[i][1] >= PACE_WINDOW_KM){ a = PACEHIST[i]; break; }
+  let a = history[0];
+  for(let i=history.length-1;i>=0;i--){
+    if(b[1]-history[i][1] >= PACE_WINDOW_KM){ a = history[i]; break; }
   }
   const dKm = b[1]-a[1], dT = b[0]-a[0];
   if(!(dKm > 0.05) || !(dT > 10)) return null;
@@ -796,16 +806,35 @@ function showError(title, msg){
   $("error").classList.remove("hidden");
 }
 
+// Recorded geometry wins over a planned course. Preserve its ordering and every
+// usable fix: neither sorting nor thinning belongs in the public renderer.
+function routePoints(plan){
+  const recorded = plan.recordedTrack?.points;
+  const points = Array.isArray(recorded) && recorded.length > 1 ? recorded : plan.track?.points;
+  return Array.isArray(points) ? points.filter(p => num(p.distanceKm)!=null &&
+    num(p.latitude)!=null && num(p.longitude)!=null && Math.abs(p.latitude)<=90 && Math.abs(p.longitude)<=180) : [];
+}
+function refreshRoute(plan){
+  const next=routePoints(plan);
+  if(JSON.stringify(next)===JSON.stringify(PTS)) return;
+  PTS=next;
+  const segs=routeSegments(PTS);
+  if(MAP && segs.length){
+    if(ROUTE) ROUTE.setLatLngs(segs);
+    else ROUTE=L.polyline(segs,{color:"#4f9dff",weight:4,opacity:.9}).addTo(MAP);
+    if(LIVELINE){MAP.removeLayer(LIVELINE);LIVELINE=null;}
+    fitMap(0);
+  }
+  if(BIGMAP){
+    if(BIGROUTE) BIGROUTE.setLatLngs(segs);
+    else if(segs.length) BIGROUTE=L.polyline(segs,{color:"#4f9dff",weight:4,opacity:.9}).addTo(BIGMAP);
+    if(BIGLIVELINE && segs.length){BIGMAP.removeLayer(BIGLIVELINE);BIGLIVELINE=null;}
+  }
+}
+
 function setupPlan(plan){
   PLAN = plan;
-  // The planned course if there is one, otherwise the line actually run.
-  // A workout started without a GPX has only the second, and it does not exist
-  // until the activity finishes — while it is running the live position below is
-  // the only route information there is.
-  const line = (plan.track && Array.isArray(plan.track.points) && plan.track.points.length)
-             ? plan.track
-             : plan.recordedTrack;
-  PTS = (line && Array.isArray(line.points)) ? line.points.filter(p=>num(p.distanceKm)!=null) : [];
+  PTS = routePoints(plan);
   IS_WORKOUT = (plan.kind === "workout");
   OPEN_ENDED = plan.isOpenEnded === true;
   TREADMILL = plan.isTreadmill === true;
@@ -847,7 +876,7 @@ async function refreshPlan(){
   try{
     const token=getToken();
     const plan = await rpc("public_plan", {token});
-    if(plan && plan.raceName){ PLAN=plan; }
+    if(plan && plan.raceName){ PLAN=plan; refreshRoute(plan); }
   }catch(e){/* keep last */}
 }
 
@@ -1573,19 +1602,20 @@ function drawProfile(km){
    between containers leaves Leaflet with stale pane sizes and a grey half-tiled
    canvas. Scroll-wheel zoom is on here and off in the card, because in the card
    it hijacks the page scroll. */
-let BIGMAP=null, BIGYOU=null;
+let BIGMAP=null, BIGYOU=null, BIGROUTE=null;
 function openBigMap(){
   const modal=$("map-modal"); if(!modal) return;
   modal.classList.remove("hidden");
   $("map-modal-title").textContent = PLAN?.raceName || "Location";
-  const segs = routeSegments(PTS);
+  $("map-close").focus();
+  const segs = PTS.length ? routeSegments(PTS) : (LIVETRAIL.length ? [LIVETRAIL] : []);
   const latlngs = segs.flat();
   if(!BIGMAP){
     BIGMAP = L.map("map-big",{zoomControl:true, scrollWheelZoom:true});
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                {maxZoom:19, attribution:'&copy; OpenStreetMap'}).addTo(BIGMAP);
+                {maxZoom:19, attribution:'© OpenStreetMap contributors'}).addTo(BIGMAP);
     if(latlngs.length){
-      L.polyline(segs,{color:"#4f9dff",weight:4,opacity:.9}).addTo(BIGMAP);
+      BIGROUTE=L.polyline(segs,{color:"#4f9dff",weight:4,opacity:.9}).addTo(BIGMAP);
       L.circleMarker(latlngs[0],{radius:6,color:"#33d69f",fillColor:"#33d69f",fillOpacity:1}).addTo(BIGMAP);
       L.circleMarker(latlngs[latlngs.length-1],{radius:6,color:"#fff",fillColor:"#2f7df6",fillOpacity:1}).addTo(BIGMAP);
     }
@@ -1617,13 +1647,14 @@ function openBigMap(){
   // than expected — fit again once it is unambiguously real.
   setTimeout(()=>{ if(BIGMAP.getZoom() <= 2) fit(); }, 400);
 }
-function closeBigMap(){ $("map-modal")?.classList.add("hidden"); }
+function closeBigMap(){ $("map-modal")?.classList.add("hidden"); $("map-expand")?.focus(); }
 
 /* Keep the runner's dot on the expanded map in step with the small one. */
 function syncBigYou(){
-  if(!BIGMAP || !LAST || LAST.km==null) return;
-  const p = posAt(LAST.km); if(!p) return;
-  const at=[p.latitude,p.longitude];
+  if(!BIGMAP || !LAST) return;
+  const p = posAt(LAST.km);
+  const at=num(LAST.lat)!=null && num(LAST.lon)!=null ? [LAST.lat,LAST.lon] : p ? [p.latitude,p.longitude] : null;
+  if(!at) return;
   if(BIGYOU) BIGYOU.setLatLng(at);
   else BIGYOU = L.circleMarker(at,{radius:8,color:"#fff",weight:3,
                                    fillColor:"#ff4b57",fillOpacity:1}).addTo(BIGMAP);
@@ -1647,7 +1678,7 @@ function initMap(){
   const latlngs = segs.flat();
   MAP = L.map("map",{zoomControl:true, attributionControl:true, scrollWheelZoom:false});
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
-    maxZoom:18, attribution:'&copy; OpenStreetMap'
+    maxZoom:18, attribution:'© OpenStreetMap contributors'
   }).addTo(MAP);
   if(latlngs.length){
     ROUTE = L.polyline(segs,{color:"#4f9dff",weight:4,opacity:.9}).addTo(MAP);
@@ -1692,8 +1723,8 @@ function updateMap(km){
   // whether or not anybody uploaded a GPX.
   let ll=null;
   const p = (km!=null && PTS.length) ? posAt(km) : null;
-  if(p) ll=[p.latitude,p.longitude];
-  else if(LAST && num(LAST.lat)!=null && num(LAST.lon)!=null) ll=[LAST.lat,LAST.lon];
+  if(LAST && num(LAST.lat)!=null && num(LAST.lon)!=null) ll=[LAST.lat,LAST.lon];
+  else if(p) ll=[p.latitude,p.longitude];
 
   if(!ll){ if(MEMARK){MAP.removeLayer(MEMARK);MEMARK=null;} return; }
 
@@ -1705,7 +1736,7 @@ function updateMap(km){
 
   // With no route to draw, stitch one from the fixes as they arrive so the crew
   // sees the shape of the run rather than a lone dot wandering a blank map.
-  if(!PTS.length){
+  if(!PLAN.recordedTrack?.points?.length && LAST && num(LAST.lat)!=null && num(LAST.lon)!=null){
     const last = LIVETRAIL[LIVETRAIL.length-1];
     // ~10 m, matching what the phone itself keeps. Anything finer is GPS jitter
     // drawn at full size.
@@ -1886,5 +1917,6 @@ wireTheme();
 wireAdmin();
 boot();
 </script>
+<script src="telemetry-tiles.js"></script>
 </body>
 </html>

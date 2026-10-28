@@ -1,0 +1,18 @@
+/* The app's measurement component, on the public page's palette. */
+.oxm-app{--ink:var(--text);--ink-secondary:var(--dim);--ink-tertiary:var(--muted);--weight-semibold:600;--weight-bold:700;--sport-run:#F2556B;--connected:#3DD47A;--attention:#FFB53D;--race-type:#FF5961}
+.oxm-tiles{margin:0 0 20px}
+.oxm-tiles .measurement-tile{position:relative;border:1px solid var(--line);padding:8px 18px 8px 8px;cursor:pointer;touch-action:pan-y;-webkit-user-select:none;user-select:none}
+.oxm-tiles .measurement-context{white-space:nowrap;font-size:11px}
+.oxm-tiles .measurement-number{font-size:23px}
+.oxm-tiles .measurement-unit{font-size:12px}
+.oxm-tiles .measurement-label{font-size:11px}
+.oxm-tiles .icon,.metric-group-menu .icon{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;flex:none}
+.metric-group-menu{position:absolute;z-index:1500;min-width:190px;padding:5px;border:1px solid var(--line);border-radius:12px;background:var(--card2);box-shadow:var(--shadow)}
+.metric-group-menu button{display:flex;align-items:center;gap:10px;width:100%;min-height:40px;padding:8px 12px;border:0;background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer;white-space:nowrap}
+.metric-group-menu button:disabled{opacity:.35;cursor:default}
+.metric-group-menu button:hover:not(:disabled){background:var(--inset);border-radius:8px}
+.metric-group-menu .check{margin-left:auto}
+.metric-group-menu .menu-action-icon{display:flex}
+.oxm-drift-label{position:absolute;top:18px;font-size:10px;font-weight:700;color:var(--dim);pointer-events:none;padding:0 4px;white-space:nowrap}
+
+.oxm-tiles .icon.drift{color:var(--drift)}
