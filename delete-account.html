@@ -31,14 +31,20 @@
   .nav{position:sticky;top:0;z-index:50;background:rgba(11,15,25,0.82);
     backdrop-filter:saturate(160%) blur(14px);-webkit-backdrop-filter:saturate(160%) blur(14px);
     border-bottom:1px solid rgba(120,124,138,0.18);}
-  .nav-in{display:flex;align-items:center;gap:16px;height:64px;}
+  .nav-in{display:flex;align-items:center;gap:16px;height:64px;min-width:0;}
   .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;color:var(--ink);letter-spacing:-.01em;}
   .brand .logo{width:26px;height:26px;flex:0 0 auto;}
   .nav-links{display:flex;gap:22px;margin-left:auto;align-items:center;}
   .nav-links a{color:var(--ink-soft);font-weight:600;font-size:15px;} .nav-links a:hover{color:var(--ink);}
   .nav-cta{display:inline-flex;align-items:center;padding:9px 18px;border-radius:999px;font-weight:700;font-size:14px;background:var(--accent);color:#fff;}
   .nav-cta:hover{filter:brightness(1.08);color:#fff;}
-  @media (max-width:600px){ .nav-links a.hide-sm{display:none;} }
+  @media (max-width:600px){
+    .nav-links a.hide-sm{display:none;}
+    .wrap{padding:0 16px;}
+    .nav-in{gap:8px;height:auto;min-height:64px;padding:10px 0;}
+    .nav-links{gap:8px 10px;flex-wrap:wrap;justify-content:flex-end;min-width:0;}
+    .nav-cta{padding:8px 12px;font-size:13px;}
+  }
 
   main{max-width:800px;margin:0 auto;padding:48px 24px 44px;}
   .eyebrow{display:inline-block;font-weight:700;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);}
@@ -76,11 +82,11 @@
 <main>
   <div class="eyebrow">Account</div>
   <h1>Delete your Oxygon account</h1>
-  <p class="updated">Last updated August 27, 2026</p>
+  <p class="updated">Last updated 30 October 2026</p>
 
   <div class="card summary">
     <h2>The short version</h2>
-    <p>Open <strong>Oxygon — Race Fuelling &amp; Coach</strong>, go to <strong>Settings → Delete Account</strong>, and confirm. Your account and everything synced to it are removed from our servers permanently. The plans and activities already on your phone stay on your phone, and deleting the app removes those too.</p>
+    <p>Open Oxygon, go to <strong>Settings → Delete Account</strong>, and confirm. Your account and everything synced to it are removed from our servers. The plans and activities already on your phone stay on your phone. Deleting the app removes those too. Deleting the account does not cancel a subscription.</p>
   </div>
 
   <div class="card">
@@ -91,7 +97,7 @@
       <li>Scroll to the bottom and tap <strong>Delete Account</strong>.</li>
       <li>Confirm when asked. There is no undo.</li>
     </ul>
-    <p>If you can't reach the app — you've lost the device, or you're already signed out — email <a href="mailto:zanon.robert@gmail.com">zanon.robert@gmail.com</a> from the address the account uses and ask for it to be deleted. We'll confirm once it's done.</p>
+    <p>If you can't reach the app — you've lost the device, or you're already signed out — email <a href="mailto:support@oxygon.app">support@oxygon.app</a> from the address the account uses and ask for it to be deleted. We'll confirm once it's done.</p>
   </div>
 
   <div class="card">
@@ -99,18 +105,18 @@
     <p>Everything stored against your account on our servers, permanently and immediately:</p>
     <ul>
       <li>Your email address and the account itself</li>
-      <li>Race plans, checkpoints, fuel items and reminders</li>
+      <li>Plans, checkpoints, fuel items and reminders</li>
       <li>Recorded activities, routes, heart-rate traces and glucose readings</li>
-      <li>Imported training-session summaries, your coach profile and any training plan built from them</li>
-      <li>Saved products, favorites, gear and settings</li>
-      <li>Any crew-tracking link you minted, which stops working at once</li>
+      <li>The live route published for a crew link, and that link, which stops working at once</li>
+      <li>Your Community profile, posts, photos and comments</li>
+      <li>Imported training summaries and saved products, gear and settings</li>
     </ul>
   </div>
 
   <div class="card">
     <h2>What is kept, and for how long</h2>
     <p><strong>Nothing is kept after the deletion completes.</strong> There is no retention window and no archive — the rows are removed rather than flagged.</p>
-    <p>Two things sit outside that, and neither is your account data: ordinary server logs, which contain no plan or activity content and age out on our host's own schedule; and anything you exported or shared yourself, such as a crew link you sent to someone who saved the page.</p>
+    <p>Two things sit outside that, and neither is your account data: ordinary server logs, which contain no plan or activity content and age out on our host's own schedule; and a page someone saved from a crew link, including the route snapshot on that page.</p>
     <p>A subscription is separate. Deleting your Oxygon account does <strong>not</strong> cancel it — cancel that in <strong>Google Play → Subscriptions</strong>, or on iPhone in <strong>Settings → your name → Subscriptions</strong>.</p>
   </div>
 
@@ -121,7 +127,7 @@
 
   <div class="card">
     <h2>Contact</h2>
-    <p>Questions about deletion can be sent to <a href="mailto:zanon.robert@gmail.com">zanon.robert@gmail.com</a>. What Oxygon stores in the first place is set out in the <a href="privacy.html">Privacy Policy</a>.</p>
+    <p>Questions about deletion can be sent to <a href="mailto:support@oxygon.app">support@oxygon.app</a>. What Oxygon stores in the first place is set out in the <a href="privacy.html">Privacy Policy</a>.</p>
   </div>
 </main>
 
@@ -129,12 +135,13 @@
   <div class="foot-in">
     <a href="/">Home</a>
     <a href="/#features">Features</a>
+    <a href="/changelog/">Changelog</a>
     <a href="support.html">Support</a>
     <a href="privacy.html">Privacy</a>
     <a href="terms.html">Terms</a>
     <a href="delete-account.html">Delete account</a>
     <span class="sp">© 2026 Oxygon</span>
-    <a href="mailto:zanon.robert@gmail.com">Contact</a>
+    <a href="mailto:support@oxygon.app">Contact</a>
   </div>
 </footer>
 </body>
