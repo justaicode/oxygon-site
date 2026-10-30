@@ -7,7 +7,7 @@
 <link rel="icon" href="/icons/icon-32.png" sizes="32x32" type="image/png">
 <link rel="icon" href="/icons/icon-192.png" sizes="192x192" type="image/png">
 <link rel="apple-touch-icon" href="/icons/icon-180.png">
-<meta name="description" content="What changed in Oxygon, from the first release through today.">
+<meta name="description" content="Oxygon started in July 2026 as a pace calculator and became a place to plan a race, record it, and share it.">
 <meta name="theme-color" content="#0B0F19">
 
 <style>
@@ -53,23 +53,17 @@
   h1{font-size:clamp(32px,5vw,44px);font-weight:850;margin:12px 0 30px;}
   .card{background:var(--panel);border:1px solid var(--panel-line);border-radius:var(--radius);padding:24px 26px;margin-bottom:16px;}
   h2{font-size:18px;margin:0 0 10px;font-weight:750;color:var(--ink);}
+  h3{font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);font-weight:750;margin:18px 0 8px;}
+  .card h3:first-of-type{margin-top:4px;}
   p{margin:0 0 12px;color:var(--ink-soft);} p:last-child{margin-bottom:0;}
+  .lead{color:var(--ink);font-size:16.5px;line-height:1.55;}
   ul{margin:0;padding-left:20px;color:var(--ink-soft);} li{margin-bottom:10px;} li:last-child{margin-bottom:0;}
   .card strong{color:var(--ink);font-weight:650;}
   .when{color:var(--ink-faint);font-size:13.5px;font-weight:650;margin:0 0 12px;}
 
-  .slot{border:1px dashed rgba(120,124,138,0.55);border-radius:12px;background:rgba(255,255,255,0.02);
-    color:var(--ink-faint);min-height:120px;display:flex;align-items:center;justify-content:center;
-    text-align:center;padding:22px 18px;min-width:0;}
-  .slot p{color:var(--ink-faint);font-weight:600;font-size:14.5px;margin:0;min-width:0;max-width:100%;}
-  .shots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;}
-  .shot{aspect-ratio:4/3;min-height:0;flex-direction:column;gap:6px;margin:0;}
-  .shot figcaption{font-size:12.5px;font-weight:650;letter-spacing:.04em;text-transform:uppercase;}
   @media (max-width:700px){
     main{padding-left:16px;padding-right:16px;}
     .card{padding:20px 18px;}
-    .shots{grid-template-columns:1fr;}
-    .shot{aspect-ratio:16/10;}
   }
 
   footer.site{border-top:1px solid rgba(120,124,138,0.26);margin-top:34px;}
@@ -78,6 +72,7 @@
   .foot-in a[aria-current="page"]{color:var(--ink);}
   .foot-in .sp{margin-left:auto;color:var(--ink-faint);}
 </style>
+
 </head>
 <body>
 
@@ -100,91 +95,347 @@
   <h1>Changelog</h1>
 
   <article class="card">
-    <h2>1.3.11 — 30 October 2026</h2>
-    <p class="when">On Google Play. Not an App Store version. The App Store app is still 1.3.10.</p>
+    <h2>Highlights</h2>
+    <p class="lead">Oxygon started in July 2026 as a pace calculator and became a place to plan a race, record it, and share it.</p>
     <ul>
-      <li>A finished recording uploads to Strava on its own, even if you close the app, and retries until it succeeds.</li>
-      <li>Heart rate keeps recording when a strap drops out.</li>
+      <li>Plan the course, the pace and the fuelling, checkpoint by checkpoint.</li>
+      <li>Record with GPS, heart rate and auto-pause, and send your crew a live link.</li>
+      <li>Bring training in from Garmin, through intervals.icu, and from Strava. Share a finished recording back to Strava.</li>
+      <li>Run, ride, swim, lift, practice yoga, or sit in the sauna. Each one is its own session.</li>
+      <li>Follow people you train with. A post can carry photos, a chart, a sticker, a story, or a 3D replay.</li>
+      <li>The calendar holds the month, the week, and a note on a day. On iPhone, widgets and the Lock Screen follow the session.</li>
+      <li>A Season plan, and an export of your activities, are on the web from 30 October. They reach Android, iPhone and iPad with the next app versions. Android is 1 November 2026.</li>
+    </ul>
+  </article>
+
+  <article class="card">
+    <h2>1.3.11 — 30 October 2026</h2>
+    <p class="when">On Google Play. Not an App Store version. The App Store app is still 1.3.10. The web app, from 30 October, has the automatic Strava upload, Season plan and export.</p>
+    <h3>New</h3>
+    <ul>
+      <li>On Google Play and on the web, a finished recording uploads to Strava on its own, and the upload retries until it succeeds. On the phone this still happens if you close the app right after Finish. The switch starts off. An activity you imported still waits for Share. An outdoor share includes the route. The App Store version on sale, 1.3.10, does not upload on its own. There you share from the activity.</li>
       <li>Add photos and video to any finished activity, Sauna included.</li>
-      <li>That week shows Run pace, with Climb in metres beside the week before.</li>
-      <li>Sauna, yoga and strength are their own sessions. A sauna fills toward the time you set.</li>
-      <li>The month shows each sport, planned time in grey.</li>
+      <li>That week shows Run pace, with Climb under it. Climb is the runs' total ascent in metres, beside the week before.</li>
+      <li>Season plan, on the web from 30 October. Android, iPhone and iPad receive it with the next app versions. Android is 1 November 2026. It is not in App Store 1.3.10. One main goal race, and other races if you want them. Each week has a load target, with hours beside it for context. The rhythm can be three loading weeks and one recovery week. A missed or heavy week is explained, and you choose whether to keep the targets or review the rest of the season. Nothing moves on its own. The first week starts from the lower of two readings of your recent training, and you may lower that number.</li>
+      <li>Export your activities, on the web from 30 October. Android, iPhone and iPad receive it with the next app versions. Android is 1 November 2026. It is not in App Store 1.3.10. You start from the calendar, the list or the charts, and you choose the dates. The file is built on your device, or in the browser on the web, and it is not assembled on a server. It can include each activity, a table of the activities, and a training report as a PDF. Photos and video stay out unless you turn them on.</li>
+    </ul>
+    <h3>Improved</h3>
+    <ul>
+      <li>Heart rate keeps recording when a strap drops out.</li>
+      <li>The month lists each sport you have done, and the time still planned sits beside it in grey.</li>
+      <li>Sauna, yoga and strength are their own sessions. A sauna fills toward the time you set. During a sauna you can change the temperature, and a finished sauna or yoga shows its heart-rate chart.</li>
+      <li>Charts open more smoothly. A button expands a chart. On the full chart, the pace lane leaves a break where you stopped, instead of stretching across the stop. The That week numbers line up in one table.</li>
+      <li>On the web, someone who opens your live link after you have started sees the route so far, not only where you are now.</li>
+    </ul>
+    <h3>Fixed</h3>
+    <ul>
       <li>A run with no distance says Not recorded.</li>
       <li>A live run stays open.</li>
+      <li>On the web, a day note no longer collides with the date on the calendar.</li>
     </ul>
-    <p>Widgets, the Lock Screen and the Dynamic Island stay on iPhone.</p>
-  </article>
-
-  <article class="card">
-    <h2>This week — 29 October 2026</h2>
-    <p class="when">On the web app now.</p>
+    <h3>Platforms</h3>
     <ul>
-      <li>That week shows your average run pace, or your ride speed, and how it compares with the week before. The current week includes the sessions you have planned.</li>
-      <li>Someone who opens your live-tracking link after you have started sees the route so far, not only where you are now.</li>
-      <li>On the web app, a wellness day can show weight, resting heart rate, sleep and heart-rate variability. A run with no distance says Not recorded. Tiles on a live-tracking page can be swapped, and cardiac drift draws a trend line.</li>
+      <li>Google Play has the automatic Strava upload and retry, photos and video, Run pace and Climb, the heart-rate hold, the grey planned time, sauna, yoga and strength, the chart button and the pace-lane break, Not recorded, and a live run that stays open. The web has the same Strava upload. App Store 1.3.10 does not.</li>
+      <li>Season plan and export are on the web from 30 October. Android, iPhone and iPad receive them with the next app versions. Android is 1 November 2026. They are not in App Store 1.3.10.</li>
+      <li>The route so far on a live link is on the web. It is not in the App Store version on sale today.</li>
+      <li>Widgets, the Lock Screen and the Dynamic Island stay on iPhone.</li>
     </ul>
   </article>
 
   <article class="card">
-    <h2>Not on the App Store yet</h2>
-    <p class="when">Not in the App Store version on sale today. The web app already shows the route so far on a live link.</p>
+    <h2>Web — 24 to 29 October 2026</h2>
+    <p class="when">On the web app at my.oxygon.app, in the days before the 30 October update. The App Store version 1.3.10, on sale from 28 October, includes the items marked for iPhone.</p>
+    <h3>New</h3>
     <ul>
-      <li>On iPhone, someone who opens your live-tracking link after you have started sees the route so far. The web app already does this.</li>
-      <li>The summary opens as soon as you finish.</li>
-      <li>A share to Strava includes the map. If you delete it on Strava, you can share it again.</li>
-      <li>Yoga, sauna and strength can be shared, and a saved share card keeps a solid background.</li>
-      <li>You can open an activity from its Community post and edit it.</li>
-      <li>Titles such as average pace stay on one line.</li>
+      <li>That week shows your average run pace, or your ride speed when the week has no runs, and how it compares with the week before. The current week includes the sessions you have planned. A past week compares what you did. A future week compares what you have planned.</li>
+      <li>Race Predictor sets every distance from 5K to the marathon, plus 60K, 80K and 100K, from your best recent run. One line names that run. The same predictor is in the App Store version.</li>
+      <li>Share a story, a sticker, or a 3D video. Stickers can be your stats, the route, the splits, the day, a big number, or a map. A story can show how this workout compares with last time, or how a run moved your race prediction. A ride can share an effort fingerprint, ridge lines, or a short sound piece.</li>
+      <li>A wellness day can show weight, resting heart rate, sleep and heart-rate variability. Open the day for the charts. A day with nothing recorded shows no block.</li>
+      <li>A step can target a heart rate, on a run, a ride or a swim. Planned load learns from recent steady sessions of the same kind.</li>
+      <li>You can set the fuelling temperature by hand, or fetch the forecast for that start.</li>
+      <li>The pace calculator keeps favourites and a split chart. Critical speed can take a third trial.</li>
+    </ul>
+    <h3>Improved</h3>
+    <ul>
+      <li>Cardiac drift draws a straight trend line, with a dot for each repetition, and names the warm-up and the cool-down. A finished run can share that drift as a picture. On a live session the heart-rate chart draws the same line once the warm-up is over.</li>
+      <li>Save or close returns you to the day you were editing, not to today. The week column has the only Today control.</li>
+      <li>Done versus planned lists each sport by the hours you planned, most first.</li>
+      <li>A Community post can open the activity, including a sauna, yoga or strength session, so you can edit it.</li>
+      <li>Tile titles stay on one line, so the values line up. Charts, the 3D video and the share summary follow kilometres or miles, whichever you use.</li>
+      <li>Connected apps names Strava once the account is connected, and says where sharing starts before you turn it on. Share on a finished run is a switch for Community and a switch for Strava. Community comes down if you turn it off. Strava stays up once it has been posted, and removing it is done on Strava.</li>
+      <li>A long ride's replay clip is ready to share when playback ends. Swipe between stories. The share sheet keeps the other cards if one of them fails.</li>
+      <li>Bikes can be tagged road, gravel, mountain, indoor or race. A ride with no bike takes yours. A bike you chose by hand stays.</li>
+      <li>Search in Settings is no longer cut off on a phone. The Charts page draws each chart once.</li>
+    </ul>
+    <h3>Fixed</h3>
+    <ul>
+      <li>A run with no distance says Not recorded.</li>
+      <li>A missing figure is left blank. Empty lap columns are hidden.</li>
+      <li>An empty course no longer shows a stand-in for its time.</li>
+      <li>In a 3D video, a missing heart-rate reading stays a gap.</li>
+      <li>A removed post, or one that is no longer shared with you, says so in plain words.</li>
+      <li>Typing a time in Race Predictor keeps every digit you enter.</li>
+      <li>Choosing a heart-rate target again keeps the band you already set.</li>
+      <li>Incline waits until there is enough distance to draw it. Letting go after a hold keeps the chart menu open.</li>
+    </ul>
+    <h3>Platforms</h3>
+    <ul>
+      <li>This section is the web app.</li>
+      <li>iPhone and iPad received the matching pieces that were in the App Store version of 28 October: the predictor, the stories and stickers, the share switches, the sauna temperature and heart-rate chart, and returning to the day you edited. See 1.3.10. The drift line on the heart-rate chart is on the web in this stretch.</li>
+      <li>Anything dated here after that App Store version is on the web first.</li>
     </ul>
   </article>
 
   <article class="card">
     <h2>1.3.10 — 28 October 2026</h2>
-    <p class="when">On the App Store. This is the update after 1.3.3. The same weeks are on the web app.</p>
+    <p class="when">On the App Store. This is the update after 1.3.3. The web app already had most of it through October. Google Play did not receive this version as its own release. Play moved from 1.3.6 to 1.3.11 on 30 October.</p>
+    <h3>New</h3>
     <ul>
-      <li>Share a 3D video of a run or a ride. The camera follows the route through the turns. Or share a sticker: your stats, the route, the splits, the day, a big number, or a map.</li>
-      <li>Race Predictor sets every distance from 5K to the marathon, plus 60K, 80K and 100K, from your best recent run. One line names that run.</li>
-      <li>Plan a run, ride, swim, strength session, yoga or sauna on one page, and open it from the calendar ready to start. A fuel block puts the doses on the plan and on the live screen.</li>
-      <li>The calendar can hold a note for a day or several days: limited availability, no availability, illness, injury, recovery, or a plain note. A missed plan keeps its color and gains a ring once the day is over.</li>
-      <li>When the same outing is recorded more than once, the Garmin figures are the ones that count.</li>
-      <li>Connect a heart-rate strap or watch, a treadmill or a foot pod, a Wahoo KICKR, and power and cadence pedals. A saved heart-rate source connects on its own.</li>
-      <li>During a sauna you can change the temperature. A finished sauna or yoga shows its heart-rate chart.</li>
-      <li>Post to Community or share to Strava when you finish. You choose what goes out, including hiding the ends of the route. Read and accept the Community rules before the first post.</li>
-      <li>A ride replay lasts at least as long as you were moving.</li>
-      <li>On iPhone, Home Screen widgets follow the session. The Lock Screen and the Dynamic Island show distance, pace, time and heart rate during a session.</li>
+      <li>Plan a run, ride or swim on one page. Add Sections, a Course, Pacing or Fuel as you need them, and mark it as a race with one switch. Open it from the calendar ready to start. A Fuel block puts the doses on the plan and on the live screen.</li>
+      <li>The calendar can hold a note for a day or several days: limited availability, no availability, illness, injury, recovery, or a plain note. A color band marks those days. A missed plan keeps its color and gains a ring once the day is over.</li>
+      <li>When you finish, post to Community or share to Strava. You choose what goes out, including hiding the ends of the route. Read and accept the Community rules before the first post. You can report or block a post.</li>
+      <li>Share a 3D video of a run or a ride. The camera follows the route through the turns. Or share a sticker.</li>
+      <li>Race Predictor uses one recent run for every distance it offers, and names that run.</li>
+      <li>On iPhone, Home Screen widgets follow the session and your plans. The Lock Screen and the Dynamic Island show distance, pace, time and heart rate during a session.</li>
+      <li>Send a bug, an idea or a question from any screen, including the live screen. The note shows which screen you were on.</li>
+      <li>After an update, What's New opens once. You can open it again from Settings, under Help.</li>
     </ul>
-    <p>On Google Play the public app is 1.3.11, from 30 October 2026. What that update adds is in the 1.3.11 entry. Widgets, the Lock Screen and the Dynamic Island are iPhone only.</p>
+    <h3>Improved</h3>
+    <ul>
+      <li>Every planned activity uses the same step layout. Save and close is on every activity type. Going back with unsaved changes asks you to discard them.</li>
+      <li>Month tiles show a circle for each activity, in its color, with the time or the distance inside. A separate recording can take the plan's place. Weeks run continuously across the month.</li>
+      <li>The same sport, started within a few minutes, becomes one activity. When a watch and the phone both recorded it, the Garmin figures are the ones that count. Notes, photos and fuelling stay. You can set a recording aside or bring it back.</li>
+      <li>A step tile counts down to the next target and shows a finish flag on the last step. It flashes through the last few seconds. A heart-rate workout shows the next zone. The planned pace sits beside Now, in grey.</li>
+      <li>Tap Pace for the current and the average pace, and for speed. Tap Distance for what is left. Tap Energy for the current rate or the average, and for active or gross calories. With heart rate, energy can split into carbohydrate and fat. Hold a tile to move it, including before you start.</li>
+      <li>On iPad, the readings sit on top and both charts sit full width below. Hold a chart to read a moment.</li>
+      <li>A ride replay lasts at least as long as you were moving, and the bike eases through the turns. Kilometre markers on a ride replay do not overlap.</li>
+      <li>Connect a heart-rate strap, or a watch that broadcasts heart rate, plus a treadmill or a foot pod, a Wahoo KICKR, and power and cadence pedals. A saved heart-rate source connects on its own, including when it starts after you do. On an indoor run, distance and pace can come from the treadmill or the foot pod. On an indoor ride, speed can come from power.</li>
+      <li>The sauna ring fills toward the time you set. You can change the temperature during the session. A finished sauna or yoga shows its heart-rate chart.</li>
+      <li>Strength sessions use the exercise library, including flywheel exercises. Each set row has its own reps and weight. A flywheel set uses a wheel size. Search by equipment or muscle group.</li>
+      <li>A finished activity opens from the record saved with it. You can correct a treadmill or foot-pod distance, how it felt, and the note. A Garmin distance stays. Share sits with the rest of the page, after Replay.</li>
+      <li>Oxygon asks you to name an activity you recorded in the app. An imported activity keeps the name it arrived with.</li>
+      <li>Each tile is spoken as one item.</li>
+      <li>Photos you add stay in Oxygon. A share to Strava does not take them from the app.</li>
+    </ul>
+    <h3>Fixed</h3>
+    <ul>
+      <li>The finish review stays where it is when you turn the phone, and the finished page opens after you save or leave it.</li>
+      <li>Signing in tries once more if the first attempt fails. A note you already saved is not sent again.</li>
+      <li>The calendar stays on the week you were looking at when you save, move or delete.</li>
+      <li>Finish works on the first tap. Closing an activity returns you to that day.</li>
+      <li>An outdoor run shows the ascent you climbed. A ride can show its drift and its heart-rate zones.</li>
+      <li>The trainer's plus and minus step once per tap.</li>
+    </ul>
+    <h3>Platforms</h3>
+    <ul>
+      <li>iPhone and iPad, on the App Store. Widgets, the Lock Screen and the Dynamic Island are iPhone only.</li>
+      <li>The web app had the plans, the calendar, Community, the replay and the sensors' web mirror through October. See the web section above for what the browser gained on its own in the last week of the month.</li>
+      <li>Google Play's public app on 28 October was still 1.3.6. What Play gained on 30 October is in 1.3.11.</li>
+    </ul>
+  </article>
+
+  <article class="card">
+    <h2>1.3.6 — October 2026</h2>
+    <p class="when">On Google Play. Sent for review on 8 October 2026 and the production version until 1.3.11. It is the Android update after 1.3.5.</p>
+    <h3>New</h3>
+    <ul>
+      <li>Plan a run, ride or swim on one page, with Sections, a Course, Pacing or Fuel, and a race switch.</li>
+      <li>Month tiles show a circle per activity, in its color, with the time or the distance inside.</li>
+      <li>Each set row has its own reps and weight, and you can add a set under the rows. Flywheel size runs from the smallest wheel to the largest.</li>
+      <li>The Community tab stays on Community. When you finish, you can post the activity beside Strava.</li>
+      <li>Send a bug, an idea or a question from any screen. The report shows that screen.</li>
+    </ul>
+    <h3>Improved</h3>
+    <ul>
+      <li>A missed plan is grey.</li>
+      <li>The Community rules appear before the first post from an activity.</li>
+      <li>Strength, sauna and yoga are in this version, including the sauna ring and yoga as its own session.</li>
+    </ul>
+    <h3>Platforms</h3>
+    <ul>
+      <li>Google Play. Not an App Store version. iPhone and iPad received the larger set on 28 October, in 1.3.10.</li>
+      <li>Widgets are not on Android.</li>
+    </ul>
+  </article>
+
+  <article class="card">
+    <h2>1.3.5 — 6 October 2026</h2>
+    <p class="when">On Google Play. The public update after 1.3.</p>
+    <h3>New</h3>
+    <ul>
+      <li>Running, cycling and swimming open the editor directly. The place is chosen when you start, and a course skips that question.</li>
+      <li>You choose what is shared to Strava. What you share is not passed on to anyone else.</li>
+      <li>Report or block in Community, and accept the rules before you post.</li>
+    </ul>
+    <h3>Improved</h3>
+    <ul>
+      <li>Strength sessions use the exercise library, including flywheel exercises. Strength setup is one page.</li>
+      <li>Arrange the live tiles. A tray puts a tile back. The chart folds into one tile.</li>
+      <li>Indoor runs can use a treadmill or a foot pod.</li>
+      <li>Replays start where you finished. Weeks run across the month.</li>
+      <li>Indoor plans no longer ask you to pick workout or race as a separate kind. Race is the switch on the plan.</li>
+    </ul>
+    <h3>Platforms</h3>
+    <ul>
+      <li>Google Play. The same editor reached iPhone, iPad and the web in the same week. On the App Store it arrived inside 1.3.10.</li>
+    </ul>
   </article>
 
   <article class="card">
     <h2>1.3.3 — 1 October 2026</h2>
     <p class="when">On the App Store. It replaced 1.3.1.</p>
+    <h3>New</h3>
     <ul>
       <li>Plan what you will eat and drink, checkpoint by checkpoint, and draw the course you will do it on.</li>
       <li>Record with GPS, heart rate and auto-pause, and share a link so your crew can follow your position, pace and heart rate.</li>
       <li>Afterward, see the pace, the heart rate against the course, the route, and the shoes you used.</li>
-      <li>Eight calculators work with no account. A library of real races is there to plan against.</li>
-      <li>Community, an optional account, and sync between your phone and the web app are in this version.</li>
+      <li>Calculators work with no account: pace, grade-adjusted pace, heart-rate zones, training paces, calories, and a race predictor.</li>
+      <li>A library of real races is there to plan against.</li>
+      <li>Community, an optional account, and sync between your phone and the web app.</li>
+    </ul>
+    <h3>Improved</h3>
+    <ul>
+      <li>Oxygon Pro adds Course Planner and additional race-fuelling products. The price is shown before you subscribe. Planning, the library, Community and the crew link stay included.</li>
+    </ul>
+    <h3>Platforms</h3>
+    <ul>
+      <li>iPhone and iPad. The web app had the same planning and recording tools. Google Play's first public version was already out. See 1.3 below.</li>
+    </ul>
+  </article>
+
+  <article class="card">
+    <h2>1.3 — 28 September 2026</h2>
+    <p class="when">On Google Play, in 178 countries. The first public Android version.</p>
+    <h3>New</h3>
+    <ul>
+      <li>The Android app: plans, the course, fuelling by checkpoint, live GPS, heart rate, and the calculators.</li>
+      <li>Health Connect can bring workouts, distance, elevation and heart rate into your history. Nothing is written back.</li>
+      <li>An account is optional. It backs up your plans and syncs them with the phone and the web.</li>
+      <li>Oxygon Pro on Android uses the same split as the App Store: Course Planner and the extra fuelling products are the subscription. The price is shown before you subscribe.</li>
+    </ul>
+    <h3>Platforms</h3>
+    <ul>
+      <li>Android. iPhone, iPad and the web already had the core of this version.</li>
+    </ul>
+  </article>
+
+  <article class="card">
+    <h2>September 2026</h2>
+    <p class="when">The month between version 1.2 and the public 1.3 releases. The web app at my.oxygon.app became a full companion to the phone, and the sports besides running filled out.</p>
+    <h3>New</h3>
+    <ul>
+      <li>Course Planner on the web, matching the planner on the phone. Draw a course, or open a GPX file. The profile shows the distance and the climb. Checkpoints go on one by one, or as a ladder every few kilometres, around the stops you have already pinned. A checkpoint shows its label, its kilometres, the minutes in, and the clock time you should reach it. Water is planned in bottles. Carbohydrate, sodium and the products you saved sit on those stops. Leaving a plan you have edited asks you to save or to discard the changes. On a wide window the plan uses two columns, the way it does on iPad.</li>
+      <li>Community, on the web from the middle of the month. Follow the people you train with. Share an activity with a caption and with photos. You choose what goes out, including the numbers, the chart and the route. A post can play back as a 3D replay. The camera follows the route through the turns. A run plays as a runner and a ride as a rider. You can hide the start of the map, the finish, or the whole map, and a post already up redraws when you save that choice. The shoe you wore can go on the post. The App Store received Community on 1 October, in 1.3.3. Google Play received it with the October updates.</li>
+      <li>Shoes, on the phone and on the web. Each pair has its own page and its own kilometres. A run can take the pair that matches the surface. Assign a pair on one device and it shows on the others. The runs behind a pair are listed on that pair's page.</li>
+      <li>Charts on a finished activity open into lanes, one measure at a time, with the laps across the top. The axis can be distance or time. Drag a stretch and that stretch has its own figures. Power is a lane on a ride, with a power card beside the others. Cardiac drift has one home on the activity, on Android as well as on iPhone. Fitness, fatigue and form can be charted, and so can metres per heartbeat.</li>
+      <li>The ride and the swim are their own sessions. A ride reads in speed, and it can show power and cadence, indoors and out. A swim reads in its own pace. An indoor ride with no GPS still shows heart rate and time. Strength has an exercise library you can search, and a planned strength day wears its own color on the calendar. Late in the month a sauna session, with a duration and a temperature, and a timed yoga session, joined them on the web. The sauna ring, and yoga as its own finished page, reached Google Play in the October updates and the App Store in 1.3.10.</li>
+      <li>The calendar on the web matches the phone: a month, a list and charts. Delete an activity from the list, from the calendar, or from its own page. Rename it, set how it felt, and write a note. Those edits reach your other devices. A recorded activity and an imported one open the same kind of page. A new import asks for a name, how it felt, and a note.</li>
+      <li>Home Screen widgets, the Lock Screen and a Live Activity were ready at the end of September. They follow the session and your plans. During a session the Lock Screen shows distance, pace, time and heart rate. They reached the App Store on 28 October. See 1.3.10.</li>
+    </ul>
+    <h3>Improved</h3>
+    <ul>
+      <li>One athlete, one set of numbers, on the phone and on the web. Garmin still comes in through intervals.icu. A Strava workout still comes in as an import.</li>
+      <li>Saving an activity keeps you on the page. The web app's settings, gear and sign-in follow the phone.</li>
+      <li>Oxygon Pro adds Course Planner and additional race-fuelling products. From 25 September there is no free trial. The price is shown before you subscribe. Planning, the library, Community and the crew link stay included.</li>
+    </ul>
+    <h3>Fixed</h3>
+    <ul>
+      <li>A course drawn on a plan no longer stands in for the distance you actually covered.</li>
+      <li>Closing the full chart no longer leaves the phone in landscape.</li>
+      <li>A message that GPS has stopped appears only on an activity that records GPS.</li>
+    </ul>
+    <h3>Platforms</h3>
+    <ul>
+      <li>iPhone, iPad and the web through the month.</li>
+      <li>Android received the core in public with Play 1.3 on 28 September: the plans, the course, the fuelling, live GPS, heart rate and the calculators. Community on Play came with the October updates. The sauna ring and yoga as its own session came on Play in those October updates, not on 28 September.</li>
+      <li>Widgets, the Lock Screen and the Live Activity reached the App Store on 28 October. They are iPhone only. They are not on Android.</li>
+    </ul>
+  </article>
+
+  <article class="card">
+    <h2>1.2 — 24 August 2026</h2>
+    <p class="when">On the App Store.</p>
+    <h3>New</h3>
+    <ul>
+      <li>Garmin, Coros, Polar, Suunto and Wahoo can bring workouts in, with heart rate and the route. The path from Garmin is intervals.icu.</li>
+      <li>Shoes count the kilometres on each pair.</li>
+    </ul>
+    <h3>Improved</h3>
+    <ul>
+      <li>The calculators and the race-fuelling plan from the first public version stay, and the imported workouts sit beside the plans.</li>
+    </ul>
+    <h3>Platforms</h3>
+    <ul>
+      <li>iPhone and iPad. Android was not on Google Play yet.</li>
     </ul>
   </article>
 
   <article class="card">
     <h2>August 2026</h2>
-    <p class="when">The App Store app was public by 10 August 2026. Version 1.2 was on sale on 24 August 2026.</p>
+    <p class="when">The first public month. The App Store app was public by 10 August 2026. Version 1.2 followed on 24 August. The Garmin import, through intervals.icu, and the shoes in version 1.2 are in the section above.</p>
+    <h3>New</h3>
     <ul>
-      <li>Pace, race prediction, grade-adjusted pace, heart-rate zones, training paces and calories, on the phone, with no account.</li>
-      <li>Race fuelling: hourly water, carbohydrate and sodium, spread across the checkpoints.</li>
-      <li>From 24 August: Garmin, Coros, Polar, Suunto and Wahoo can bring workouts in, with heart rate and the route. Shoes count the kilometres on each pair.</li>
+      <li>The store build carried the July tools, and they work offline, with no account. Pace Calculator, for pace, time and distance, with splits. Grade-Adjusted Pace, Heart Rate Zones, Training Paces, Calories Burned, Race Predictor, a VO2max Estimator that estimates from a recent result, and Critical Speed from the trials you enter. Favourites stay with you.</li>
+      <li>Race fuelling on the public app: hourly water, carbohydrate and sodium, spread across the checkpoints, with the course attached. The drinks, the food and the caffeine timing from the planner sit on the same plan.</li>
+      <li>The race library is on the public app, filtered by distance, terrain, sport and country. Pick a race and the planner takes it.</li>
+      <li>Live recording. GPS distance and pace continue when the phone is locked. Heart rate comes from a strap, or from a watch that broadcasts it. The last kilometre is the headline pace, and the average sits beside it. Cardiac drift has its own tile from 1 August, and the crew page shows that drift too. Auto-pause holds the recording when you stop moving. A reminder can fire during the session. The crew link shows position, pace and heart rate, in whole kilometres, with the forecast for the course. Each checkpoint says whether you are ahead of the plan or behind it.</li>
+      <li>Hold the chart to read one moment. The chart can open wide, so the course fits. With heart rate, energy can show the current rate, the average, and a split of carbohydrate and fat.</li>
+      <li>Strava on this version is an import. A year of workouts can come in, with the routes. On the finished page you can edit the name and how it felt. Sharing a finished recording back to Strava arrived in October.</li>
+      <li>Units, an accent color, and a profile. On iPad the wider screen is used, including the sidebar, with the same destinations as the phone.</li>
+      <li>Delete your account from inside the app. Signed out, the calculators and a recording still work. Signed in, plans sync.</li>
+      <li>Shoes, with version 1.2 on 24 August. Each pair counts its own kilometres. A workout can be renamed, and the shoe is chosen on it, whether you recorded it or imported it.</li>
+      <li>The activities list gathers recorded and imported sessions. An imported session opens on the same page as one you recorded, with the route drawn on that page and the map able to open full screen. The calendar marks which sport a day holds. A chart can cover a range you choose.</li>
+      <li>Late in the month the web app was up at my.oxygon.app, with the calculators, including Treadmill Pace, plus settings, sign-in, the race library and the activities list. The course planner on the web came in September.</li>
+    </ul>
+    <h3>Improved</h3>
+    <ul>
+      <li>The July pace calculator is what the store opened on. The planner, the fuelling and the live page were already around it.</li>
+      <li>Recorded and imported sessions share one detail page. The effort on an import can be edited, and its chart can open full screen.</li>
+      <li>Web settings follow the phone: the units, the athlete and the account.</li>
+    </ul>
+    <h3>Fixed</h3>
+    <ul>
+      <li>Standing still no longer adds to the distance. Auto-pause follows the ground you covered.</li>
+      <li>The chart scrolls, and a tap reads a point on it instead of fighting that scroll.</li>
+    </ul>
+    <h3>Platforms</h3>
+    <ul>
+      <li>iPhone and iPad, on the App Store.</li>
+      <li>The web app joined at the end of the month, with the calculators and your history.</li>
+      <li>The Android app was being built this month. People on Android received it on 28 September.</li>
     </ul>
   </article>
 
   <article class="card">
-    <h2>On Google Play</h2>
+    <h2>July 2026</h2>
+    <p class="when">Where Oxygon started. It began as a pace calculator for iPhone on 11 July 2026. What this month built is what people installed in August.</p>
+    <h3>New</h3>
     <ul>
-      <li>28 September 2026: Oxygon on Google Play, version 1.3.</li>
-      <li>6 October 2026: version 1.3.5, the next public Play release.</li>
-      <li>October 2026: version 1.3.6.</li>
-      <li>30 October 2026: version 1.3.11, the Play production version. See 1.3.11 above.</li>
+      <li>Pace Calculator. Enter pace, time or distance, any two, and the third is filled in. Splits open as a full-screen sheet, and the whole row is tappable. Presets cover the usual race distances, on through 100K. A favourite keeps a pace you use often, with a name and a tag. Favourites sync once you have an account.</li>
+      <li>The rest of Tools landed in the same two weeks. All of them work with no account and no connection. Grade-Adjusted Pace. Heart Rate Zones, with the method those zones use. Training Paces. Calories Burned. Race Predictor. VO2max Estimator, which estimates from a recent result. Critical Speed, from the trials you enter.</li>
+      <li>Settings hold the units, the accent color and a profile.</li>
+      <li>iPad has its own layouts, including a sidebar with the same destinations as the phone's tabs. A window can use the large iPhone size.</li>
+      <li>The planner. A course comes from a GPX file, kept on the device, or from a sample course when you have no file. Distance quick-picks sit beside it. The course and the plan stay in step, and a prompt asks when the file's distance and the plan's distance disagree. An elevation profile shows the climb, the checkpoints and a marker for where you are. Checkpoints begin about every 5 km. You can rename one, pin one so it stays put, or lock a hand edit. Each leg shows its own ascent and descent, and the course shows the total.</li>
+      <li>Fuelling on that plan. The planner holds more than one race. Drinks and food sit on the checkpoints, including when the caffeine lands. Scan a barcode to add a product, and the products you keep stay in a library on the device.</li>
+      <li>The live page, for the session itself. This is the in-app page, separate from the Lock Screen Live Activity that came in September. GPS keeps your position while the phone is locked, with the next checkpoint and whether you are ahead of the plan or behind it. The chart is the course with heart rate on it, and the same chart is there while you are still planning. Connect a heart-rate strap, or a watch that broadcasts heart rate, and the page shows the rate and the trend. Weather for the course can sit on the chart. The crew page reads in whole kilometres, with labelled ranges, so someone with the link can see where you are.</li>
+      <li>The race library. Real races, with a map and filters for distance, terrain, sport and country, plus sorting and a way back to the top. Pick a race and the planner takes it. A course distance that cannot be right is refused, so a wrong file does not trap the plan.</li>
+      <li>Strava, as an import. Workouts come in, and the route comes with them. Apple Health can bring workouts in as well.</li>
+      <li>An account is optional. It is how plans sync between devices. You can delete the account from inside the app.</li>
+    </ul>
+    <h3>Improved</h3>
+    <ul>
+      <li>The planner's steps collapse into one course-and-method step, so a race is one pass.</li>
+      <li>The Events tab uses a crossed-flags mark. On iPad the sidebar carries those same destinations.</li>
+      <li>The last kilometre can be the headline pace, with the average for the run beside it.</li>
+    </ul>
+    <h3>Fixed</h3>
+    <ul>
+      <li>Opening a course in the planner no longer closes the app.</li>
+      <li>Grade-Adjusted Pace accepts an elevation above 1,000 m.</li>
+    </ul>
+    <h3>Platforms</h3>
+    <ul>
+      <li>iPhone and iPad. No public Android app yet, and no public web app yet. Android reached people on 28 September. The web app opened through late August and September.</li>
     </ul>
   </article>
 </main>
