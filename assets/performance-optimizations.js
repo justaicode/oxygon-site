@@ -39,14 +39,14 @@
   };
 
   var CALCULATOR_REPLACEMENTS = {
-    pace: "assets/site/appstore/iphone-dark/15-tools.webp",
-    cs: "assets/site/appstore/iphone-dark/16-tool-critical-speed.webp",
+    pace: "assets/site/current-171/calc-pace.webp",
+    cs: "assets/site/current-171/critical-speed.webp",
     predictor: "assets/site/current-171/predictor.webp",
-    vo2: "assets/site/appstore/iphone-dark/18-tool-vo2max.webp",
-    hr: "assets/site/appstore/iphone-dark/19-tool-hr-zones.webp",
-    training: "assets/site/appstore/iphone-dark/20-tool-training-paces.webp",
-    gap: "assets/site/appstore/iphone-dark/21-tool-grade-adjusted-pace.webp",
-    calories: "assets/site/appstore/iphone-dark/22-tool-calories.webp"
+    vo2: "assets/site/current-171/vo2max.webp",
+    hr: "assets/site/current-171/hr-zones.webp",
+    training: "assets/site/current-171/training-paces.webp",
+    gap: "assets/site/current-171/grade-adjusted-pace.webp",
+    calories: "assets/site/current-171/calories.webp"
   };
 
   function escapeRegExp(value) {

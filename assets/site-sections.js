@@ -2,6 +2,7 @@
   "use strict";
 
   var STYLE_ID = "oxygon-site-sections-styles";
+  var GOOGLE_PLAY_URL = "https://play.google.com/store/apps/details?id=app.oxygon.android";
   var APP_STORE_URL = "https://apps.apple.com/app/oxygon/id6796728801";
   var CONTENT = {
     en: {
@@ -323,10 +324,12 @@
     return button;
   }
 
-  function upgradeAppStoreLinks() {
+  function upgradeStoreLinks() {
     Array.prototype.forEach.call(document.querySelectorAll('a[href="#download"]'), function (link) {
-      if (!/app\s*store/i.test(link.textContent.replace(/\u00a0/g, " "))) return;
-      link.href = APP_STORE_URL;
+      var label = link.textContent.replace(/\u00a0/g, " ");
+      var store = /app\s*store/i.test(label) ? APP_STORE_URL : /google\s*play/i.test(label) ? GOOGLE_PLAY_URL : null;
+      if (!store) return;
+      link.href = store;
       link.target = "_blank";
       link.rel = "noopener noreferrer";
     });
@@ -341,7 +344,7 @@
     var greek = /\/el\.html$/.test(window.location.pathname);
     var content = greek ? CONTENT.el : CONTENT.en;
 
-    upgradeAppStoreLinks();
+    upgradeStoreLinks();
     upgradeAbout(content.about);
 
     if (!document.querySelector(".ox-feature-ticker")) {

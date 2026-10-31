@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var SOURCE_URL = "product-explorer-fullbleed-preview.html?v=20261101-screens171";
+  var SOURCE_URL = "product-explorer-fullbleed-preview.html?v=20261101-complete";
   var LEGACY_IDS = ["features", "crew", "tools", "races"];
   var PANEL_FOR_HASH = {
     "#features": 1,
