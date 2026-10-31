@@ -485,7 +485,7 @@
       .panel[aria-label="Library"] .visual { height: min(77vh,840px); }
       .library-window { width: min(100%,980px); }
 
-      .panel[aria-label="Coach"] .visual { height: min(79vh,860px); }
+      .panel[aria-label="Calendar"] .visual { height: min(79vh,860px); }
       .coach-calendar { right: 30%; left: auto; height: min(72vh,720px); }
       .coach-chat { right: 0; height: min(64vh,620px); }
 
@@ -640,7 +640,7 @@
       <header class="showcase-topbar">
         <span class="topbar-label">Inside the app</span>
         <div class="tabs" role="tablist" aria-label="Product areas">
-          <button class="tab" type="button" role="tab" aria-selected="true" data-index="0">Coach</button>
+          <button class="tab" type="button" role="tab" aria-selected="true" data-index="0">Calendar</button>
           <button class="tab" type="button" role="tab" aria-selected="false" data-index="1">Activities</button>
           <button class="tab" type="button" role="tab" aria-selected="false" data-index="2">Library</button>
           <button class="tab" type="button" role="tab" aria-selected="false" data-index="3">Tools</button>
@@ -649,16 +649,16 @@
       </header>
 
       <div class="panels">
-        <article class="panel active" data-panel="0" aria-label="Coach">
+        <article class="panel active" data-panel="0" aria-label="Calendar">
           <div class="copy">
-            <div class="eyebrow">Coach</div>
-            <h2>A training block that adapts.</h2>
-            <p>A guided interview builds your dated plan. Fitness, fatigue, form and durability keep it current, while every proposed change remains under your control.</p>
-            <div class="chips"><span class="chip">Apple Health</span><span class="chip">Strava</span><span class="chip">Coach chat</span></div>
+            <div class="eyebrow">Calendar</div>
+            <h2>Your training, on the calendar.</h2>
+            <p>The month shows each session in its own color. Add a note for a day or several days. Review the week beside the one before it. Weeks start on Monday.</p>
+            <div class="chips"><span class="chip">Apple Health</span><span class="chip">Strava</span><span class="chip">Calendar and charts</span></div>
           </div>
           <div class="visual">
-            <img class="asset coach-screen coach-calendar" src="assets/site/appstore/iphone-dark/11-coach-calendar.webp" alt="Oxygon Coach calendar in dark mode with orange accent" width="660" height="1434">
-            <img class="asset coach-screen coach-chat" src="assets/site/appstore/iphone-dark/13-coach-chat.webp" alt="Oxygon AI coach chat in dark mode with orange accent" width="660" height="1434" loading="lazy">
+            <img class="asset coach-screen coach-calendar" src="assets/site/current-171/calendar.webp" alt="Oxygon activity calendar" width="660" height="1434">
+            <img class="asset coach-screen coach-chat" src="assets/site/current-171/charts.webp" alt="Oxygon activity charts" width="660" height="1434" loading="lazy">
           </div>
         </article>
 
@@ -694,12 +694,12 @@
               <article class="activity-copy-panel" data-activity-copy="4">
                 <h2>Execute it while you move.</h2>
                 <p>See elapsed time, distance, sensors, conditions and the next checkpoint at a glance—without losing focus on the effort.</p>
-                <div class="chips"><span class="chip">Live sensors</span><span class="chip">Next up</span><span class="chip">Live guidance</span></div>
+                <div class="chips"><span class="chip">Live sensors</span><span class="chip">Next up</span><span class="chip">Live readings</span></div>
               </article>
               <article class="activity-copy-panel" data-activity-copy="5">
-                <h2>Help, while it matters.</h2>
-                <p>Tell the in-app assistant what you are feeling during the effort. It uses the live race context to turn symptoms such as dark urine into practical, safety-aware guidance.</p>
-                <div class="chips"><span class="chip">Race context</span><span class="chip">Hydration guidance</span><span class="chip">Safety flags</span></div>
+                <h2>Share when you finish.</h2>
+                <p>Post to Community or share to Strava. You choose what goes out. Export opens the web app, where you choose the dates and can include a training report as a PDF.</p>
+                <div class="chips"><span class="chip">Community</span><span class="chip">Strava</span><span class="chip">Export opens the web</span></div>
               </article>
             </div>
 
@@ -709,7 +709,7 @@
               <button class="activity-step" type="button" role="tab" aria-selected="false" data-activity-step="2"><span class="activity-step-number">03</span>Review</button>
               <button class="activity-step" type="button" role="tab" aria-selected="false" data-activity-step="3"><span class="activity-step-number">04</span>Plan</button>
               <button class="activity-step" type="button" role="tab" aria-selected="false" data-activity-step="4"><span class="activity-step-number">05</span>Live</button>
-              <button class="activity-step" type="button" role="tab" aria-selected="false" data-activity-step="5"><span class="activity-step-number">06</span>Assistant</button>
+              <button class="activity-step" type="button" role="tab" aria-selected="false" data-activity-step="5"><span class="activity-step-number">06</span>Share</button>
             </div>
             <div class="activity-controls">
               <button class="activity-arrow activity-previous" type="button" aria-label="Previous Activities step" disabled>←</button>
@@ -725,16 +725,16 @@
               <img class="activity-screen" data-activity-screen="1" src="assets/site/appstore/iphone-dark/08-wizard-fuel.webp" alt="Oxygon fuelling targets in dark mode with orange accent" width="660" height="1434" loading="lazy">
               <img class="activity-screen" data-activity-screen="2" src="assets/site/appstore/iphone-dark/09-wizard-review.webp" alt="Oxygon activity review in dark mode with orange accent" width="660" height="1434" loading="lazy">
               <img class="activity-screen" data-activity-screen="3" src="assets/site/appstore/iphone-dark/04-plan-schedule.webp" alt="Oxygon generated checkpoint plan in dark mode with orange accent" width="660" height="1434" loading="lazy">
-              <img class="activity-screen" data-activity-screen="4" src="assets/site/appstore/iphone-dark/01-live-activity.webp" alt="Oxygon live activity in dark mode with orange accent" width="660" height="1434" loading="lazy">
-              <img class="activity-screen" data-activity-screen="5" src="assets/site/appstore/iphone-dark/03-race-assistant.webp" alt="Oxygon race assistant using live fuelling and sensor context in dark mode with orange accent" width="660" height="1434" loading="lazy">
+              <img class="activity-screen" data-activity-screen="4" src="assets/site/current-171/live.webp" alt="Oxygon live activity in dark mode with orange accent" width="660" height="1434" loading="lazy">
+              <img class="activity-screen" data-activity-screen="5" src="assets/site/current-171/community.webp" alt="Oxygon Community after an activity" width="660" height="1434" loading="lazy">
             </div>
             <div class="activity-device activity-device-peek" aria-hidden="true">
               <img class="activity-peek-screen" data-activity-peek-screen="0" src="assets/site/appstore/iphone-dark/07-wizard-event.webp" alt="" width="660" height="1434">
               <img class="activity-peek-screen active" data-activity-peek-screen="1" src="assets/site/appstore/iphone-dark/08-wizard-fuel.webp" alt="" width="660" height="1434" loading="lazy">
               <img class="activity-peek-screen" data-activity-peek-screen="2" src="assets/site/appstore/iphone-dark/09-wizard-review.webp" alt="" width="660" height="1434" loading="lazy">
               <img class="activity-peek-screen" data-activity-peek-screen="3" src="assets/site/appstore/iphone-dark/04-plan-schedule.webp" alt="" width="660" height="1434" loading="lazy">
-              <img class="activity-peek-screen" data-activity-peek-screen="4" src="assets/site/appstore/iphone-dark/01-live-activity.webp" alt="" width="660" height="1434" loading="lazy">
-              <img class="activity-peek-screen" data-activity-peek-screen="5" src="assets/site/appstore/iphone-dark/03-race-assistant.webp" alt="" width="660" height="1434" loading="lazy">
+              <img class="activity-peek-screen" data-activity-peek-screen="4" src="assets/site/current-171/live.webp" alt="" width="660" height="1434" loading="lazy">
+              <img class="activity-peek-screen" data-activity-peek-screen="5" src="assets/site/current-171/community.webp" alt="" width="660" height="1434" loading="lazy">
             </div>
             </div>
           </div>
@@ -753,7 +753,7 @@
             <div class="chips"><span class="chip">90+ races</span><span class="chip">Verified GPX</span><span class="chip">Your routes</span></div>
           </div>
           <div class="visual">
-            <div class="library-window"><img src="assets/site/appstore/ipad-dark/02-library-sidebar-landscape.webp" alt="Oxygon race library on iPad in dark mode with orange accent" width="1600" height="1200" loading="lazy"></div>
+            <div class="library-window"><img src="assets/site/current-171/library-ipad.webp" alt="Oxygon race library on iPad" width="1600" height="1200" loading="lazy"></div>
           </div>
         </article>
 
@@ -776,9 +776,9 @@
               <button class="tool-picker" type="button" aria-pressed="false" data-tool="7">Calories</button>
             </div>
             <div class="tool-screen">
-              <img class="asset tool-image active" src="assets/site/appstore/iphone-dark/15-tools.webp?v=20260803-175844" alt="Oxygon tools overview in dark mode with orange accent" width="660" height="1434" loading="lazy">
+              <img class="asset tool-image active" src="assets/site/current-171/tools.webp" alt="Oxygon tools overview" width="660" height="1434" loading="lazy">
               <img class="asset tool-image" src="assets/site/appstore/iphone-dark/16-tool-critical-speed.webp" alt="Oxygon critical speed calculator in dark mode with orange accent" width="660" height="1434" loading="lazy">
-              <img class="asset tool-image" src="assets/site/appstore/iphone-dark/17-tool-race-predictor.webp" alt="Oxygon race predictor in dark mode with orange accent" width="660" height="1434" loading="lazy">
+              <img class="asset tool-image" src="assets/site/current-171/predictor.webp" alt="Oxygon race predictor based on recent training" width="660" height="1434" loading="lazy">
               <img class="asset tool-image" src="assets/site/appstore/iphone-dark/18-tool-vo2max.webp" alt="Oxygon VO2max estimator in dark mode with orange accent" width="660" height="1434" loading="lazy">
               <img class="asset tool-image" src="assets/site/appstore/iphone-dark/19-tool-hr-zones.webp" alt="Oxygon heart rate zones calculator in dark mode with orange accent" width="660" height="1434" loading="lazy">
               <img class="asset tool-image" src="assets/site/appstore/iphone-dark/20-tool-training-paces.webp" alt="Oxygon training paces calculator in dark mode with orange accent" width="660" height="1434" loading="lazy">
@@ -792,12 +792,12 @@
           <div class="copy">
             <div class="eyebrow">Live telemetry</div>
             <h2>The people who care can watch.</h2>
-            <p>Share one link. Crew sees position, pace, checkpoint progress, heart rate, glucose and conditions in one readable live dashboard—no app and no login.</p>
+            <p>Share one link. Your crew sees your position, pace and heart rate in a browser. They do not need the app, and they do not need an account. Anyone with the link can see it while the activity is running.</p>
             <div class="chips"><span class="chip">Live map</span><span class="chip">Sensors</span><span class="chip">Crew link</span></div>
           </div>
           <div class="visual">
             <button class="telemetry-window" type="button" aria-label="Open interactive live telemetry demo" aria-haspopup="dialog" aria-controls="telemetry-dialog">
-              <img src="assets/img/526f1e3c52771eb9-optimized.webp" alt="Oxygon live telemetry dashboard" width="1600" height="1440" loading="lazy">
+              <img src="assets/site/current-171/follow.webp" alt="Oxygon live telemetry dashboard" width="1600" height="1440" loading="lazy">
               <span class="telemetry-discovery" aria-hidden="true">
                 <span class="telemetry-discovery-icon">↗</span>
                 <span class="telemetry-hover-copy">Hover to explore</span>

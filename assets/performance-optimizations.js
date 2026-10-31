@@ -3,47 +3,50 @@
 
   var IMAGE_REPLACEMENTS = {
     "549ec65cce65d40f.png": {
-      file: "../site/appstore/ipad-dark/01-race-library.webp",
-      width: 1032,
-      height: 1376
+      file: "../site/current-171/library-ipad.webp",
+      width: 1600,
+      height: 1200
     },
     "526f1e3c52771eb9.png": {
-      file: "526f1e3c52771eb9-optimized.webp",
+      file: "../site/current-171/follow.webp",
       width: 1600,
       height: 1440
     },
     "3b0b7386ccbb1063.png": {
-      file: "../site/appstore/iphone-dark/01-live-activity.webp",
+      file: "../site/current-171/live.webp",
       width: 660,
       height: 1434
     },
     "b22450971251c564.png": {
-      file: "../site/appstore/iphone-dark/11-coach-calendar.webp",
+      file: "../site/current-171/calendar.webp",
       width: 660,
       height: 1434
     },
     "5863566aab9e8458.png": {
-      file: "5863566aab9e8458-optimized.webp",
+      file: "../site/current-171/calendar-ipad.webp",
       width: 1600,
-      height: 1103
+      height: 1200
     }
   };
 
+  IMAGE_REPLACEMENTS["0b7d6f6ac4f978e2.png"] = {file:"../site/current-171/sauna.webp",width:660,height:1434};
+  IMAGE_REPLACEMENTS["8058d0b06fd69879.png"] = {file:"../site/current-171/strength.webp",width:660,height:1434};
+
   var LAZY_ONLY = {
-    "0b7d6f6ac4f978e2.png": { width: 422, height: 514 },
+    "0b7d6f6ac4f978e2.png": { width: 660, height: 1434 },
     "8058d0b06fd69879.png": { width: 422, height: 514 },
     "c1e1545da59a3f72.png": { width: 512, height: 512 }
   };
 
   var CALCULATOR_REPLACEMENTS = {
-    pace: "15-tools.webp",
-    cs: "16-tool-critical-speed.webp",
-    predictor: "17-tool-race-predictor.webp",
-    vo2: "18-tool-vo2max.webp",
-    hr: "19-tool-hr-zones.webp",
-    training: "20-tool-training-paces.webp",
-    gap: "21-tool-grade-adjusted-pace.webp",
-    calories: "22-tool-calories.webp"
+    pace: "assets/site/appstore/iphone-dark/15-tools.webp",
+    cs: "assets/site/appstore/iphone-dark/16-tool-critical-speed.webp",
+    predictor: "assets/site/current-171/predictor.webp",
+    vo2: "assets/site/appstore/iphone-dark/18-tool-vo2max.webp",
+    hr: "assets/site/appstore/iphone-dark/19-tool-hr-zones.webp",
+    training: "assets/site/appstore/iphone-dark/20-tool-training-paces.webp",
+    gap: "assets/site/appstore/iphone-dark/21-tool-grade-adjusted-pace.webp",
+    calories: "assets/site/appstore/iphone-dark/22-tool-calories.webp"
   };
 
   function escapeRegExp(value) {
@@ -51,10 +54,10 @@
   }
 
   function combineCoachAndDevices(template) {
-    var greek = template.indexOf("Ένα μπλοκ προπόνησης που προσαρμόζεται") !== -1;
+    var greek = template.indexOf("Η προπόνησή σου στο ημερολόγιο") !== -1;
     var coachHeading = greek
-      ? "Ένα μπλοκ προπόνησης που προσαρμόζεται"
-      : "A training block that adapts";
+      ? "Η προπόνησή σου στο ημερολόγιο"
+      : "Your training, on the calendar";
     var deviceSectionMatch = template.match(/\n<section id="devices"[\s\S]*?<\/section>\n/);
     var coachHeadingIndex = template.indexOf(coachHeading);
     if (!deviceSectionMatch || coachHeadingIndex === -1) return template;
@@ -77,20 +80,20 @@
 
     var labels = greek
       ? {
-          group: "Το Oxygon σε iPad και Apple Watch",
+          group: "Το Oxygon σε iPad και iPhone",
           ipad: "iPad — σχεδιασμός και ανασκόπηση",
-          watch: "Apple Watch — ημέρα αγώνα",
+          watch: "iPhone — σάουνα και δύναμη",
           ipadAlt: "Σχεδιασμός και ανασκόπηση του Oxygon στο iPad",
-          liveAlt: "Live αγώνας στο Apple Watch",
-          checkpointAlt: "Επόμενος σταθμός στο Apple Watch"
+          liveAlt: "Προσαρμογή στη ζέστη της σάουνας",
+          checkpointAlt: "Ολοκληρωμένη συνεδρία δύναμης"
         }
       : {
-          group: "Oxygon on iPad and Apple Watch",
+          group: "Oxygon on iPad and iPhone",
           ipad: "iPad — planning and review",
-          watch: "Apple Watch — race day",
+          watch: "iPhone — sauna and strength",
           ipadAlt: "Oxygon planning and review on iPad",
-          liveAlt: "Live race on Apple Watch",
-          checkpointAlt: "Next checkpoint on Apple Watch"
+          liveAlt: "Sauna heat adaptation",
+          checkpointAlt: "Finished strength session"
         };
 
     var combinedVisual =
@@ -161,14 +164,15 @@
     Object.keys(CALCULATOR_REPLACEMENTS).forEach(function (name) {
       template = template.replaceAll(
         "assets/site/calc-" + name + ".png",
-        "assets/site/appstore/iphone-dark/" + CALCULATOR_REPLACEMENTS[name]
+        CALCULATOR_REPLACEMENTS[name]
       );
     });
 
     template = template.replace(
       "<head>",
       '<head><style id="oxygon-performance-styles">' +
-        '.ox-page-shell img[loading="lazy"]{height:auto}' +
+        '.ox-page-shell img[loading="lazy"]{height:auto;min-width:0;max-width:100%}' +
+        '@media(min-width:1024px){#races{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)!important}}' +
         '#coach-devices{scroll-margin-top:84px}' +
         '.ox-combined-devices{position:relative;width:100%;min-width:0;padding:12px 8px 76px;isolation:isolate}' +
         '.ox-combined-ipad-card,.ox-combined-watch-card{background:#212630;border:1px solid rgba(84,84,88,.58);box-shadow:0 24px 55px rgba(0,0,0,.38)}' +

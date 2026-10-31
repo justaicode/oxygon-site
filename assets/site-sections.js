@@ -8,7 +8,7 @@
       tickerLabel: "Oxygon features",
       backToTop: "Back to top",
       features: [
-        "Adaptive training plans",
+        "Activity planning",
         "Checkpoint fuelling",
         "Live race telemetry",
         "Crew tracking",
@@ -16,7 +16,7 @@
         "8 free calculators",
         "BLE heart rate",
         "Glucose and conditions",
-        "Apple Watch support",
+        "iPhone widgets",
         "Private by design"
       ],
       eyebrow: "FAQ",
@@ -26,7 +26,7 @@
         eyebrow: "Why Oxygon",
         heading: "Built for the moment the plan meets reality.",
         lead: "Endurance rarely falls apart because the athlete forgot how to train. It falls apart when pacing, fuelling, conditions and decisions stop living in the same place.",
-        body: "Oxygon turns the plan into something that can travel with you—on your phone, on your wrist and with the people crewing you.",
+        body: "Oxygon turns the plan into something that can travel with you—on your phone and with the people crewing you.",
         cardEyebrow: "About the builder",
         cardHeading: "Made in Athens. Tested over distance.",
         cardBody: "Oxygon is built by Roberto Zanon, an ultradistance runner who wanted the tools used before a race to remain useful during it.",
@@ -39,7 +39,7 @@
       questions: [
         [
           "What is Oxygon?",
-          "Oxygon is a training and race-execution toolkit for endurance athletes. It combines adaptive planning, checkpoint-by-checkpoint fuelling, live telemetry, calculators and crew tracking in one place."
+          "Oxygon is a training and race-execution toolkit for endurance athletes. It combines activity planning, checkpoint-by-checkpoint fuelling, live telemetry, calculators and crew tracking in one place."
         ],
         [
           "Who is Oxygon for?",
@@ -62,8 +62,8 @@
           "Oxygon can combine GPS, compatible Bluetooth heart-rate sensors, conditions and authorised health data such as glucose. What appears during an activity depends on the devices and permissions you have enabled."
         ],
         [
-          "Does it work across iPhone, iPad and Apple Watch?",
-          "Yes. iPhone owns the live plan, iPad provides more space for planning and review, and Apple Watch keeps the most important race information available at a glance."
+          "Does it work across iPhone, iPad and the web?",
+          "Yes. Plan and review on iPhone, iPad and the web. On iPhone, Home Screen widgets, the Lock Screen and the Dynamic Island follow the session."
         ],
         [
           "How does Oxygon handle my data?",
@@ -71,7 +71,7 @@
         ],
         [
           "Is Oxygon free?",
-          "The calculators and a product demo are free. Oxygon Pro unlocks advanced planning and live guidance; current availability is shown inside the app."
+          "Community, the calculators, activity planning and a live link are free. Oxygon Pro adds Course Planner and more fuelling products. The price is shown before you subscribe."
         ]
       ]
     },
@@ -79,7 +79,7 @@
       tickerLabel: "Δυνατότητες του Oxygon",
       backToTop: "Πίσω στην κορυφή",
       features: [
-        "Προσαρμοζόμενα πλάνα προπόνησης",
+        "Σχεδιασμός δραστηριοτήτων",
         "Τροφοδοσία ανά σταθμό",
         "Live δεδομένα αγώνα",
         "Παρακολούθηση από το crew",
@@ -87,7 +87,7 @@
         "8 δωρεάν εργαλεία",
         "Παλμοί μέσω Bluetooth",
         "Γλυκόζη και συνθήκες",
-        "Υποστήριξη Apple Watch",
+        "Widgets στο iPhone",
         "Ιδιωτικότητα από τον σχεδιασμό"
       ],
       eyebrow: "ΣΥΧΝΕΣ ΕΡΩΤΗΣΕΙΣ",
@@ -97,7 +97,7 @@
         eyebrow: "Γιατί το Oxygon",
         heading: "Για τη στιγμή που το πλάνο συναντά την πραγματικότητα.",
         lead: "Η αντοχή σπάνια καταρρέει επειδή ο αθλητής ξέχασε πώς να προπονηθεί. Καταρρέει όταν ο ρυθμός, η τροφοδοσία, οι συνθήκες και οι αποφάσεις παύουν να βρίσκονται στο ίδιο μέρος.",
-        body: "Το Oxygon μετατρέπει το πλάνο σε κάτι που ταξιδεύει μαζί σου—στο τηλέφωνο, στον καρπό και στα χέρια των ανθρώπων που σε υποστηρίζουν.",
+        body: "Το Oxygon μετατρέπει το πλάνο σε κάτι που ταξιδεύει μαζί σου—στο τηλέφωνο και στα χέρια των ανθρώπων που σε υποστηρίζουν.",
         cardEyebrow: "Σχετικά με τον δημιουργό",
         cardHeading: "Σχεδιασμένο στην Αθήνα. Δοκιμασμένο στην απόσταση.",
         cardBody: "Το Oxygon δημιουργείται από τον Roberto Zanon, δρομέα υπεραποστάσεων που ήθελε τα εργαλεία πριν από τον αγώνα να παραμένουν χρήσιμα και κατά τη διάρκειά του.",
@@ -110,7 +110,7 @@
       questions: [
         [
           "Τι είναι το Oxygon;",
-          "Το Oxygon είναι ένα ολοκληρωμένο εργαλείο προπόνησης και εκτέλεσης αγώνα για αθλητές αντοχής. Συνδυάζει προσαρμοζόμενα πλάνα, τροφοδοσία ανά σταθμό, live δεδομένα, υπολογιστές και παρακολούθηση από το crew."
+          "Το Oxygon είναι ένα ολοκληρωμένο εργαλείο προπόνησης και εκτέλεσης αγώνα για αθλητές αντοχής. Συνδυάζει σχεδιασμό δραστηριοτήτων, τροφοδοσία ανά σταθμό, live δεδομένα, υπολογιστές και παρακολούθηση από το crew."
         ],
         [
           "Για ποιους αθλητές είναι σχεδιασμένο;",
@@ -133,8 +133,8 @@
           "Το Oxygon μπορεί να συνδυάζει GPS, συμβατούς Bluetooth αισθητήρες παλμών, συνθήκες και εξουσιοδοτημένα δεδομένα υγείας όπως η γλυκόζη. Οι διαθέσιμες ενδείξεις εξαρτώνται από τις συσκευές και τα δικαιώματα που έχεις ενεργοποιήσει."
         ],
         [
-          "Λειτουργεί σε iPhone, iPad και Apple Watch;",
-          "Ναι. Το iPhone διαχειρίζεται το live πλάνο, το iPad προσφέρει περισσότερο χώρο για σχεδιασμό και ανασκόπηση, και το Apple Watch κρατά τις σημαντικότερες πληροφορίες του αγώνα άμεσα διαθέσιμες."
+          "Λειτουργεί σε iPhone, iPad και ιστό;",
+          "Ναι. Σχεδιασμός και ανασκόπηση σε iPhone, iPad και ιστό. Στο iPhone, τα widgets της αρχικής οθόνης, η οθόνη κλειδώματος και το Dynamic Island ακολουθούν τη συνεδρία."
         ],
         [
           "Πώς διαχειρίζεται τα δεδομένα μου;",
@@ -142,7 +142,7 @@
         ],
         [
           "Είναι δωρεάν το Oxygon;",
-          "Οι υπολογιστές και το demo είναι δωρεάν. Το Oxygon Pro ξεκλειδώνει προηγμένο σχεδιασμό και live καθοδήγηση· η τρέχουσα διαθεσιμότητα εμφανίζεται μέσα στην εφαρμογή."
+          "Το Community, οι υπολογιστές, ο σχεδιασμός δραστηριοτήτων και ένας ζωντανός σύνδεσμος είναι δωρεάν. Το Oxygon Pro προσθέτει το Course Planner και περισσότερα προϊόντα τροφοδοσίας. Η τιμή εμφανίζεται πριν από τη συνδρομή."
         ]
       ]
     }

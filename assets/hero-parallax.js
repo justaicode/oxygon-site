@@ -66,7 +66,7 @@
       ".ox-page-parallax-shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(11,15,25,.34),rgba(11,15,25,.18) 52%,rgba(11,15,25,.3)),linear-gradient(180deg,rgba(11,15,25,.2),rgba(11,15,25,.4))}" +
       ".ox-hero-decoration{display:none!important}" +
       "@media(min-width:1024px){#top{box-sizing:border-box!important;min-height:clamp(820px,86vh,920px)}}" +
-      "#top>.ox-hero-screenshot-target,#top>div[style*=\"justify-self:center\"]{width:292px!important;height:auto!important;aspect-ratio:1320/2868;background:url(\"assets/site/appstore/iphone-dark/01-live-activity.webp\") center/100% 100% no-repeat!important;border-radius:38px;overflow:visible;border:1px solid rgba(84,84,88,.6);box-shadow:0 40px 80px rgba(0,0,0,.55);perspective:900px;transform-style:preserve-3d}" +
+      "#top>.ox-hero-screenshot-target,#top>div[style*=\"justify-self:center\"]{width:292px!important;height:auto!important;aspect-ratio:1320/2868;background:url(\"assets/site/current-171/live.webp\") center/100% 100% no-repeat!important;border-radius:38px;overflow:visible;border:1px solid rgba(84,84,88,.6);box-shadow:0 40px 80px rgba(0,0,0,.55);perspective:900px;transform-style:preserve-3d}" +
       "#top>.ox-hero-screenshot-target>:first-child,#top>div[style*=\"justify-self:center\"]>:first-child{display:none!important}" +
       "#top>.ox-hero-screenshot-target>:not(:first-child),#top>div[style*=\"justify-self:center\"]>:not(:first-child){display:block!important;pointer-events:auto!important;will-change:transform;transform-style:preserve-3d;cursor:default;transition:border-color .25s ease,box-shadow .25s ease}" +
       "#top>.ox-hero-screenshot-target>:nth-child(2){left:-118px!important;right:auto!important;top:165px!important;bottom:auto!important}" +
