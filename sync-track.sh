@@ -28,6 +28,7 @@ fi
 
 mkdir -p "$SCRIPT_DIR/track"
 cp "$SRC" "$DEST"
+python3 "$SCRIPT_DIR/scripts/version-assets.py"
 
 if git -C "$SCRIPT_DIR" diff --quiet -- track/index.html 2>/dev/null; then
   echo "track/index.html is already up to date."
