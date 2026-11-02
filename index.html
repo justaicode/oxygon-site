@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="icon" href="/icons/icon-32.png" type="image/png">
   <meta charset="utf-8">
   <title>Oxygon — Fuel the distance. Finish the race.</title><meta name="description" content="Plan the session, record it, and keep the fuelling with you. Run, ride, swim, strength, yoga and sauna, from the track to a 250 km ultra."><meta property="og:type" content="website"><meta property="og:site_name" content="Oxygon"><meta property="og:title" content="Oxygon — Fuel the distance. Finish the race."><meta property="og:description" content="Fuelling, live readings, a follow link, Community and a 3D replay of the route."><meta property="og:url" content="https://oxygon.app/"><meta name="twitter:card" content="summary_large_image"><script>(function(){var T="Oxygon — Fuel the distance. Finish the race.";function s(){if(document.title!==T){document.title=T;}}s();addEventListener('DOMContentLoaded',s);addEventListener('load',s);var n=0,i=setInterval(function(){s();if(++n>40){clearInterval(i);}},75);})();</script>
   <style>
@@ -17,7 +18,7 @@
       This page requires JavaScript to display.
     </div>
   </noscript>
-<script src="assets/hero-parallax.js?v=43545ce53d0c" defer></script><script src="assets/site-sections.js?v=6523c019bc48" defer></script><script src="assets/product-explorer-section.js?v=fbdbe6648663" defer></script><script src="assets/mobile-responsive.js?v=2f26859f4ac7" defer></script><script src="assets/performance-optimizations.js?v=c46221ebf064" defer></script></head>
+<script src="assets/hero-parallax.js?v=43545ce53d0c" defer></script><script src="assets/site-sections.js?v=6523c019bc48" defer></script><script src="assets/product-explorer-section.js?v=c9a6a9970cc0" defer></script><script src="assets/mobile-responsive.js?v=2f26859f4ac7" defer></script><script src="assets/performance-optimizations.js?v=c46221ebf064" defer></script></head>
 <body>
   <div id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#0B0F19"></rect><circle cx="50" cy="50" r="20" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-dasharray="94 32" transform="rotate(120 50 50)"></circle><path d="M 50 30 A 20 20 0 0 1 68 62" fill="none" stroke="#0A84FF" stroke-width="5"></path><circle cx="50" cy="50" r="6" fill="#FFFFFF"></circle></svg></div>
   <div id="__bundler_loading">Unpacking...</div>
@@ -47,13 +48,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         e.target.tagName, String(e.target.src || e.target.href || ''));
       return;
     }
-    var p = document.body || document.documentElement;
-    var d = document.getElementById('__bundler_err') || p.appendChild(document.createElement('div'));
-    d.id = '__bundler_err';
-    d.style.cssText = 'position:fixed;bottom:12px;left:12px;right:12px;font:12px/1.4 ui-monospace,monospace;background:#2a1215;color:#ff8a80;padding:10px 14px;border-radius:8px;border:1px solid #5c2b2e;z-index:99999;white-space:pre-wrap;max-height:40vh;overflow:auto';
-    d.textContent = (d.textContent ? d.textContent + String.fromCharCode(10) : '') +
-      '[bundle] ' + (e.message || e.type) +
-      (e.filename ? ' (' + e.filename.slice(0, 60) + ':' + e.lineno + ')' : '');
+    console.error('[bundle]', e.error || e.message || e.type,
+      e.filename || '', e.lineno || '');
   }, true);
 
   try {
@@ -300,7 +296,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const headOpen = template.match(/<head[^>]*>/i);
     if (headOpen) {
       const i = headOpen.index + headOpen[0].length;
-      template = template.slice(0, i) + resourceScript + template.slice(i);
+      template = template.slice(0, i) + '<link rel="icon" href="/icons/icon-32.png" type="image/png">' + resourceScript + template.slice(i);
     }
 
     // Parse the template and swap the root element. Scripts inserted via

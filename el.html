@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
+<link rel="icon" href="/icons/icon-32.png" type="image/png">
   <meta charset="utf-8">
   <title>Oxygon — Τροφοδότησε την απόσταση. Τερμάτισε τον αγώνα.</title><meta name="description" content="Σχεδίασε τη συνεδρία, κατέγραψέ την και κράτα την τροφοδοσία μαζί σου. Τρέξιμο, ποδήλατο, κολύμπι, βάρη, γιόγκα και σάουνα."><meta property="og:type" content="website"><meta property="og:site_name" content="Oxygon"><meta property="og:title" content="Oxygon — Τροφοδότησε την απόσταση. Τερμάτισε τον αγώνα."><meta property="og:url" content="https://oxygon.app/el.html"><meta name="twitter:card" content="summary_large_image"><script>(function(){var T="Oxygon — Τροφοδότησε την απόσταση. Τερμάτισε τον αγώνα.";function s(){if(document.title!==T){document.title=T;}}s();addEventListener('DOMContentLoaded',s);addEventListener('load',s);var n=0,i=setInterval(function(){s();if(++n>40){clearInterval(i);}},75);})();</script>
   <style>
@@ -47,13 +48,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         e.target.tagName, String(e.target.src || e.target.href || ''));
       return;
     }
-    var p = document.body || document.documentElement;
-    var d = document.getElementById('__bundler_err') || p.appendChild(document.createElement('div'));
-    d.id = '__bundler_err';
-    d.style.cssText = 'position:fixed;bottom:12px;left:12px;right:12px;font:12px/1.4 ui-monospace,monospace;background:#2a1215;color:#ff8a80;padding:10px 14px;border-radius:8px;border:1px solid #5c2b2e;z-index:99999;white-space:pre-wrap;max-height:40vh;overflow:auto';
-    d.textContent = (d.textContent ? d.textContent + String.fromCharCode(10) : '') +
-      '[bundle] ' + (e.message || e.type) +
-      (e.filename ? ' (' + e.filename.slice(0, 60) + ':' + e.lineno + ')' : '');
+    console.error('[bundle]', e.error || e.message || e.type,
+      e.filename || '', e.lineno || '');
   }, true);
 
   try {
@@ -300,7 +296,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const headOpen = template.match(/<head[^>]*>/i);
     if (headOpen) {
       const i = headOpen.index + headOpen[0].length;
-      template = template.slice(0, i) + resourceScript + template.slice(i);
+      template = template.slice(0, i) + '<link rel="icon" href="/icons/icon-32.png" type="image/png">' + resourceScript + template.slice(i);
     }
 
     // Parse the template and swap the root element. Scripts inserted via

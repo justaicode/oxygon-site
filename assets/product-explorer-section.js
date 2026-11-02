@@ -171,6 +171,16 @@
     }
 
     function onWindowScroll() {
+      // A long smooth jump can outlast the original 900ms timer. Keep its
+      // selected panel until scrolling actually settles, rather than mapping
+      // the intermediate position back onto an unrelated (fading) panel.
+      if (programmaticPanel !== null) {
+        window.clearTimeout(panelScrollTimer);
+        panelScrollTimer = window.setTimeout(function () {
+          programmaticPanel = null;
+          updateFromScroll();
+        }, 180);
+      }
       if (ticking) return;
       ticking = true;
       window.requestAnimationFrame(updateFromScroll);
