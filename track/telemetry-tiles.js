@@ -98,8 +98,8 @@
   function drawTiles() {
     loadChoices(); AVAIL=availability();
     const tiles = SLOTS.map(slot => tileHTML(slot, variant(slot)));
-    // Approved phone 3×2; intermediate 2×3; desktop 1×6.
-    const rows = '<div class="measurement-grid" data-fixed-columns="' + (innerWidth >= 1100 ? 6 : innerWidth >= 620 ? 3 : 2) + '">' + tiles.join("") + "</div>";
+    // Layout A: 3×2 tiles in the left column at desktop, 2×3 on narrower widths.
+    const rows = '<div class="measurement-grid" data-fixed-columns="' + (innerWidth >= 620 ? 3 : 2) + '">' + tiles.join("") + "</div>";
     let host = document.getElementById("oxm-tiles");
     if (!host) {
       host = document.createElement("div"); host.id = "oxm-tiles"; host.className = "oxm-app oxm-tiles";
@@ -178,6 +178,10 @@
   document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMenu();const t=e.target.closest("[data-metric-slot]");if(t&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openMenu(t.dataset.metricSlot);}});
   addEventListener("resize",()=>{closeMenu();if(PLAN&&LAST)drawTiles();});
   const baseRender=window.render;
-  window.render=function(){baseRender();if(PLAN&&LAST)drawTiles();};
-  if(PLAN&&LAST)render();
+  function drawTilesSafe(){ try{ drawTiles(); }catch(e){ console.error("telemetry-tiles draw failed", e); } }
+  window.render=function(){ if(baseRender) baseRender(); if(PLAN&&LAST) drawTilesSafe(); };
+  if(PLAN&&LAST){ render(); requestAnimationFrame(drawTilesSafe); }
+  // If the first render happened before this script loaded, the old stats are still
+  // visible; draw the new tiles once the layout viewport is known.
+  if(!document.getElementById("oxm-tiles") && PLAN && LAST) requestAnimationFrame(drawTilesSafe);
 })();

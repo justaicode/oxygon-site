@@ -44,7 +44,6 @@
     padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     transition:background-color .2s ease, color .2s ease;
   }
-  .wrap{max-width:760px;margin:0 auto;padding:18px 16px 40px}
   a{color:var(--accent2);text-decoration:none}
 
   /* Header */
@@ -170,10 +169,33 @@
   .card h2{margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--dim);font-weight:800;display:flex;align-items:center;gap:8px}
   .card h2 .r{margin-left:auto;color:var(--faint);font-weight:600;text-transform:none;letter-spacing:0;font-size:12.5px}
 
+  /* Layout A: two columns at desktop, single column on phones. */
+  .wrap{max-width:760px;margin:0 auto;padding:18px 16px 40px}
+  .layout{display:grid;gap:16px;grid-template-columns:1fr}
+  .left-col,.right-col{display:contents}
+  @media (min-width:1100px){
+    .wrap{max-width:1240px;padding:18px 24px 40px}
+    .layout{grid-template-columns:1fr 1fr;align-items:stretch}
+    .left-col,.right-col{display:flex;flex-direction:column}
+    .left-col>*:not(.grid),.right-col>*{margin-bottom:0}
+    .left-col .grid{display:none}
+    #map-card{display:flex;flex-direction:column;flex:1 1 auto;min-height:200px}
+    #map{flex:1 1 auto;min-height:200px;height:auto;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--inset)}
+    #chart-card{flex:0 0 auto;margin-top:16px}
+    #chart-card .profile{height:110px}
+    #energy-card{display:flex;flex-direction:column;flex:1 1 auto;margin-top:16px}
+    .energy-body{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:2px 0 10px}
+    .energy-bar{margin-top:auto;display:flex;height:7px;border-radius:99px;overflow:hidden;background:var(--inset)}
+  }
+  @media (max-width:1099px){
+    #map{height:min(360px,46vh);border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--inset)}
+    .energy-body{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:2px 0 10px}
+    .energy-bar{display:flex;height:7px;border-radius:99px;overflow:hidden;background:var(--inset)}
+  }
+
   /* Taller than the original 230px: the route is the thing a crew actually
      navigates by, and on a phone 230px left it a strip. Capped in viewport
      units so it can't eat a short screen whole. */
-  #map{height:min(360px,46vh);border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--inset)}
   .leaflet-container{background:var(--inset)}
   .pin{width:16px;height:16px;border-radius:50%;background:var(--live);border:3px solid #fff;box-shadow:0 0 0 4px rgba(255,75,87,.3),0 2px 6px rgba(0,0,0,.5)}
 
@@ -238,46 +260,64 @@
       <div id="status" class="status"><span class="dot"></span><span id="status-t">—</span></div>
     </div>
 
-    <h1 id="race-name">—</h1>
-    <p class="sub" id="race-sub">—</p>
+    <div class="layout">
+      <div class="left-col">
+        <h1 id="race-name">—</h1>
+        <p class="sub" id="race-sub">—</p>
 
-    <div class="elapsed">
-      <span class="big" id="elapsed">0:00:00</span>
-      <span class="lab" id="elapsed-lab">Elapsed</span>
-    </div>
+        <div class="elapsed">
+          <span class="big" id="elapsed">0:00:00</span>
+          <span class="lab" id="elapsed-lab">Elapsed</span>
+        </div>
 
-    <div class="prog" id="prog-wrap">
-      <div class="track"><div class="fill" id="prog-fill"></div></div>
-      <div class="meta">
-        <span><b id="cur-km">0</b> km</span>
-        <span id="pct-wrap"><b id="pct">0</b>%</span>
-        <span id="tot-wrap">of <b id="tot-km">0</b> km</span>
+        <div class="prog" id="prog-wrap">
+          <div class="track"><div class="fill" id="prog-fill"></div></div>
+          <div class="meta">
+            <span><b id="cur-km">0</b> km</span>
+            <span id="pct-wrap"><b id="pct">0</b>%</span>
+            <span id="tot-wrap">of <b id="tot-km">0</b> km</span>
+          </div>
+        </div>
+
+        <div class="grid primary" id="stats-primary"></div>
+        <div class="grid metrics" id="stats-metrics"></div>
+        <!-- Present in the markup, not conjured by script: the card is there from the
+             first paint whether or not any telemetry has arrived. Zero is the honest
+             reading before a run, and a card that materialises later makes a crew
+             wonder what else is still missing. -->
+        <div class="card" id="energy-card">
+          <h2>Energy burned</h2>
+          <div class="energy-body">
+            <span style="font-size:26px;font-weight:500">0<span style="font-size:12px;color:var(--muted);margin-left:5px">kcal</span></span>
+            <span style="font-size:13px;color:var(--temp)">carbs 0 g</span>
+            <span style="font-size:13px;color:var(--humid)">fat 0 g</span>
+          </div>
+          <div class="energy-bar" aria-hidden="true"></div>
+        </div>
       </div>
-    </div>
 
-    <div class="grid primary" id="stats-primary"></div>
-    <div class="grid metrics" id="stats-metrics"></div>
-    <!-- Present in the markup, not conjured by script: the card is there from the
-         first paint whether or not any telemetry has arrived. Zero is the honest
-         reading before a run, and a card that materialises later makes a crew
-         wonder what else is still missing. -->
-    <div class="card" id="energy-card">
-      <h2>Energy burned</h2>
-      <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:2px 0 10px">
-        <span style="font-size:26px;font-weight:500">0<span style="font-size:12px;color:var(--muted);margin-left:5px">kcal</span></span>
-        <span style="font-size:13px;color:var(--temp)">carbs 0 g</span>
-        <span style="font-size:13px;color:var(--humid)">fat 0 g</span>
+      <div class="right-col">
+        <div class="card" id="map-card">
+          <h2>Location
+            <span class="r" id="map-r"></span>
+            <button type="button" class="expand" id="map-expand"
+                    aria-label="Expand the map">Expand</button>
+          </h2>
+          <div id="map"></div>
+        </div>
+
+        <div class="card" id="chart-card">
+          <h2>Activity chart <span class="r">press &amp; hold to inspect</span></h2>
+          <div class="pills" id="prof-pills"></div>
+          <div class="profwrap">
+            <div class="yax" id="yax"></div>
+            <div class="yax right" id="yax2"></div>
+            <svg class="profile" id="profile" viewBox="0 0 1000 150" preserveAspectRatio="none"></svg>
+            <div class="scrubtip hidden" id="scrubtip"></div>
+          </div>
+          <div class="xax" id="xax"></div>
+        </div>
       </div>
-      <div style="display:flex;height:7px;border-radius:99px;overflow:hidden;background:var(--inset)"></div>
-    </div>
-
-    <div class="card" id="map-card">
-      <h2>Location
-        <span class="r" id="map-r"></span>
-        <button type="button" class="expand" id="map-expand"
-                aria-label="Expand the map">Expand</button>
-      </h2>
-      <div id="map"></div>
     </div>
 
     <!-- Full-screen map. The card version is deliberately small so the numbers
@@ -289,18 +329,6 @@
         <button type="button" class="expand" id="map-close" aria-label="Close the map">Close</button>
       </div>
       <div id="map-big"></div>
-    </div>
-
-    <div class="card">
-      <h2>Activity chart <span class="r">press &amp; hold to inspect</span></h2>
-      <div class="pills" id="prof-pills"></div>
-      <div class="profwrap">
-        <div class="yax" id="yax"></div>
-        <div class="yax right" id="yax2"></div>
-        <svg class="profile" id="profile" viewBox="0 0 1000 150" preserveAspectRatio="none"></svg>
-        <div class="scrubtip hidden" id="scrubtip"></div>
-      </div>
-      <div class="xax" id="xax"></div>
     </div>
 
 
@@ -579,6 +607,7 @@ function onAxis(p){
    is making. The recorded route only arrives at the finish; until then this is
    the only trail there is. */
 let LIVETRAIL=[], LIVELINE=null, BIGLIVELINE=null;
+let LIVE_ROUTE=null, LIVE_ROUTE_STAMP=null;
 const THEME_KEY="oxygon_track_theme";
 
 function totalKm(plan){
@@ -810,7 +839,7 @@ function showError(title, msg){
 // usable fix: neither sorting nor thinning belongs in the public renderer.
 function routePoints(plan){
   const recorded = plan.recordedTrack?.points;
-  const points = Array.isArray(recorded) && recorded.length > 1 ? recorded : plan.track?.points;
+  const points = Array.isArray(recorded) && recorded.length > 1 ? recorded : LIVE_ROUTE?.points?.length > 1 ? LIVE_ROUTE.points : plan.track?.points;
   return Array.isArray(points) ? points.filter(p => num(p.distanceKm)!=null &&
     num(p.latitude)!=null && num(p.longitude)!=null && Math.abs(p.latitude)<=90 && Math.abs(p.longitude)<=180) : [];
 }
@@ -876,7 +905,10 @@ async function refreshPlan(){
   try{
     const token=getToken();
     const plan = await rpc("public_plan", {token});
-    if(plan && plan.raceName){ PLAN=plan; refreshRoute(plan); }
+    if(plan && plan.raceName){
+      if(plan.startedAt!==PLAN.startedAt){LIVE_ROUTE=null;LIVE_ROUTE_STAMP=null;LIVETRAIL=[];}
+      PLAN=plan; refreshRoute(plan);
+    }
   }catch(e){/* keep last */}
 }
 
@@ -922,6 +954,20 @@ function mergeSeries(row){
   if(newest.length) SERIES_T = Math.max(...newest);
 }
 
+// Optional migration 0084: one bounded snapshot on open, then only changed snapshots.
+// Old servers keep the existing position-only fallback; sharing remains token gated.
+async function refreshLiveRoute(token){
+  if(TREADMILL || PLAN.recordedTrack?.points?.length) return;
+  try {
+    const snapshot=await rpc("public_live_route",{token,since:LIVE_ROUTE_STAMP});
+    if(!snapshot?.points?.length || !snapshot.updatedAt) return;
+    LIVE_ROUTE=snapshot;LIVE_ROUTE_STAMP=snapshot.updatedAt;
+    refreshRoute(PLAN);
+    const last=snapshot.points.at(-1);
+    LIVETRAIL=[[last.latitude,last.longitude]];
+  }catch(_){/* New page remains compatible with the previous server. */}
+}
+
 /* ----------------------------------------------------------------- tick    */
 async function tick(){
   if(SIM) return;   // simulation drives LAST locally; don't clobber it with real telemetry
@@ -937,6 +983,7 @@ async function tick(){
     const row = Array.isArray(rows) ? rows[0] : rows;
     if(row) mergeSeries(row);
     LAST = row || LAST;
+    await refreshLiveRoute(token);
     // Which measures exist is decided by the telemetry, but the pills were built
     // once in setupPlan — before a single row had arrived, when every series was
     // still empty. So temperature, humidity and glucose rendered disabled and
@@ -1431,12 +1478,12 @@ function renderEnergy(){
     card.style.display = "";
     card.innerHTML = `
       <h2>Energy burned</h2>
-      <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:2px 0 10px">
+      <div class="energy-body">
         <span style="font-size:26px;font-weight:500">0<span style="font-size:12px;color:var(--muted);margin-left:5px">kcal</span></span>
         <span style="font-size:13px;color:var(--temp)">carbs 0 g</span>
         <span style="font-size:13px;color:var(--humid)">fat 0 g</span>
       </div>
-      <div style="display:flex;height:7px;border-radius:99px;overflow:hidden;background:var(--inset)"></div>
+      <div class="energy-bar"></div>
       <p style="font-size:11px;color:var(--muted);margin:8px 0 0">${
         pending ? "Counts up once the activity starts."
                 : "No body weight on file — every figure here scales with it."}</p>`;
@@ -1464,14 +1511,14 @@ function renderEnergy(){
 
   card.innerHTML = `
     <h2>Energy burned ${rate!=null?`<span class="r">${rate} kcal/h</span>`:""}</h2>
-    <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:2px 0 10px">
+    <div class="energy-body">
       <span style="font-size:26px;font-weight:500">${kcal.toLocaleString()}<span style="font-size:12px;color:var(--muted);margin-left:5px">kcal</span></span>
       <span style="font-size:13px;color:var(--temp)">carbs <b>${carb} g</b></span>
       <span style="font-size:13px;color:var(--humid)">fat ${fat} g</span>
       <span style="flex:1"></span>
       <span style="font-size:12px">${gap}</span>
     </div>
-    <div style="display:flex;height:7px;border-radius:99px;overflow:hidden;opacity:${dim?0.45:1}">
+    <div class="energy-bar" style="opacity:${dim?0.45:1}">
       <div style="width:${carbShare.toFixed(1)}%;background:var(--temp)"></div>
       <div style="flex:1;background:var(--humid)"></div>
     </div>
@@ -1706,6 +1753,11 @@ function initMap(){
         if(!done && ROUTE){ MAP.fitBounds(ROUTE.getBounds().pad(0.15),{maxZoom:15}); done=true; } } });
     },{threshold:0.15});
     io.observe(document.getElementById('map'));
+  }
+  if('ResizeObserver' in window){
+    let ro;
+    try{ ro=new ResizeObserver(()=>{ if(MAP) MAP.invalidateSize(); }); ro.observe(document.getElementById('map')); }
+    catch(e){ if(ro) ro.disconnect(); }
   }
 }
 /* Off-screen / pre-layout, the map can report no size and fit to zoom 0 (whole

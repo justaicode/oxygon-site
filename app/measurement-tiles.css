@@ -124,7 +124,161 @@
   row-gap: .125rem;
 }
 
+/* Activity page: one grid for the tile section under the title. 3×2 on desktop,
+   2×3 when the container is narrow, so values stay on one line at 390. */
+.tile-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .5rem;
+  align-items: start;
+}
+.tile-grid > .measurement-tile,
+.tile-grid > .card {
+  min-width: 0;
+}
+/* Measurement tiles inside the activity tile grid need the same card box as the
+ * sauna/yoga placeholder cards so backgrounds, caption placement and face dots line up. */
+.tile-grid > .measurement-tile {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: var(--measurement-label-row, 1rem) var(--measurement-value-row, 1.625rem) var(--measurement-context-row, 1rem);
+  gap: .125rem;
+  padding: .5rem;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: var(--card);
+}
+/* Long labels in the activity popup tile grid wrap to a second line rather than
+ * shrinking below 11 px or being clipped. The icon stays in its own column. */
+.tile-grid .measurement-tile > .measurement-label > .measurement-content {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: .375rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+}
+.tile-grid .measurement-tile > .measurement-label .icon {
+  margin-top: 0.125rem;
+}
+
+/* Cards that sit inside the activity tile grid (sauna TIME/TEMP/HR/thermal, yoga TIME)
+ * use the same three-row box as measurement tiles so the grid rows line up. */
+.tile-grid > .card {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: var(--measurement-label-row, 1rem) var(--measurement-value-row, 1.625rem) var(--measurement-context-row, 1rem);
+  gap: .125rem;
+  padding: .5rem;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: var(--card);
+}
+.tile-grid > .card > .lbl {
+  font-size: .75rem;
+  line-height: 1rem;
+  font-weight: var(--weight-semibold);
+  color: var(--ink-secondary);
+  text-transform: uppercase;
+  letter-spacing: .025em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tile-grid > .card > .big {
+  display: flex;
+  align-items: baseline;
+  gap: .25rem;
+  font-size: 1.25rem;
+  font-weight: var(--weight-bold);
+  line-height: 1.625rem;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tile-grid > .card > .big i {
+  font-style: normal;
+  font-size: .6875rem;
+  line-height: 1rem;
+  font-weight: var(--weight-regular);
+  color: var(--ink-secondary);
+}
+.tile-grid > .card > .sub {
+  display: block;
+  text-align: right;
+  font-size: .6875rem;
+  line-height: 1rem;
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Never let a long value overflow its tile and overlap its neighbour.
+ * Values stay on one line; if they still don't fit they truncate with ellipsis. */
+.tile-grid .measurement-tile {
+  overflow: hidden;
+}
+.tile-grid .measurement-tile .measurement-content {
+  max-width: 100%;
+}
+.tile-grid .measurement-tile .measurement-readings {
+  min-width: 0;
+}
+.tile-grid .measurement-tile .measurement-reading {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tile-grid .measurement-tile .measurement-number {
+  font-size: 1.25rem;
+}
+.tile-grid .measurement-tile .measurement-unit {
+  font-size: .6875rem;
+}
+
 .activity-note-row{display:flex;align-items:center;gap:8px;width:100%;padding:0;background:none;text-align:left;color:var(--ink);font-size:var(--font-subheadline)}
 .activity-note-row>span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .activity-note-row small{color:var(--ink-secondary);font-size:var(--font-caption)}
 .activity-note-save{display:block;margin-left:auto;background:none;color:var(--accent);font-weight:var(--weight-semibold)}
+
+/* At narrow viewports the sauna/yoga custom cards need their labels to shrink so
+ * "THERMAL LOAD" and the "Exposure, not strain" caption fit, while staying >= 11 px. */
+@media (max-width: 430px) {
+  .tile-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .375rem;
+  }
+  .tile-grid > .measurement-tile,
+  .tile-grid > .card {
+    padding: .375rem;
+  }
+  .tile-grid .measurement-tile .measurement-number {
+    font-size: 1.125rem;
+  }
+  .tile-grid .measurement-tile .measurement-unit {
+    font-size: .625rem;
+  }
+  .tile-grid > .card > .lbl {
+    font-size: .6875rem;
+    letter-spacing: 0;
+  }
+  .tile-grid > .card > .big {
+    font-size: 1.125rem;
+  }
+  .tile-grid > .card > .big i {
+    font-size: .625rem;
+  }
+  .tile-grid > .card > .sub {
+    font-size: .5625rem;
+  }
+}

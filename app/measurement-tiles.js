@@ -39,8 +39,11 @@
   // A header or a numeric reading shrinks (down to 0.7) before a pair stacks, so the
   // values in that row stay on one baseline. The icon, the face dots and a context
   // sentence keep their size; a sentence still takes the full width.
-  function fitLine(el, room) {
-    var width = el.getBoundingClientRect().width;
+  function fitLine(el, room, minScale) {
+    if (minScale == null) minScale = MIN_LINE_SCALE;
+    // Measure the intrinsic width so a max-width cap (e.g. in the activity-popup
+    // tile grid) doesn't make a long label look like it already fits.
+    var width = el.scrollWidth;
     if (!(room > 0) || width <= room + 0.5) return;
     var numbers = el.querySelectorAll('.measurement-number, .measurement-unit');
     var fixed = 0;
@@ -53,7 +56,7 @@
     }
     var flexible = width - fixed;
     if (!(flexible > 1)) return;
-    var scale = Math.max(MIN_LINE_SCALE, (room - fixed) / flexible);
+    var scale = Math.max(minScale, (room - fixed) / flexible);
     if (numbers.length) {
       numbers.forEach(function (n) {
         n.style.fontSize = (parseFloat(getComputedStyle(n).fontSize) * scale) + 'px';
@@ -63,7 +66,7 @@
     }
   }
 
-  function fitGrid(grid, columns) {
+  function fitGrid(grid, columns, minScale) {
     var tiles = Array.from(grid.children).filter(function (t) { return t.classList.contains('measurement-tile'); });
     if (!tiles.length || !(columns > 0)) return;
     var gap = parseFloat(getComputedStyle(grid).columnGap) || 0;
@@ -73,9 +76,9 @@
       // One pixel inside the column, so a rounded font-size still clears the edge.
       var room = Math.max(1, narrow - parseFloat(inset.paddingLeft) - parseFloat(inset.paddingRight) - 1);
       var label = t.querySelector('.measurement-label > .measurement-content');
-      if (label) fitLine(label, room);
+      if (label) fitLine(label, room, minScale);
       var readings = t.querySelector('.measurement-readings');
-      if (readings) fitLine(readings, room);
+      if (readings) fitLine(readings, room, minScale);
     });
   }
 
@@ -88,7 +91,8 @@
 
   function layout(root) {
     var grids = Array.from(root.querySelectorAll('.measurement-grid')).filter(function (g) { return g.clientWidth > 0; });
-    if (!grids.length) return;
+    var tileGrids = Array.from(root.querySelectorAll('.tile-grid')).filter(function (g) { return g.clientWidth > 0 && g.querySelector('.measurement-tile, .card'); });
+    if (!grids.length && !tileGrids.length) return;
     clearFit(root);
     var scale = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
     var slots = [scale, scale * 26 / 16, scale];
@@ -155,6 +159,46 @@
       });
       delete g._mtColumns;
       delete g._mtExpanded;
+    });
+    // Activity popups use a fixed 3-column tile grid; shrink long labels/readings
+    // to fit without changing the grid layout, never below 11 px. Labels that still
+    // don't fit wrap to a second line, and every tile in the grid shares the same
+    // measured label / value / context row heights.
+    tileGrids.forEach(function (g) {
+      var label = g.querySelector('.measurement-label > .measurement-content');
+      var minScale = label ? 11 / parseFloat(getComputedStyle(label).fontSize) : MIN_LINE_SCALE;
+      fitGrid(g, 3, Math.max(minScale, MIN_LINE_SCALE));
+    });
+    tileGrids.forEach(function (g) {
+      var tiles = Array.from(g.children).filter(function (t) { return t.classList.contains('measurement-tile') || t.classList.contains('card'); });
+      if (!tiles.length) return;
+      var gap = parseFloat(getComputedStyle(g).columnGap) || 0;
+      var narrow = (g.clientWidth - gap * 2) / 3;
+      var heights = [0, 0, 0];
+      tiles.forEach(function (t) {
+        var inset = getComputedStyle(t);
+        var room = Math.max(1, narrow - parseFloat(inset.paddingLeft) - parseFloat(inset.paddingRight) - 1);
+        var isCard = t.classList.contains('card');
+        var rows = isCard ? [
+          t.querySelector('.lbl'),
+          t.querySelector('.big'),
+          t.querySelector('.sub')
+        ] : [
+          t.querySelector('.measurement-label > .measurement-content'),
+          t.querySelector('.measurement-value > .measurement-content'),
+          t.querySelector('.measurement-context > .measurement-content')
+        ];
+        rows.forEach(function (el, i) {
+          if (!el) return;
+          var prior = el.style.maxWidth;
+          el.style.maxWidth = room + 'px';
+          heights[i] = Math.max(heights[i], el.getBoundingClientRect().height);
+          el.style.maxWidth = prior;
+        });
+      });
+      set(g, '--measurement-label-row', Math.ceil(heights[0]) + 'px');
+      set(g, '--measurement-value-row', Math.ceil(heights[1]) + 'px');
+      set(g, '--measurement-context-row', Math.ceil(heights[2]) + 'px');
     });
   }
 
