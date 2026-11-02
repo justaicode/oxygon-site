@@ -380,7 +380,7 @@
           ":host{display:block;min-width:0;color-scheme:dark;--ox-bg:#0b0f19;--ox-text:#fff;--ox-muted:rgba(235,235,245,.64);--ox-quiet:rgba(235,235,245,.38);--ox-line:rgba(84,84,88,.48);--ox-blue:#0a84ff;--ox-green:#30d158;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}" +
           source.style +
           ".tabs{min-width:0;max-width:100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tab{flex:0 0 auto;white-space:nowrap}" +
-          ".navigation .arrow{width:44px;height:44px}" +
+          ".navigation{right:max(80px,calc((100vw - 1320px)/2))}.navigation .arrow{width:44px;height:44px}" +
           "@media(max-width:850px){.tabs{width:100%;flex-wrap:nowrap}.navigation{right:80px}}" +
           "@media(hover:none),(pointer:coarse){.telemetry-hover-copy{display:none}.telemetry-touch-copy{display:inline}}" +
           ".showcase{background:rgba(9,13,22,.14)!important}" +
