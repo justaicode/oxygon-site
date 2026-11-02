@@ -2,7 +2,8 @@
   "use strict";
 
   var SOURCE_URL = "product-explorer-fullbleed-preview.html?v=20261101-complete";
-  var GREEK_STRINGS_URL = "assets/product-explorer-el.json?v=8c70a46682d7";
+  var ENGLISH_STRINGS_URL = "assets/product-explorer-en.json?v=baf1b0d28578";
+  var GREEK_STRINGS_URL = "assets/product-explorer-el.json?v=e874f3ddeb7f";
   var greek = /^el(?:-|$)/i.test(document.documentElement.lang);
   var LEGACY_IDS = ["features", "crew", "tools", "races"];
   var PANEL_FOR_HASH = {
@@ -39,12 +40,10 @@
     });
   }
 
-  var translationsPromise = greek
-    ? window.fetch(GREEK_STRINGS_URL, { credentials: "same-origin" }).then(function (response) {
+  var translationsPromise = window.fetch(greek ? GREEK_STRINGS_URL : ENGLISH_STRINGS_URL, { credentials: "same-origin" }).then(function (response) {
         if (!response.ok) throw new Error("Product Explorer translations returned " + response.status);
         return response.json();
-      })
-    : Promise.resolve(null);
+      });
   var sourcePromise = Promise.all([
     window.fetch(SOURCE_URL, { credentials: "same-origin" }).then(readSource),
     translationsPromise
@@ -57,7 +56,12 @@
     var styles = sourceStyle.textContent.replace(/\.panel\[aria-label="(Calendar|Activities|Library|Tools|Live telemetry)"\]/g, function (_, label) {
       return '.panel[data-panel="' + { Calendar: "0", Activities: "1", Library: "2", Tools: "3", "Live telemetry": "4" }[label] + '"]';
     });
-    if (values[1]) { localize(story, values[1]); localize(dialog, values[1]); }
+    localize(story, values[1]);
+    localize(dialog, values[1]);
+    // Calendar gets its approved v2 chip; Strava remains on Activities Share only.
+    var calendarChips = story.querySelectorAll('.panel[data-panel="0"] .chips .chip');
+    if (calendarChips.length !== values[1].calendarChips.length) throw new Error("Calendar chips are incomplete");
+    calendarChips.forEach(function (chip, index) { chip.textContent = values[1].calendarChips[index]; });
     return { style: styles, story: story, dialog: dialog, runtime: values[1] ? values[1].runtime : {}, language: greek ? "el" : "en" };
   });
 
@@ -379,8 +383,10 @@
         style.textContent =
           ":host{display:block;min-width:0;color-scheme:dark;--ox-bg:#0b0f19;--ox-text:#fff;--ox-muted:rgba(235,235,245,.64);--ox-quiet:rgba(235,235,245,.38);--ox-line:rgba(84,84,88,.48);--ox-blue:#0a84ff;--ox-green:#30d158;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}" +
           source.style +
-          ".tabs{min-width:0;max-width:100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tab{flex:0 0 auto;white-space:nowrap}" +
+          ".tabs{min-width:0;max-width:100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tab{flex:0 0 auto}.tab,.chip,.activity-step,.tool-picker{white-space:nowrap}" +
           ".navigation{right:max(80px,calc((100vw - 1320px)/2))}.navigation .arrow{width:44px;height:44px}" +
+          "@media(min-width:601px) and (max-width:1120px){.tool-picker-list{width:274px}}" +
+          "@media(max-width:600px){.tool-picker-list{display:flex;gap:8px;width:100%;overflow-x:auto;padding-bottom:6px}.tool-picker{flex:0 0 auto;padding:8px 12px;min-height:44px}.tool-screen{min-height:350px}}" +
           "@media(max-width:850px){.tabs{width:100%;flex-wrap:nowrap}.navigation{right:80px}}" +
           "@media(hover:none),(pointer:coarse){.telemetry-hover-copy{display:none}.telemetry-touch-copy{display:inline}}" +
           ".showcase{background:rgba(9,13,22,.14)!important}" +
@@ -393,9 +399,8 @@
         if (source.language === "el") {
           style.textContent +=
             ".activities-visual::after{content:\"Πραγματικές οθόνες της εφαρμογής\"}" +
-            ".tab,.chip,.activity-step,.tool-picker{white-space:nowrap}" +
-            ".tool-picker-list{grid-template-columns:minmax(0,1fr);width:210px}" +
-            "@media(max-width:600px){.activity-steps{grid-template-columns:repeat(3,minmax(0,1fr))}.tool-picker-list{display:flex;gap:8px;width:100%;overflow-x:auto;padding-bottom:6px}.tool-picker{flex:0 0 auto;padding:8px 12px;min-height:44px}.tool-screen{min-height:350px}}";
+            "@media(min-width:601px){.tool-picker-list{grid-template-columns:minmax(0,1fr);width:210px}}" +
+            "@media(max-width:600px){.activity-steps{grid-template-columns:repeat(3,minmax(0,1fr))}}";
         }
         root.appendChild(style);
         root.appendChild(document.importNode(source.story, true));
