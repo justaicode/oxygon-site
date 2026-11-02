@@ -183,6 +183,11 @@
     #map{flex:1 1 auto;min-height:200px;height:auto;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--inset)}
     #chart-card{flex:0 0 auto;margin-top:16px}
     #chart-card .profile{height:110px}
+    /* No map (treadmill, indoor, no position): the chart card takes the map's place
+       and absorbs the difference, so both columns still end on the same line. */
+    #map-card.hidden + #chart-card{display:flex;flex-direction:column;flex:1 1 auto;margin-top:0}
+    #map-card.hidden + #chart-card .profwrap{display:flex;flex:1 1 auto;min-height:110px}
+    #map-card.hidden + #chart-card .profile{flex:1 1 auto;height:auto;min-height:110px}
     #energy-card{display:flex;flex-direction:column;flex:1 1 auto;margin-top:16px}
     .energy-body{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:2px 0 10px}
     .energy-bar{margin-top:auto;display:flex;height:7px;border-radius:99px;overflow:hidden;background:var(--inset)}
@@ -469,8 +474,20 @@ let LAST_PACE=null;    // last valid pace (s/km), held through transient null ti
 let PREV_KM=null;      // projected finish + ETAs don't blink; both reset on a restart
 let SCRUB=null, SCRUB_WIRED=false;   // press-and-hold profile scrubber (0..1 course fraction)
 /* Profile overlays + theme. */
-let HRHIST=[];  // {km,bpm} — accumulated client-side (server keeps only the latest row)
+let HRHIST=[];  // {km,bpm,t} — accumulated client-side (server keeps only the latest row); t = elapsed s
 const SHOW={hr:false,temp:true,humid:false,gluc:false};
+/* Until the viewer taps a pill, the chart shows something it can draw. Temperature
+   is the default, but a treadmill run with a strap and no sensor has heart rate
+   and no temperature, and the chart sat empty (HR available, Temp selected and
+   dimmed) until someone thought to tap HR. A choice the viewer made is kept. */
+let PILLS_TOUCHED=false;
+function ensureShown(){
+  if(PILLS_TOUCHED) return;
+  const keys=["hr","temp","humid","gluc"];
+  if(keys.some(k=>SHOW[k] && seriesCount(k)>=2)) return;
+  const k=keys.find(k=>seriesCount(k)>=2);
+  if(k) SHOW[k]=true;
+}
 /* Fallbacks only. Every series is auto-ranged to the data it actually has —
    see `autoRange`. Fixed bands were why temperature read as a dead straight line:
    a real run varying 28.5–28.8 °C, drawn on a -5..45 band, moves less than one
@@ -761,12 +778,18 @@ function measAt(f){
    trace) when present, else what this viewer accumulated since opening the link. */
 function hrPoints(){
   const s = LAST && LAST.hr_series;
-  if(Array.isArray(s) && s.length>1){
-    return s.map(p => Array.isArray(p) ? {km:+p[0], bpm:+p[1], t:+(p[2] ?? NaN)}
-                                       : {km:+(p&&p.km), bpm:+(p&&p.bpm), t:+(p&&p.t)})
-            .filter(h => isFinite(h.bpm) && onAxis(h));
+  let pts = [];
+  if(Array.isArray(s) && s.length){
+    pts = s.map(p => Array.isArray(p) ? {km:+p[0], bpm:+p[1], t:+(p[2] ?? NaN)}
+                                      : {km:+(p&&p.km), bpm:+(p&&p.bpm), t:+(p&&p.t)})
+           .filter(h => isFinite(h.bpm) && onAxis(h));
+    if(pts.length > 1) return pts;
   }
-  return HRHIST;
+  // The published series is missing, or has no point this axis can place (legacy
+  // [km, bpm] pairs on a treadmill's time axis): the readings this page has seen,
+  // which carry both km and elapsed time, so they draw on either axis.
+  const own = HRHIST.filter(h => isFinite(h.bpm) && onAxis(h));
+  return own.length > pts.length ? own : pts;
 }
 
 /* HR (bpm) interpolated at a course km, for the scrubber tooltip. */
@@ -992,7 +1015,8 @@ async function tick(){
     // Re-rendered only when availability actually changes, not on every poll: the
     // pills are buttons, and rebuilding them every few seconds throws away focus
     // and hover mid-click.
-    const sig = JSON.stringify(measAvail());
+    ensureShown();
+    const sig = JSON.stringify([measAvail(), SHOW]);
     if(sig !== PILLSIG){ PILLSIG = sig; renderPills(); }
     render();
   }catch(e){/* keep last frame; age timer will flag staleness */}
@@ -1394,9 +1418,13 @@ function render(){
   renderEnergy();
 
   // Accumulate an HR-vs-distance trace for the profile overlay.
-  if(st==="live" && km!=null && hr!=null){
-    const lh=HRHIST[HRHIST.length-1];
-    if(!lh || Math.abs(km-lh.km)>0.02) HRHIST.push({km, bpm:hr});
+  // Each point keeps the elapsed time too: a treadmill is drawn against time, and a
+  // point with only km had nowhere to sit there (the chart stayed empty).
+  if(st==="live" && hr!=null){
+    const lh=HRHIST[HRHIST.length-1], t=num(LAST && LAST.elapsed_sec);
+    const moved = km!=null && (!lh || !isFinite(lh.km) || Math.abs(km-lh.km)>0.02);
+    const later = t!=null && (!lh || !isFinite(lh.t) || t-lh.t>=5);
+    if(!lh || moved || later) HRHIST.push({km: km!=null ? km : NaN, bpm:hr, t: t!=null ? t : NaN});
   }
 
   // Map + profile marker
@@ -1528,7 +1556,11 @@ function renderEnergy(){
 /* --------------------------------------------------------------- profile   */
 function drawProfile(km){
   const svg=$("profile");
-  const W=1000,H=150,pad=14;
+  // The drawing's height follows the box it is shown in (1000 wide), so a chart
+  // that grows to fill the column keeps round dots and even lines.
+  const box=svg.getBoundingClientRect();
+  const W=1000,H=(box.width>0&&box.height>0)?Math.max(80,Math.round(W*box.height/box.width)):150,pad=14;
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
   const span = Math.max(MAXE-MINE, 1);
   const X = (d)=> (clamp(d/Math.max(chartKm(),1e-6),0,1))*W;
   const Y = (e)=> H-pad - ((e-MINE)/span)*(H-2*pad);
@@ -1568,8 +1600,11 @@ function drawProfile(km){
   if(km!=null){
     // Without a course there is no elevation line to sit the dot on, but the
     // vertical rule still says where you are across every other trace.
-    const p = PTS.length ? posAt(km) : null;
-    me = `<line x1="${X(km).toFixed(1)}" y1="0" x2="${X(km).toFixed(1)}" y2="${H}" stroke="rgba(255,75,87,.35)" stroke-width="1"/>`;
+    const p = PTS.length && !timeAxis() ? posAt(km) : null;
+    // On a time axis (treadmill, no distance) "here" is the elapsed time, not km.
+    const el = num(LAST && LAST.elapsed_sec);
+    const mx = timeAxis() ? (el!=null ? clamp(el/Math.max(axisMax(),1e-6),0,1)*W : null) : X(km);
+    if(mx!=null) me = `<line x1="${mx.toFixed(1)}" y1="0" x2="${mx.toFixed(1)}" y2="${H}" stroke="rgba(255,75,87,.35)" stroke-width="1"/>`;
     if(p) me += `<circle class="me" cx="${X(km).toFixed(1)}" cy="${Y(num(p.elevationM) ?? MINE).toFixed(1)}" r="5"/>`;
   }
 
@@ -1633,7 +1668,7 @@ function drawProfile(km){
   // an axis nobody selected is an axis nobody is reading.
   if(yax) yax.innerHTML = ak.length
       ? axisFor(ak[0])
-      : `<span>${Math.round(MAXE)} m</span><span>${Math.round(MINE)} m</span>`;
+      : (PTS.length && !timeAxis() ? `<span>${Math.round(MAXE)} m</span><span>${Math.round(MINE)} m</span>` : "");
   if(yax2) yax2.innerHTML = ak.length > 1 ? axisFor(ak[1]) : "";
   // Every label carries km, not just the last. "7.6" alone is a number without
   // a subject when you're glancing at a phone on a roadside.
@@ -1863,7 +1898,7 @@ function wirePills(){
   if(PILLS_WIRED) return; PILLS_WIRED=true;
   $("prof-pills").addEventListener("click",(e)=>{
     const b=e.target.closest(".pill"); if(!b || b.disabled) return;
-    SHOW[b.dataset.k]=!SHOW[b.dataset.k];
+    SHOW[b.dataset.k]=!SHOW[b.dataset.k]; PILLS_TOUCHED=true;
     renderPills(); drawProfile(currentKm());
   });
 }
@@ -1964,6 +1999,13 @@ function wireAdmin(){
   $("simseg").addEventListener("click", e=>{ const b=e.target.closest("button"); if(!b) return; setSim(b.dataset.m==="sim"); });
 }
 
+// The chart's drawing height follows its box (drawProfile), so redraw when the box
+// changes: the map card hiding on a treadmill, a resize, the two-column switch.
+if('ResizeObserver' in window){
+  let lastH=0;
+  try{ new ResizeObserver(es=>{ const h=Math.round(es[0].contentRect.height);
+    if(h && h!==lastH && PLAN){ lastH=h; drawProfile(currentKm()); } }).observe(document.getElementById('profile')); }catch(_){}
+}
 applyTheme();
 wireTheme();
 wireAdmin();
