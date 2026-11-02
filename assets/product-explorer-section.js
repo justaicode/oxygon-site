@@ -2,7 +2,7 @@
   "use strict";
 
   var SOURCE_URL = "product-explorer-fullbleed-preview.html?v=20261101-complete";
-  var GREEK_STRINGS_URL = "assets/product-explorer-el.json?v=d47f2eaee436";
+  var GREEK_STRINGS_URL = "assets/product-explorer-el.json?v=8c70a46682d7";
   var greek = /^el(?:-|$)/i.test(document.documentElement.lang);
   var LEGACY_IDS = ["features", "crew", "tools", "races"];
   var PANEL_FOR_HASH = {
@@ -144,6 +144,13 @@
       tabs.forEach(function (tab, tabIndex) {
         tab.setAttribute("aria-selected", String(tabIndex === current));
       });
+      // Scroll only the tab strip; scrollIntoView would also move the pinned story.
+      var selectedTab = tabs[current];
+      var strip = selectedTab.parentElement;
+      var tabBounds = selectedTab.getBoundingClientRect();
+      var stripBounds = strip.getBoundingClientRect();
+      if (tabBounds.left < stripBounds.left) strip.scrollLeft += tabBounds.left - stripBounds.left;
+      else if (tabBounds.right > stripBounds.right) strip.scrollLeft += tabBounds.right - stripBounds.right;
       progressCount.textContent = label(current);
       navCount.textContent = label(current);
       fill.style.transform = "translate3d(0," + (current * 100) + "%,0)";
@@ -372,6 +379,9 @@
         style.textContent =
           ":host{display:block;min-width:0;color-scheme:dark;--ox-bg:#0b0f19;--ox-text:#fff;--ox-muted:rgba(235,235,245,.64);--ox-quiet:rgba(235,235,245,.38);--ox-line:rgba(84,84,88,.48);--ox-blue:#0a84ff;--ox-green:#30d158;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}" +
           source.style +
+          ".tabs{min-width:0;max-width:100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tab{flex:0 0 auto;white-space:nowrap}" +
+          "@media(max-width:850px){.tabs{width:100%;flex-wrap:nowrap}}" +
+          "@media(hover:none),(pointer:coarse){.telemetry-hover-copy{display:none}.telemetry-touch-copy{display:inline}}" +
           ".showcase{background:rgba(9,13,22,.14)!important}" +
           ".showcase::before{background:radial-gradient(circle at 80% 35%,rgba(10,132,255,.1),transparent 34%),linear-gradient(115deg,rgba(10,15,25,.3) 0%,rgba(16,23,37,.2) 48%,rgba(9,13,22,.34) 100%)!important}" +
           ".dialog-header{position:absolute!important;top:20px;right:24px;z-index:40;display:flex!important;pointer-events:none}" +
@@ -381,6 +391,7 @@
           "@media(max-width:600px){.dialog-header{top:12px;right:12px}}";
         if (source.language === "el") {
           style.textContent +=
+            ".activities-visual::after{content:\"Πραγματικές οθόνες της εφαρμογής\"}" +
             ".tab,.chip,.activity-step,.tool-picker{white-space:nowrap}" +
             ".tool-picker-list{grid-template-columns:minmax(0,1fr);width:210px}" +
             "@media(max-width:600px){.activity-steps{grid-template-columns:repeat(3,minmax(0,1fr))}.tool-picker-list{display:flex;gap:8px;width:100%;overflow-x:auto;padding-bottom:6px}.tool-picker{flex:0 0 auto;padding:8px 12px;min-height:44px}.tool-screen{min-height:350px}}";
@@ -389,7 +400,7 @@
         root.appendChild(document.importNode(source.story, true));
         root.appendChild(document.importNode(source.dialog, true));
         root.querySelector(".dialog-close").textContent = source.runtime["Close"] || "Close";
-        if (source.language === "el") {
+        {
           var topbar = root.querySelector(".showcase-topbar");
           var panelsBox = root.querySelector(".panels");
           function fitTopbar() { panelsBox.style.insetBlockStart = topbar.offsetHeight + "px"; }
