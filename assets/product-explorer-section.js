@@ -2,6 +2,8 @@
   "use strict";
 
   var SOURCE_URL = "product-explorer-fullbleed-preview.html?v=20261101-complete";
+  var GREEK_STRINGS_URL = "assets/product-explorer-el.json?v=d47f2eaee436";
+  var greek = /^el(?:-|$)/i.test(document.documentElement.lang);
   var LEGACY_IDS = ["features", "crew", "tools", "races"];
   var PANEL_FOR_HASH = {
     "#features": 1,
@@ -13,19 +15,51 @@
   var ELEMENT_NAME = "oxygon-product-explorer";
   var LEGACY_STYLE_ID = "oxygon-product-explorer-legacy-styles";
 
-  var sourcePromise = window.fetch(SOURCE_URL, { credentials: "same-origin" })
-    .then(function (response) {
-      if (!response.ok) throw new Error("Product Explorer source returned " + response.status);
-      return response.text();
-    })
-    .then(function (html) {
-      var parsed = new DOMParser().parseFromString(html, "text/html");
-      var sourceStyle = parsed.querySelector("head style");
-      var story = parsed.querySelector(".story");
-      var dialog = parsed.querySelector(".telemetry-dialog");
-      if (!sourceStyle || !story || !dialog) throw new Error("Product Explorer source is incomplete");
-      return { style: sourceStyle.textContent, story: story, dialog: dialog };
+  function readSource(response) {
+    if (!response.ok) throw new Error("Product Explorer source returned " + response.status);
+    return response.text();
+  }
+
+  function localize(container, translations) {
+    var walker = container.ownerDocument.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+    var node;
+    while ((node = walker.nextNode())) {
+      var key = node.nodeValue.trim().replace(/\s+/g, " ");
+      if (translations.text[key]) {
+        node.nodeValue = node.nodeValue.replace(/\S[\s\S]*\S|\S/, function () { return translations.text[key]; });
+      }
+    }
+    [container].concat(Array.prototype.slice.call(container.querySelectorAll("*"))).forEach(function (element) {
+      ["aria-label", "alt", "title"].forEach(function (attribute) {
+        var value = element.getAttribute(attribute);
+        if (value && translations[attribute] && translations[attribute][value]) {
+          element.setAttribute(attribute, translations[attribute][value]);
+        }
+      });
     });
+  }
+
+  var translationsPromise = greek
+    ? window.fetch(GREEK_STRINGS_URL, { credentials: "same-origin" }).then(function (response) {
+        if (!response.ok) throw new Error("Product Explorer translations returned " + response.status);
+        return response.json();
+      })
+    : Promise.resolve(null);
+  var sourcePromise = Promise.all([
+    window.fetch(SOURCE_URL, { credentials: "same-origin" }).then(readSource),
+    translationsPromise
+  ]).then(function (values) {
+    var parsed = new DOMParser().parseFromString(values[0], "text/html");
+    var sourceStyle = parsed.querySelector("head style");
+    var story = parsed.querySelector(".story");
+    var dialog = parsed.querySelector(".telemetry-dialog");
+    if (!sourceStyle || !story || !dialog) throw new Error("Product Explorer source is incomplete");
+    var styles = sourceStyle.textContent.replace(/\.panel\[aria-label="(Calendar|Activities|Library|Tools|Live telemetry)"\]/g, function (_, label) {
+      return '.panel[data-panel="' + { Calendar: "0", Activities: "1", Library: "2", Tools: "3", "Live telemetry": "4" }[label] + '"]';
+    });
+    if (values[1]) { localize(story, values[1]); localize(dialog, values[1]); }
+    return { style: styles, story: story, dialog: dialog, runtime: values[1] ? values[1].runtime : {}, language: greek ? "el" : "en" };
+  });
 
   function storyTop(story) {
     return story.getBoundingClientRect().top + window.scrollY;
@@ -40,7 +74,7 @@
     document.head.appendChild(style);
   }
 
-  function wireExplorer(root, host) {
+  function wireExplorer(root, host, runtime) {
     var story = root.getElementById("story");
     var panels = Array.prototype.slice.call(root.querySelectorAll(".panel"));
     var tabs = Array.prototype.slice.call(root.querySelectorAll(".tab"));
@@ -71,7 +105,7 @@
     var telemetryPrepared = false;
     var panelCount = panels.length;
     var activityPanelIndex = panels.findIndex(function (panel) {
-      return panel.getAttribute("aria-label") === "Activities";
+      return panel.getAttribute("data-panel") === "1";
     });
     var scrollMomentCount = activitySteps.length + panelCount - 1;
     var programmaticPanel = null;
@@ -140,8 +174,8 @@
       activityNext.disabled = activityCurrent === activitySteps.length - 1;
       activityCurrentLabel.textContent = String(activityCurrent + 1).padStart(2, "0");
       activityScrollHint.textContent = activityCurrent === activitySteps.length - 1
-        ? "Scroll to Library"
-        : "Scroll to continue";
+        ? (runtime["Scroll to Library"] || "Scroll to Library")
+        : (runtime["Scroll to continue"] || "Scroll to continue");
     }
 
     function updateFromScroll() {
@@ -345,25 +379,41 @@
           ".dialog-close{position:static!important;display:inline-flex!important;align-items:center;justify-content:center;min-height:34px;padding:8px 12px!important;border:1px solid rgba(255,255,255,.18)!important;border-radius:999px!important;color:#fff!important;background:rgba(17,23,34,.92)!important;box-shadow:0 8px 24px rgba(0,0,0,.3);font:700 12px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif!important;cursor:pointer;pointer-events:auto;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}" +
           ".dialog-close:hover{border-color:rgba(10,132,255,.7)!important;background:rgba(28,36,48,.96)!important}" +
           "@media(max-width:600px){.dialog-header{top:12px;right:12px}}";
+        if (source.language === "el") {
+          style.textContent +=
+            ".tab,.chip,.activity-step,.tool-picker{white-space:nowrap}" +
+            ".tool-picker-list{grid-template-columns:minmax(0,1fr);width:210px}" +
+            "@media(max-width:600px){.activity-steps{grid-template-columns:repeat(3,minmax(0,1fr))}.tool-picker-list{display:flex;gap:8px;width:100%;overflow-x:auto;padding-bottom:6px}.tool-picker{flex:0 0 auto;padding:8px 12px;min-height:44px}.tool-screen{min-height:350px}}";
+        }
         root.appendChild(style);
         root.appendChild(document.importNode(source.story, true));
         root.appendChild(document.importNode(source.dialog, true));
-        root.querySelector(".dialog-close").textContent = "Close";
-        this.__explorerCleanup = wireExplorer(root, this);
+        root.querySelector(".dialog-close").textContent = source.runtime["Close"] || "Close";
+        if (source.language === "el") {
+          var topbar = root.querySelector(".showcase-topbar");
+          var panelsBox = root.querySelector(".panels");
+          function fitTopbar() { panelsBox.style.insetBlockStart = topbar.offsetHeight + "px"; }
+          fitTopbar();
+          this.__explorerResize = new ResizeObserver(fitTopbar);
+          this.__explorerResize.observe(topbar);
+        }
+        this.__explorerCleanup = wireExplorer(root, this, source.runtime);
       }
 
       disconnectedCallback() {
+        if (this.__explorerResize) this.__explorerResize.disconnect();
         if (typeof this.__explorerCleanup === "function") this.__explorerCleanup();
         this.__explorerCleanup = null;
       }
     });
   }
 
-  function createHost() {
+  function createHost(source) {
     var host = document.createElement(ELEMENT_NAME);
     host.id = "features";
     host.className = "ox-product-explorer-section";
-    host.setAttribute("aria-label", "Explore Oxygon features");
+    host.setAttribute("aria-label", source.runtime["Explore Oxygon features"] || "Explore Oxygon features");
+    host.lang = source.language;
     return host;
   }
 
@@ -381,7 +431,7 @@
       section.id = "legacy-" + id;
     });
 
-    var host = createHost();
+    var host = createHost(source);
     legacyFeatures.parentElement.insertBefore(host, legacyFeatures);
 
     LEGACY_IDS.forEach(function (id) {
