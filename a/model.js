@@ -18,15 +18,19 @@ export function normalize(raw,expectedId){
  // Optional summary columns come from the SQL allowlist; derive running pace only as contracted.
  for(const [key,source]of [['elapsedSeconds','movingSec'],['temperatureC','tempC'],['load','load'],...(free?[]:[['distanceKm','distanceKm'],['ascentM','elevationGainM']])]){const value=number(summary[source]);if(value!==null)stats[key]=value;}
  for(const [key,source]of [['avgHeartRate','avgHR'],['maxHeartRate','maxHR']]){const value=number(summary[source]);if(value!==null)stats[key]=value;}
+ if(sport==='sauna'&&Number.isInteger(summary.rounds)&&summary.rounds>0)stats.rounds=summary.rounds;
  if(sport==='run'&&stats.elapsedSeconds>0&&stats.distanceKm>0)stats.avgPaceSecondsPerKm=stats.elapsedSeconds/stats.distanceKm;
  const heartRateShared=stats.avgHeartRate!==undefined||stats.maxHeartRate!==undefined;
  const paceWords=/(?:pace|distance|\bkm\b|\bmiles?\b|\/km|ρυθμ|απόστασ|χλμ)/i,heartWords=/(?:heart rate|\bbpm\b|\bHR\b|παλμ)/i;
  const publicText=(v,n)=>{const s=text(v,n);return (free&&paceWords.test(s))||(!heartRateShared&&heartWords.test(s))?'':s;};
  const words=text(raw.athlete,60).trim().split(/\s+/),name=words.length>1?words[0]+' '+Array.from(words.at(-1))[0]+'.':words[0];
  const route=free?[]:projectRoute(raw.route);
+ const photoCaptions=Object.create(null);for(const p of Array.isArray(raw.photos)?raw.photos:[])if(Number.isInteger(p?.index)&&p.index>=0&&p.index<=3&&photoCaptions[p.index]===undefined)photoCaptions[p.index]=publicText(p.caption,500);
  const photoIndexes=[...new Set((Array.isArray(raw.photos)?raw.photos:[]).map(p=>p?.index).filter(i=>Number.isInteger(i)&&i>=0&&i<=3))];
  // Populated rep shape is defined by shared StravaServerUpload.PublicRep / StravaServerJs.
- const reps=(Array.isArray(raw.reps)?raw.reps:[]).slice(0,100).filter(r=>r&&number(r.seconds)!==null).map((r,i)=>({number:Number.isInteger(r.number)&&r.number>0?r.number:i+1,seconds:r.seconds,paceSecPerKm:free?null:number(r.paceSecPerKm),target:publicText(r.target,150)}));
- return {id:raw.id,name,date:text(raw.startedAt,40),sport,sportDetail:'',title:publicText(raw.title,150),aiLines:publicText(raw.aiLines,600),note:publicText(raw.note,10000),stats,heartRateShared,route,photoIndexes,photos:[],reps,plan:null,replayAvailable:raw.replay===true&&route.length>1,replayUrl:null,appUrl:safeUrl(raw.openUrl)||'https://my.oxygon.app/'};
+ const reps=(Array.isArray(raw.reps)?raw.reps:[]).slice(0,100).filter(r=>r&&number(r.seconds)!==null).map((r,i)=>({number:Number.isInteger(r.number)&&r.number>0?r.number:i+1,seconds:r.seconds,paceSecPerKm:free?null:number(r.paceSecPerKm),distanceM:free?null:number(r.distanceM),target:publicText(r.planTarget||r.target,150)}));
+ return {id:raw.id,name,date:text(raw.startedAt,40),sport,sportDetail:raw.sportDetail==='Intervals'?'Intervals':'',sourceLabel:['Garmin','intervals.icu','Oxygon'].includes(raw.sourceLabel)?raw.sourceLabel:'',title:publicText(raw.title,150),aiLines:publicText(raw.aiLines,600),note:publicText(raw.note,10000),stats,heartRateShared,route,photoIndexes,photoCaptions,photos:[],reps,plan:null,replayAvailable:raw.replay===true&&route.length>1,replayUrl:null,appUrl:safeUrl(raw.openUrl)||'https://my.oxygon.app/'};
 }
 export function clock(seconds){const n=Math.round(seconds);return `${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`;}
+
+export function planTargetLabel(value,lang='en'){const pace=/^pace\s+(\d+(?:\.\d+)?)(?:\s*[–−-]\s*(\d+(?:\.\d+)?))?$/.exec(value);const label=pace?clock(Number(pace[1]))+(pace[2]?'–'+clock(Number(pace[2])):''):value;return label+' '+(lang==='el'?'πλάνο':'plan');}
