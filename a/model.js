@@ -15,9 +15,10 @@ export function normalize(raw,expectedId){
  const sport=raw?.sport==='ride'?'bike':raw?.sport;
  if(!raw||Array.isArray(raw)||raw.version!==1||!validId(raw.id)||(expectedId&&raw.id!==expectedId)||raw.source==='strava'||!['run','bike','swim','sauna','yoga','strength'].includes(sport))return null;
  const free=distanceFree(sport),stats={},summary=raw.summary||{};
- // Optional summary columns come from the actual SQL allowlist; no pace/rounds are invented.
+ // Optional summary columns come from the SQL allowlist; derive running pace only as contracted.
  for(const [key,source]of [['elapsedSeconds','movingSec'],['temperatureC','tempC'],['load','load'],...(free?[]:[['distanceKm','distanceKm'],['ascentM','elevationGainM']])]){const value=number(summary[source]);if(value!==null)stats[key]=value;}
  for(const [key,source]of [['avgHeartRate','avgHR'],['maxHeartRate','maxHR']]){const value=number(summary[source]);if(value!==null)stats[key]=value;}
+ if(sport==='run'&&stats.elapsedSeconds>0&&stats.distanceKm>0)stats.avgPaceSecondsPerKm=stats.elapsedSeconds/stats.distanceKm;
  const heartRateShared=stats.avgHeartRate!==undefined||stats.maxHeartRate!==undefined;
  const paceWords=/(?:pace|distance|\bkm\b|\bmiles?\b|\/km|ρυθμ|απόστασ|χλμ)/i,heartWords=/(?:heart rate|\bbpm\b|\bHR\b|παλμ)/i;
  const publicText=(v,n)=>{const s=text(v,n);return (free&&paceWords.test(s))||(!heartRateShared&&heartWords.test(s))?'':s;};
