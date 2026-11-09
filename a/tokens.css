@@ -1,0 +1,719 @@
+/* Oxygon design tokens, read off the SwiftUI source.
+ *
+ * Colours are Theme.swift + AccentColorPreference.swift; the ink/separator values
+ * are UIKit's semantic colours, which the app uses via `.primary`/`.secondary` and
+ * so never spells out itself. Type sizes are Apple's text-style metrics at Dynamic
+ * Type Large. Layout caps are Theme.readableWidth and the fixed regular-width
+ * columns. Every screen ported to the web reads from here rather than re-deriving.
+ */
+:root {
+  color-scheme: light dark;
+
+  /* --- surfaces --- */
+  --bg:              #E8F0FC;                 /* Theme.swift:13 */
+  --card:            rgba(255,255,255,0.65);  /* Theme.swift:17 — translucent in light */
+  /* A modal is a surface ABOVE the page, and in dark it has to say so. `--bg` on
+     `--bg` is one flat field with a dialog somewhere in it — the cards inside
+     read, the dialog itself does not. Web-only: the phones push a screen where
+     the desktop opens a modal, so there is no `Theme.swift` twin to match.
+
+     **In LIGHT it cannot be #FFFFFF**, which is what it was: `--card` is
+     translucent white at 65%, so a white dialog made every card inside it
+     disappear — a page of figures floating on one flat field, which is what he
+     photographed on 3 Sep. Raising is the shadow and the backdrop's job here;
+     the surface only has to stay UNDER the cards, a hair above the page. */
+  --bg-raised:       #EDF3FD;
+
+  /* --- the coach's workout types ---
+     `WorkoutType.tint` (WorkoutType.swift:13-96). They lived in `coach.html`
+     alone, so a Strength session on the Activities board reached for a colour
+     that did not exist in that file and fell back to the generic workout green.
+     A vocabulary two screens speak belongs in the file both of them load. */
+  --wt-green:  #34C759;
+  --wt-purple: #AF52DE;
+  --wt-amber:  #FFBF00;
+  --wt-orange: #FF9500;
+  --wt-teal:   #30B0C7;
+  --wt-gray:   #8E8E93;
+  --chip-unselected: rgba(0,0,0,0.06);        /* Theme.swift:21 */
+  --switch-off: rgba(120,120,128,0.20);      /* UIKit systemFill: a Toggle's off track */
+  /* `.ultraThinMaterial` — the iPad Splits panel. */
+  --material-thin:   rgba(255,255,255,0.45);
+  /* WE-1 (approved 14 Oct 2026, docs/mockups/web-editor-2026-10-14/): the editor's step and
+     exercise rows sit on a 4 % ink tint. Follows the accent and the theme on its own. */
+  --row-tint:        color-mix(in srgb, var(--ink) 4%, transparent);
+
+  /* --- ink (UIKit semantics) --- */
+  --ink:             #000000;
+  /* Greys raised to WCAG AA 4.5:1 on every surface (Roberto, 3 Nov 2026: "Yes, raise the greys"): slightly darker in
+     light, slightly lighter in dark, same order secondary > week-pale > tertiary. check-theme-tokens enforces it. */
+  --ink-secondary:   rgba(60,60,67,0.78);
+  --ink-tertiary:    rgba(60,60,67,0.73);   /* tertiaryLabel — section headers, chevrons */
+  --ink-week-pale:   rgba(60,60,67,0.75);   /* week-before and /planned figures, between secondary and tertiary */
+  --separator:       rgba(60,60,67,0.29);
+  /* UISegmentedControl's selected segment (Theme.kt:191 measured the pair). */
+  --seg-thumb:       #FFFFFF;
+
+  /* --- accent: blue is the default; swap the pair to switch --- */
+  --accent:          #007AFF;                 /* AccentColorPreference.swift:20 */
+  --on-accent:       #FFFFFF;                 /* AccentColorPreference.swift:31 */
+  --accent-hairline: rgba(0,122,255,0.40);    /* the .opacity(0.4) card stroke */
+  --accent-area-top: rgba(0,122,255,0.25);    /* SplitsView chart gradient */
+  --accent-area-bot: rgba(0,122,255,0.02);
+
+  /* --- fixed semantics: never tint these with the accent (Theme.swift:27-49) --- */
+  --race-type:       #C92129;
+  --workout-type:    #5DCAA5;
+  --connected:       #17A863;
+  --attention:       #CC800D;
+  --carb:            #D97706;
+  --fat:             #2A9D8F;
+  /* Button roles (12 Sep 2026): a PRIMARY action is --accent on --on-accent; a
+     DESTRUCTIVE one is --destructive (iOS systemRed); anything else is quiet —
+     --ink-secondary in a --separator outline. No page picks its own red or green. */
+  --destructive:     #FF3B30;
+  /* Lifebuoy bands (FEEDBACK-1 icon B). Rings use currentColor. iOS system orange. */
+  --lifebuoy-band:   #FF9500;
+
+  /* `Theme.sportTint` — the sport colours (20 Oct 2026, option D of
+     docs/mockups/sport-colours-D-2026-10-20; revised 21 Oct 2026, Roberto: "teal
+     to Yoga … and yellow for riding, everywhere"): running crimson, cycling
+     yellow, swimming blue, strength violet, sauna rose, yoga teal, and race a
+     black/white checker whose solid ink is `--sport-race`. Same hex as
+     `ActivityModalityPalette`, iOS `Theme` and Android `T`. Swim is a clear
+     blue so yoga's teal stays apart from it; `--race-type` stays the red for warnings and text that are not
+     sport marks, and `--workout-type` stays the workout tag's teal. Figures on
+     a solid sport fill take `--sport-ink-*`. Dark values: the media
+     query and `html[data-theme]` below. */
+  --sport-run:       #9E1B32;
+  --sport-ride:      #DDAA00;
+  --sport-swim:      #2F86F0;
+  --sport-strength:  #6A3FC9;
+  --sport-sauna:     #E36FA8;
+  --sport-yoga:      #22C7B5;
+  --sport-race:      #1C1C1E;
+  --sport-race-cell: #FFFFFF;
+  --sport-other:     var(--ink-secondary); /* Theme.sportTint(.other): header chips and charts */
+  /* Month-grid circles for a walk. ActivityModalityPalette's else branch, the
+     same #8E8E93 in light and dark (iPhone modalityTint). Not the header chip. */
+  --palette-other:   #8E8E93;
+  /* The figure on a solid sport fill: white on a dark fill, near-black on a
+     light one — relative luminance under 0.18 is dark, the rule of
+     `ActivityModalityPalette.inkIsWhite` (check-month-circles holds them to it). */
+  --sport-ink-run:#FFFFFF;
+  --sport-ink-ride:rgba(0,0,0,.82);
+  --sport-ink-swim:rgba(0,0,0,.82);
+  --sport-ink-strength:#FFFFFF;
+  --sport-ink-sauna:rgba(0,0,0,.82);
+  --sport-ink-yoga:rgba(0,0,0,.82);
+  --sport-ink-race:#FFFFFF;
+  --sport-ink-other:rgba(0,0,0,.82);
+  /* Race is a black/white checker, not a colour: 4×4 cells on a calendar
+     circle (with --race-ring), 6×6 on the summary glyph and large circles, a
+     left/right split on a dot under 14px. Cells swap in dark mode. */
+  --race-checker-4:  repeating-conic-gradient(var(--sport-race) 0 25%, var(--sport-race-cell) 0 50%) 0 0 / 50% 50%;
+  --race-checker-6:  repeating-conic-gradient(var(--sport-race) 0 25%, var(--sport-race-cell) 0 50%) 0 0 / calc(100% / 3) calc(100% / 3);
+  --race-split:      linear-gradient(90deg, var(--sport-race) 50%, var(--sport-race-cell) 50%);
+  --race-ring:       rgba(142,142,147,.6);
+
+  /* --- Strava attribution (docs/icons-contract.md) ---
+     Strava's API agreement: its "Powered by Strava" mark wherever Strava data is shown, and "View on
+     Strava" links in bold, underlined or #FC5200. The mark's colours are its supplied variants: orange
+     (black words, orange STRAVA) on light, all white on dark; mono = black / white. Strava sets no size or
+     clear space, so these are ours: 20 tall (197 wide), never under 16, half its height clear all round. */
+  --strava-orange:      #FC5200;
+  --strava-mark-text:   #000000;
+  --strava-mark-word:   #FC5200;
+  --strava-mark-h:      20px;
+  --strava-mark-min-h:  16px;
+  --strava-mark-clear:  10px;
+
+  /* --- type --- */
+  --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  --font-rounded: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, sans-serif;
+  --font-caption2:    11px;
+  --font-caption:     12px;
+  --font-footnote:    13px;
+  --font-subheadline: 15px;   /* the workhorse */
+  --font-body:        17px;
+  --font-headline:    17px;   /* weight 600 baked in */
+  --font-title3:      20px;
+  --font-title2:      22px;
+  --font-title:       28px;
+  --font-large-title: 34px;   /* .navigationTitle's large mode */
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+  --weight-heavy:    800;
+
+  /* --- spacing --- */
+  --space-1:  2px;  --space-2:  4px;  --space-3:  6px;
+  --space-4:  8px;  --space-5: 10px;  --space-6: 12px;
+  --space-7: 14px;  --space-8: 16px;  --space-9: 20px;
+  --space-10: 24px;
+
+  /* --- radii: ONE scale for web, iOS and Android, the iPhone's values (docs/design-tokens.md, 2 Oct 2026).
+         SwiftUI draws .continuous squircles; plain radius here. --- */
+  --radius-mini:  8px;   /* mini button (28 tall) */
+  --radius-md:   10px;   /* = --radius-field: search, filter button, text field */
+  --radius-field: 10px;
+  --radius-button: 12px; /* every action, on every platform — docs/buttons-contract.md; the floating Coach too */
+  --radius-xl:   14px;   /* = --radius-tile: activity card, inner tile */
+  --radius-tile: 14px;
+  /* Chart axis tick labels, every chart (19 Oct 2026): the shared ChartStyle.AXIS_LABEL_SIZE, iOS pt / Android sp. */
+  --chart-axis-size: 11px;
+  --radius-list: 16px;   /* compact list row / session card */
+  --radius-card: 18px;   /* .cardStyle() — Theme.swift CardBackground */
+  --radius-panel: 22px;  /* floating panel, sheet */
+  --radius-pill: 9999px; /* chips, badges, segmented controls, toolbar groups (iOS 26 capsules) */
+
+  /* --- strokes --- */
+  --stroke-hairline: 1px;
+  --stroke:          1.5px;
+  --stroke-chart:    2.5px;
+
+  /* --- layout caps (Theme.readableWidth) --- */
+  --width-default: 640px;   /* Theme.swift:82 */
+  --width-tools:   820px;   /* regular width only — MoreToolsView.swift:90 */
+  --width-library: 900px;   /* regular width only — LibraryView.swift:69 */
+
+  /* --- fixed columns, regular width only --- */
+  --col-splits: 380px;      /* CalculatorView.swift:36 */
+  --col-chat:   400px;
+  --col-day:    460px;      /* CoachPlannerView.swift:254 */
+
+  /* --- editor sizing (WE-1, approved 14 Oct 2026) — one control height and one card
+     padding for the planned editor, in tokens so every web page reuses the same pair. --- */
+  --control-height: 40px;   /* every field, select and segmented control in an editor */
+  --card-padding: 24px;
+}
+
+@media (max-width: 600px) {
+  :root { --card-padding: 20px; }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sport-run:       #F2556B;
+    --sport-ride:      #FFD43B;
+    --sport-swim:      #3B8BFF;
+    --sport-strength:  #C3B2FF;
+    --sport-sauna:     #C02BB8;
+    --sport-yoga:      #40E0C8;
+    --sport-race:      #F2F2F7;
+    --sport-race-cell: #1C1C1E;
+    --palette-other:   #8E8E93;
+    --sport-ink-run:rgba(0,0,0,.82); --sport-ink-ride:rgba(0,0,0,.82); --sport-ink-swim:rgba(0,0,0,.82); --sport-ink-strength:rgba(0,0,0,.82); --sport-ink-sauna:#FFFFFF; --sport-ink-yoga:rgba(0,0,0,.82); --sport-ink-race:rgba(0,0,0,.82); --sport-ink-other:rgba(0,0,0,.82);
+    --strava-mark-text: #FFFFFF;
+    --strava-mark-word: #FFFFFF;
+    --bg:              #0B0F19;                    /* Theme.swift:14 */
+    --card:            #212630;                    /* Theme.swift:18 — opaque in dark */
+    /* Between the page (#0B0F19) and a card (#212630), so the dialog lifts off
+       the page and its own cards still lift off IT. */
+    --bg-raised:       #151B27;
+
+    --wt-green:  #30D158;
+    --wt-purple: #BF5AF2;
+    --wt-amber:  #FFBF00;
+    --wt-orange: #FF9F0A;
+    --wt-teal:   #40C8E0;
+    --wt-gray:   #8E8E93;
+    --chip-unselected: rgba(255,255,255,0.10);     /* Theme.swift:22 */
+    --switch-off: rgba(120,120,128,0.36);          /* systemFill, dark */
+    --material-thin:   rgba(30,36,48,0.55);
+
+    --ink:             #FFFFFF;
+    --ink-secondary:   rgba(235,235,245,0.60);
+    --ink-tertiary:    rgba(235,235,245,0.52);
+    --ink-week-pale:   rgba(235,235,245,0.55);
+    --separator:       rgba(84,84,88,0.60);
+    --seg-thumb:       rgba(255,255,255,0.16);
+
+    --accent:          #0A84FF;
+    --accent-hairline: rgba(10,132,255,0.40);
+    --accent-area-top: rgba(10,132,255,0.25);
+    --accent-area-bot: rgba(10,132,255,0.02);
+
+    --race-type:       #FF5961;
+    --connected:       #3DD47A;
+    --attention:       #FFB53D;
+    --destructive:     #FF453A;
+    --lifebuoy-band:   #FF9F0A;
+    --carb:            #FFB84D;
+    --fat:             #40C8C0;
+  }
+}
+
+/* ── Forced theme — the Settings Theme row ───────────────────────────────────
+   The blocks above answer only `prefers-color-scheme`, so a chosen Light or
+   Dark needs these: the palette re-asserted under `html[data-theme]`, whose
+   specificity beats the media query either way round. Every token the media
+   block sets must appear in BOTH blocks below (web/check-theme-tokens.mjs). Every page sets the
+   attribute before first paint from `themePreference` (the inline head script
+   settings.html introduced), so the preference holds on all of them.
+
+   Neither block touches `--accent`: a `html[data-theme]` declaration would
+   outrank the bare `[data-accent]` selectors below and paint every chosen
+   accent blue. The only accent that differs by theme is the default blue, and
+   the `:not([data-accent])` pair handles it — which cannot collide, because a
+   chosen accent always sets the attribute. */
+html[data-theme="light"]{
+  --sport-run:#9E1B32; --sport-ride:#DDAA00; --sport-swim:#2F86F0; --sport-strength:#6A3FC9; --sport-sauna:#E36FA8; --sport-yoga:#22C7B5;
+  --sport-race:#1C1C1E; --sport-race-cell:#FFFFFF; --palette-other:#8E8E93;
+  --sport-ink-run:#FFFFFF; --sport-ink-ride:rgba(0,0,0,.82); --sport-ink-swim:rgba(0,0,0,.82); --sport-ink-strength:#FFFFFF; --sport-ink-sauna:rgba(0,0,0,.82); --sport-ink-yoga:rgba(0,0,0,.82); --sport-ink-race:#FFFFFF; --sport-ink-other:rgba(0,0,0,.82);
+  --strava-mark-text:#000000; --strava-mark-word:#FC5200;
+  color-scheme:light;
+  --bg:#E8F0FC; --card:rgba(255,255,255,0.65); --chip-unselected:rgba(0,0,0,0.06);
+  --switch-off:rgba(120,120,128,0.20);
+  /* Same reason as `:root` — white here hid every card in the workout dialog. */
+  --bg-raised:#EDF3FD;
+  --wt-green:#34C759; --wt-purple:#AF52DE; --wt-amber:#FFBF00;
+  --wt-orange:#FF9500; --wt-teal:#30B0C7; --wt-gray:#8E8E93;
+  --material-thin:rgba(255,255,255,0.45);
+  --ink:#000000; --ink-secondary:rgba(60,60,67,0.78); --ink-tertiary:rgba(60,60,67,0.73); --ink-week-pale:rgba(60,60,67,0.75);
+  --separator:rgba(60,60,67,0.29); --seg-thumb:#FFFFFF;
+  --race-type:#C92129; --connected:#17A863; --attention:#CC800D; --destructive:#FF3B30;
+  --lifebuoy-band:#FF9500;
+  --carb:#D97706; --fat:#2A9D8F;
+}
+html[data-theme="dark"]{
+  --sport-run:#F2556B; --sport-ride:#FFD43B; --sport-swim:#3B8BFF; --sport-strength:#C3B2FF; --sport-sauna:#C02BB8; --sport-yoga:#40E0C8;
+  --sport-race:#F2F2F7; --sport-race-cell:#1C1C1E; --palette-other:#8E8E93;
+  --sport-ink-run:rgba(0,0,0,.82); --sport-ink-ride:rgba(0,0,0,.82); --sport-ink-swim:rgba(0,0,0,.82); --sport-ink-strength:rgba(0,0,0,.82); --sport-ink-sauna:#FFFFFF; --sport-ink-yoga:rgba(0,0,0,.82); --sport-ink-race:rgba(0,0,0,.82); --sport-ink-other:rgba(0,0,0,.82);
+  --strava-mark-text:#FFFFFF; --strava-mark-word:#FFFFFF;
+  color-scheme:dark;
+  --bg:#0B0F19; --card:#212630; --chip-unselected:rgba(255,255,255,0.10);
+  --switch-off:rgba(120,120,128,0.36);
+  --bg-raised:#151B27;
+  --wt-green:#30D158; --wt-purple:#BF5AF2; --wt-amber:#FFBF00;
+  --wt-orange:#FF9F0A; --wt-teal:#40C8E0; --wt-gray:#8E8E93;
+  --material-thin:rgba(30,36,48,0.55);
+  --ink:#FFFFFF; --ink-secondary:rgba(235,235,245,0.60); --ink-tertiary:rgba(235,235,245,0.52); --ink-week-pale:rgba(235,235,245,0.55);
+  --separator:rgba(84,84,88,0.60); --seg-thumb:rgba(255,255,255,0.16);
+  --race-type:#FF5961; --connected:#3DD47A; --attention:#FFB53D; --destructive:#FF453A;
+  --lifebuoy-band:#FF9F0A;
+  --carb:#FFB84D; --fat:#40C8C0;
+}
+html[data-theme="light"]:not([data-accent]){
+  --accent:#007AFF; --accent-hairline:rgba(0,122,255,.40);
+  --accent-area-top:rgba(0,122,255,.25); --accent-area-bot:rgba(0,122,255,.02);
+}
+html[data-theme="dark"]:not([data-accent]){
+  --accent:#0A84FF; --accent-hairline:rgba(10,132,255,.40);
+  --accent-area-top:rgba(10,132,255,.25); --accent-area-bot:rgba(10,132,255,.02);
+}
+
+/* The four non-default accents have no light/dark variant.
+   Set --accent and --on-accent together; nothing else changes. */
+[data-accent="orange"]  { --accent:#FF6B00; --on-accent:#000; --accent-hairline:rgba(255,107,0,.40);
+                          --accent-area-top:rgba(255,107,0,.25); --accent-area-bot:rgba(255,107,0,.02); }
+[data-accent="green"]   { --accent:#6BFF00; --on-accent:#000; --accent-hairline:rgba(107,255,0,.40);
+                          --accent-area-top:rgba(107,255,0,.25); --accent-area-bot:rgba(107,255,0,.02); }
+[data-accent="magenta"] { --accent:#FF00A3; --on-accent:#FFF; --accent-hairline:rgba(255,0,163,.40);
+                          --accent-area-top:rgba(255,0,163,.25); --accent-area-bot:rgba(255,0,163,.02); }
+[data-accent="yellow"]  { --accent:#FEC600; --on-accent:#000; --accent-hairline:rgba(254,198,0,.40);
+                          --accent-area-top:rgba(254,198,0,.25); --accent-area-bot:rgba(254,198,0,.02); }
+
+/* Every ticking number in the app uses monospacedDigit(). */
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* ── Tab bar ─────────────────────────────────────────────────────────────────
+   The iOS app's bottom tab bar — the same five destinations in
+   RootTabView.swift:409's order. The Calculator is not one of them on any
+   platform: it is the first row inside Tools (MoreToolsView.swift), so
+   index.html keeps its URL and lights the Tools item. Each web screen
+   was built standalone by a different agent, so this is the one shared piece:
+   the same markup in every page, styled once here. Fixed, so it survives a long
+   scroll the way the native bar does.
+
+   `body { padding-bottom }` is what stops the bar sitting on top of the last
+   row of a long list — iOS never needs it because the system TabView reserves
+   its own height. It was written as `body`, and every one of the five pages
+   overrode it: each screen's own <style> opens with `html,body{margin:0;padding:0}`,
+   which comes after this file and wins on equal specificity. So the reservation
+   was 0 everywhere and the Library's last card scrolled under the bar. `html body`
+   outranks the page rule without editing five files.
+
+   The number is the bar's measured height (8 + 22 icon + 2 + 14 label + 8 = 54,
+   plus its 1px border), and the home-indicator inset is on top of it — 0 on a
+   desktop, 34 on the phone this is now expected to open on. */
+html body { padding-bottom: calc(55px + env(safe-area-inset-bottom)); }
+
+/* The phones' floating "● Activity ›" while an activity runs (RootTabView's pill;
+   shell.js draws it). Phone: above the tab bar, right. Sidebar: above the account
+   chip — his call, 9 Sep 2026. */
+.live-pill {
+  position: fixed; right: 14px; bottom: calc(55px + env(safe-area-inset-bottom) + 14px); z-index: 60;
+  display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px 10px 12px;
+  border-radius: var(--radius-pill, 999px); background: var(--bg-raised); color: var(--ink);
+  border: 1px solid var(--separator); box-shadow: 0 6px 20px rgba(0,0,0,.3);
+  font-size: var(--font-subheadline); font-weight: var(--weight-semibold); text-decoration: none;
+}
+.live-pill .dot { width: 9px; height: 9px; border-radius: 50%; background: #FF453A;
+                  box-shadow: 0 0 0 3px rgba(255,69,58,.25); animation: live-dot 1.6s ease-in-out infinite; }
+.live-pill .chev { opacity: .7; font-size: 18px; line-height: 1; margin-left: 2px; }
+@keyframes live-dot { 50% { box-shadow: 0 0 0 6px rgba(255,69,58,.10); } }
+
+.tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+  display: flex; justify-content: center; gap: 4px;
+  padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+  background: var(--material-thin, var(--card));
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-top: 1px solid var(--accent-hairline, transparent);
+}
+.tabbar a {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  /* six tabs since Community joined (19 Sep): no minimum, a slimmer pad, and the
+     label may not wrap — 375 px over six is 62 px each. */
+  min-width: 0; padding: 6px 6px; border-radius: var(--radius-pill, 999px); white-space: nowrap; overflow: hidden;
+  /* `font:` is a shorthand and needs a family, so `font: 12px` was invalid and
+     dropped — the labels inherited the page's 17px body size and the four of
+     them ran off the right edge of a phone. */
+  font-size: var(--font-caption); color: var(--ink-secondary);
+  text-decoration: none; -webkit-tap-highlight-color: transparent;
+}
+.tabbar a[aria-current="page"] { color: var(--on-accent); background: var(--accent); }
+.tabbar svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+
+/* Five items still don't fit a phone at 72px apiece (5×72 + gaps + padding = 400),
+   so on compact they shrink evenly and the label drops to caption2 — the size
+   the native bar uses anyway. */
+@media (max-width: 699px) {
+  /* Six equal slots — 375 px gives 62 each — and a 10 px label so "Community" fits one. */
+  .tabbar { padding-left: 6px; padding-right: 6px; gap: 2px; }
+  .tabbar a { min-width: 0; flex: 1 1 0; padding: 6px 2px; font-size: 10px; letter-spacing: -.1px; }
+}
+
+/* ── Regular width: the bar becomes a left rail ──────────────────────────────
+   iPad-audit #1. iOS gets this from `.tabViewStyle(.sidebarAdaptable)`
+   (RootTabView.swift:454-459) — destinations in a left sidebar, collapsible to
+   an icon rail. The rail is the web's form: the item markup is already an icon
+   over a caption, so the bar only changes axis. Apple's sidebar width is
+   Apple's (web-design-tokens.md §4.4 — "a web port must pick its own number");
+   96px is 72px of item plus the bar's own 12px padding either side, and the
+   700px boundary is the same compact/regular line the Calculator splits on.
+   The body reservation moves from bottom to left with it. */
+@media (min-width: 700px) {
+  html body { padding-bottom: 0; padding-left: calc(96px + env(safe-area-inset-left)); }
+  .tabbar {
+    top: 0; right: auto; width: calc(96px + env(safe-area-inset-left));
+    flex-direction: column; justify-content: flex-start; gap: var(--space-4);
+    padding: var(--space-9) var(--space-6) var(--space-9) calc(var(--space-6) + env(safe-area-inset-left));
+    border-top: none; border-right: 1px solid var(--accent-hairline, transparent);
+  }
+}
+
+/* ── Desktop shell: the sidebar ──────────────────────────────────────────────
+   The rail above is the iPad's answer — a 96px column that can only ever show a
+   glyph, because that is all `.sidebarAdaptable` collapses to. A desktop window
+   has the width to say the word, so from 960px up a page that opts in
+   (`<body class="shell">` + the `<aside class="side">` markup) trades the rail
+   for a 240px labelled sidebar and the tab bar disappears.
+
+   Opt-in, not automatic: the pages still on the ported iPad layout keep the
+   rail, and each moves over as it is rebuilt. `html body.shell` outranks the
+   rail's `html body` on specificity, so the 96px reservation goes with it.
+
+   **Every selector below is `aside.side`, and the element must be the aside.**
+   A bare `.side` also matched the navbar's own leading/trailing slots, which
+   two pages spell `<span class="side">` — those pages set `display` and `width`
+   on them, so the collision was invisible until it wasn't: the sidebar's
+   `position:sticky; height:100vh` landed on a navbar slot, the bar grew to the
+   full height of the window, and the whole screen came down with it. */
+aside.side { display: none; }
+
+@media (min-width: 960px) {
+  html body.shell {
+    padding-left: 0; padding-bottom: 0;
+    display: grid; grid-template-columns: 240px 1fr; min-height: 100vh;
+  }
+  body.shell .tabbar { display: none; }
+
+  aside.side {
+    /* border-box, here: 100vh plus this padding overflowed the viewport on a page
+       without a global box-sizing rule, and the account chip fell below the fold. */
+    box-sizing: border-box; position: sticky; top: 0; height: 100vh;
+    display: flex; flex-direction: column; gap: var(--space-4);
+    padding: var(--space-9) var(--space-6);
+    border-right: 1px solid var(--separator);
+  }
+  aside.side .brand { display: flex; align-items: center; gap: var(--space-5);
+                 padding: 0 var(--space-5) var(--space-9); }
+  aside.side .brand svg { width: 26px; height: 26px; }
+  aside.side .brand b { font-size: var(--font-title3); font-weight: var(--weight-bold);
+                   letter-spacing: -.3px; }
+  aside.side nav { display: flex; flex-direction: column; gap: 2px; }
+  aside.side nav a {
+    display: flex; align-items: center; gap: var(--space-6); height: 40px;
+    padding: 0 var(--space-5); border-radius: var(--radius-md);
+    font-size: var(--font-subheadline); font-weight: var(--weight-medium);
+    color: var(--ink-secondary); text-decoration: none;
+  }
+  aside.side nav a svg { width: 19px; height: 19px; fill: none; stroke: currentColor;
+                    stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  aside.side nav a:hover { background: var(--chip-unselected); }
+  aside.side nav a[aria-current="page"] { background: var(--accent); color: var(--on-accent);
+                                     font-weight: var(--weight-semibold); }
+  /* The account, where every desktop app keeps it. iOS reaches this from
+     Settings; the web has had only the Calculator header's person button. */
+  aside.side .live-pill { position: static; margin: auto 0 4px var(--space-5); align-self: flex-start; box-shadow: none; }
+  aside.side .live-pill + .who { margin-top: 0; }
+  aside.side .who { margin-top: auto; display: flex; align-items: center; gap: var(--space-5);
+               padding: var(--space-5); border-radius: var(--radius-md);
+               text-decoration: none; }
+  aside.side .who:hover { background: var(--chip-unselected); }
+  aside.side .who .av { width: 28px; height: 28px; border-radius: 50%; background: var(--accent);
+                   color: var(--on-accent); display: grid; place-items: center;
+                   font-size: var(--font-caption); font-weight: var(--weight-bold); }
+  aside.side .who span { font-size: var(--font-caption); color: var(--ink-secondary);
+                    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+/* ── A field with focus ─────────────────────────────────────────────────────
+   The browser's blue ring on an orange-accent page "looks bad" (his call, 13 Sep
+   2026). Every text field, select and textarea on every page focuses the same
+   way: the accent on its border and a soft ring of it — Settings' rule, promoted.
+   The ring is the focus indicator, so the outline can go. */
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+/* ── A search field ──────────────────────────────────────────────────────────
+   "The textbox is selected twice? ugly" (his call, 25 Oct 2026). One pill, one
+   focus indicator: `.ox-search` wraps the glyph, the input and any clear button,
+   and takes the accent edge and the soft ring above on :focus-within — a keyboard
+   focus included. The input inside draws nothing of its own: no outline, border,
+   ring, nor WebKit's search decoration or cancel button. A bare type=search input
+   with no pill focuses as every other field does. check-search-focus. */
+.ox-search:focus-within {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.ox-search input, .ox-search input:focus, .ox-search input:focus-visible {
+  outline: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: none;
+}
+input[type=search] { -webkit-appearance: none; appearance: none; }
+input[type=search]::-webkit-search-decoration, input[type=search]::-webkit-search-cancel-button,
+input[type=search]::-webkit-search-results-button, input[type=search]::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  display: none;
+}
+
+/* ── 44pt hit area for the bare glyph buttons ────────────────────────────────
+   `.icon-btn` is the same control on all four pages — a lone glyph in a header
+   or nav bar — painted 36px on the Calculator and 38px everywhere else. On iOS
+   that paint is the *label*: a Button's frame is what you hit, and a bar button
+   gets 44pt whatever it draws (HeaderView.swift:62-73 draws 36 into a bar item).
+   The web has no such floor, so a thumb misses by 3-4px on every one of them.
+
+   An ::after overlay rather than a bigger box, so nothing about the layout or
+   the paint moves — the same trick the Calculator already used for the unit
+   pill and the favourite star, hoisted here so the four pages can't drift.
+   The overhang (3-4px a side) is never more than the gap between two of them. */
+.icon-btn { position: relative; }
+.icon-btn::after {
+  content: ""; position: absolute; top: 50%; left: 50%;
+  width: 44px; height: 44px; transform: translate(-50%, -50%);
+}
+
+/* ── Buttons — docs/buttons-contract.md (19 Sep 2026) ──────────────────────
+   One shape for every action: --radius-button, 12. Four roles: .btn alone is
+   QUIET (no fill, secondary ink, separator outline); .primary is the accent;
+   .destructive is the red; .text is accent ink with no box. Three sizes:
+   44 (forms, sheets, screen actions), .compact 36 (inside cards and rows),
+   .mini 28 (dense toolbars; radius 8, because at 28 tall a 12 corner is a
+   pill). Peers in one row share a size. --radius-pill is for chips, filters,
+   badges, segments and the tab bar — never for an action. ─────────────── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+     min-height:44px;padding:0 15px;border-radius:var(--radius-button);
+     border:1px solid var(--separator);background:none;font:inherit;
+     font-size:var(--font-subheadline);font-weight:var(--weight-semibold);
+     color:var(--ink-secondary);cursor:pointer;text-decoration:none;white-space:nowrap;
+     -webkit-tap-highlight-color:transparent}
+.btn.primary{background:var(--accent);border-color:transparent;color:var(--on-accent)}
+.btn.destructive{background:var(--destructive);border-color:transparent;color:#fff}
+.btn.text{border-color:transparent;padding:0 6px;color:var(--accent)}
+.btn.compact{min-height:36px;padding:0 12px;font-size:var(--font-footnote)}
+.btn.mini{min-height:28px;padding:0 9px;font-size:var(--font-caption);border-radius:8px}
+.btn.full{width:100%}
+.btn:disabled,.btn[aria-disabled="true"]{opacity:.45;cursor:default}
+.btn:active:not(:disabled){opacity:.7}
+.btn .icon{width:16px;height:16px;flex:none}
+
+/* ── Switch — one control, the same on all four platforms (Roberto, 2 Oct 2026) ──
+   iOS's Toggle is the reference, in points = CSS px: a 51×31 track, a 27 white
+   thumb inset 2 and travelling 20, the off track systemFill (--switch-off), the
+   on track the accent, or the context's own tint through --switch-tint (Strava's
+   orange on Share to Strava). Focus: the fields' soft ring. Disabled: the
+   buttons' .45. A button with role="switch", never a checkbox:
+     <button type="button" class="ox-switch" role="switch" aria-checked="false"
+             aria-label="Share to Strava"><span></span></button>
+   The script flips aria-checked; the CSS draws both states from it. The 31-tall
+   track gets a 44 hit area from ::after, as .icon-btn does. Settings' switches use
+   it (its page-local `.sw-toggle` is gone); Android's `Switch` (ProfileUI.kt) draws
+   the same numbers in dp. ─────────────────────────────────────────── */
+.ox-switch{position:relative;flex:none;box-sizing:border-box;width:51px;height:31px;
+  margin:0;padding:2px;border:0;border-radius:var(--radius-pill);
+  background:var(--switch-off);cursor:pointer;vertical-align:middle;
+  transition:background-color .2s ease;-webkit-tap-highlight-color:transparent}
+.ox-switch > span{display:block;width:27px;height:27px;border-radius:50%;background:#fff;
+  box-shadow:0 3px 8px rgba(0,0,0,.15),0 3px 1px rgba(0,0,0,.06);
+  transition:transform .2s ease;pointer-events:none}
+.ox-switch[aria-checked="true"]{background:var(--switch-tint,var(--accent))}
+.ox-switch[aria-checked="true"] > span{transform:translateX(20px)}
+.ox-switch:focus-visible{outline:none;
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--switch-tint,var(--accent)) 22%,transparent)}
+.ox-switch:disabled,.ox-switch[aria-disabled="true"]{opacity:.45;cursor:default}
+.ox-switch::after{content:"";position:absolute;left:-2px;right:-2px;top:-7px;bottom:-6px}
+@media (prefers-reduced-motion: reduce){.ox-switch,.ox-switch > span{transition:none}}
+
+/* ── Menu, date, number — one control, the same on all four platforms (30 Oct 2026)
+   iOS Menu: a rounded button, the current value, a chevron, a popover list.
+   iOS compact DatePicker: a rounded pill; the calendar is Monday-first and the
+   label is the app's date ("30 Oct 2026"). Time is that picker's hour-and-minute face.
+   Stepper: round − / +, a typed value, no browser spinner. Light and dark come
+   from the tokens above. Behaviour lives in ox-controls.js.
+     <ox-menu class="ox-menu" value="easy" aria-label="Kind">…</ox-menu>
+     <ox-date class="ox-date" value="2026-10-30" aria-label="Date"></ox-date>
+     <ox-date class="ox-date" mode="time" value="08:00" aria-label="Start time"></ox-date>
+     <ox-number class="ox-number" value="25" min="1" max="100" step="1" aria-label="Pool length"></ox-number>
+   ─────────────────────────────────────────────────────────────────────────── */
+ox-menu.ox-menu, ox-date.ox-date, ox-number.ox-number{box-sizing:border-box;color:var(--ink);vertical-align:middle}
+ox-menu.ox-menu{display:inline-flex;min-width:0;max-width:100%}
+ox-menu.ox-menu.ox-block, ox-menu.ox-menu.fld{display:flex;width:100%}
+.ox-menu-select, .ox-date-pill{
+  display:inline-flex;align-items:center;justify-content:space-between;gap:8px;
+  box-sizing:border-box;width:100%;min-height:var(--control-height);height:var(--control-height);
+  margin:0;padding:0 12px;border:1px solid var(--separator);border-radius:var(--radius-pill);
+  background:var(--bg);color:var(--ink);font:inherit;font-size:var(--font-subheadline);
+  font-weight:var(--weight-medium);line-height:1.2;text-align:left;cursor:pointer;
+  -webkit-tap-highlight-color:transparent}
+.ox-menu-value, .ox-date-value{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ox-chevron{width:12px;height:12px;flex:none;color:var(--ink-secondary)}
+/* Hug the date by default so a sheet can drop the control in. ox-block, and any
+   page that sets the host to 100%, still paints a full-width pill. */
+ox-date.ox-date{display:inline-flex;width:auto;max-width:100%}
+ox-date.ox-date.ox-block{display:flex;width:100%}
+.ox-date-pill{min-width:9.5rem}
+/* A labelled date row (Charts › Custom range): every label one width, so the pills line up when the row wraps. */
+.ox-date-label{display:inline-block;min-width:3em;margin-right:6px}
+label:has(> .ox-date-label){display:inline-flex;align-items:center}
+.ox-pop{
+  inset:unset;margin:0;padding:6px;border:1px solid var(--separator);border-radius:12px;
+  background:var(--bg-raised);color:var(--ink);box-shadow:0 12px 40px rgba(0,0,0,.18);
+  max-height:calc(100vh - 16px);overflow-y:auto;overscroll-behavior:contain;box-sizing:border-box}
+.ox-pop .ox-group{padding:8px 12px 2px;font-size:var(--font-caption);font-weight:var(--weight-semibold);
+  color:var(--ink-secondary)}
+.ox-pop [role="option"]{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;
+  min-height:44px;margin:0;padding:0 12px;border:0;border-radius:8px;background:none;
+  color:var(--ink);font:inherit;font-size:var(--font-subheadline);text-align:left;cursor:pointer}
+.ox-pop [role="option"][aria-selected="true"]{color:var(--accent);font-weight:var(--weight-semibold)}
+.ox-pop [role="option"][aria-selected="true"] .ox-opt-check::before{content:"✓"}
+.ox-pop [role="option"].ox-active, .ox-pop [role="option"]:hover{background:var(--chip-unselected)}
+.ox-pop [role="option"]:disabled{opacity:.4;cursor:default}
+.ox-cal{padding:10px}
+.ox-cal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.ox-cal-title{font-size:var(--font-subheadline);font-weight:var(--weight-semibold)}
+.ox-cal-nav{
+  width:32px;height:32px;border:0;border-radius:50%;background:var(--chip-unselected);
+  color:var(--ink);font:inherit;font-size:18px;line-height:1;cursor:pointer}
+.ox-cal-week, .ox-cal-grid [role="row"]{display:grid;grid-template-columns:repeat(7,36px);gap:2px}
+.ox-cal-week span{text-align:center;font-size:var(--font-caption);color:var(--ink-secondary);padding-bottom:4px}
+.ox-cal-grid [role="gridcell"]{
+  width:36px;height:36px;border:0;border-radius:50%;background:none;color:var(--ink);
+  font:inherit;font-size:var(--font-subheadline);cursor:pointer}
+.ox-cal-grid button[aria-selected="true"]{background:var(--accent);color:var(--on-accent);font-weight:var(--weight-semibold)}
+.ox-cal-grid button[aria-current="date"]:not([aria-selected="true"]){box-shadow:inset 0 0 0 1px var(--accent)}
+.ox-cal-grid button:disabled{opacity:.3;cursor:default}
+.ox-cal-grid button:hover:not(:disabled):not([aria-selected="true"]){background:var(--chip-unselected)}
+.ox-time{display:flex;gap:8px}
+.ox-time-col{display:flex;flex-direction:column;max-height:220px;overflow:auto;min-width:56px}
+.ox-time-col [role="option"]{justify-content:center;min-width:56px}
+ox-number.ox-number{display:inline-flex;align-items:center;gap:6px;max-width:100%}
+.ox-step{
+  width:32px;height:32px;flex:none;display:grid;place-items:center;margin:0;padding:0;
+  border:0;border-radius:50%;background:var(--chip-unselected);color:var(--ink);
+  font:inherit;font-size:18px;line-height:1;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.ox-number-value{
+  width:4.5rem;height:var(--control-height);box-sizing:border-box;margin:0;padding:0 8px;
+  border:1px solid var(--separator);border-radius:var(--radius-field);background:var(--bg);
+  color:var(--ink);font:inherit;font-size:var(--font-subheadline);font-variant-numeric:tabular-nums;
+  text-align:center;-moz-appearance:textfield;appearance:textfield}
+.ox-number-value::-webkit-outer-spin-button, .ox-number-value::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.ox-menu-select:focus-visible, .ox-date-pill:focus-visible, .ox-step:focus-visible,
+.ox-number-value:focus-visible, .ox-pop [role="option"]:focus-visible, .ox-cal-nav:focus-visible,
+.ox-cal-grid button:focus-visible{
+  outline:none;border-color:var(--accent);
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent)}
+.ox-menu-select:disabled, .ox-date-pill:disabled, .ox-step:disabled, ox-menu[aria-disabled="true"],
+ox-number[aria-disabled="true"]{opacity:.45;cursor:default}
+@media (prefers-reduced-motion: reduce){
+  .ox-menu-select, .ox-date-pill, .ox-step, .ox-number-value{transition:none}
+}
+
+/* A loading glyph turns about its own centre, one turn in under a second. */
+.empty.loading > .icon{
+  animation: ox-empty-spin .95s linear infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes ox-empty-spin{ to{ transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce){
+  .empty.loading > .icon{ animation: none; }
+}
+
+/* ── Strava attribution — the same on all four platforms (2 Oct 2026) ─────────
+   Strava's own mark, from the page sprite (#i-strava-powered), never redrawn or
+   recoloured beyond its supplied variants (the tokens above):
+     <svg class="strava-powered" role="img" aria-label="Powered by Strava"><use href="#i-strava-powered"/></svg>
+   `.mono` for the black / white variant. Place it apart from Oxygon's own name and
+   never larger than it. "View on Strava" is a link in Strava's orange, bold:
+     <a class="strava-link" href="https://www.strava.com/activities/<id>" target="_blank" rel="noopener">View on Strava</a>
+   iOS: `PoweredByStrava()` / `Theme.stravaOrange`; Android: `PoweredByStrava()` / `T.stravaOrange`. ── */
+.strava-powered{display:block;flex:none;box-sizing:content-box;
+  height:var(--strava-mark-h);width:calc(var(--strava-mark-h) * 365 / 37);
+  min-height:var(--strava-mark-min-h);padding:var(--strava-mark-clear) 0}
+.strava-powered.mono{--strava-mark-word:var(--strava-mark-text)}
+.strava-link{color:var(--strava-orange);font-weight:var(--weight-bold);text-decoration:none}
+.strava-link:hover{text-decoration:underline}
+
+/* The activity dialog is a container; keyboard focus remains visible on its controls. */
+#detail:focus{outline:none}
+.dsections > .completion-card .btn{color:var(--accent);min-height:44px}
+
+/* Date/time segments own their native selection. Keep only our border focus indicator. */
+input[type="date"]:focus, input[type="time"]:focus {
+  background: transparent;
+  border-color: var(--accent);
+  box-shadow: none;
+  outline: none;
+}
+
+.ox-menu-value,.ox-opt-label{display:inline-flex;align-items:center;gap:8px}.ox-menu-icon{flex:none}
+
+/* OxControls.confirm / alert / prompt: the app's own small dialog, the calendar note's style
+   (web/app/ox-controls.js). Never window.confirm/alert/prompt. */
+.ox-dialog{border:0;border-radius:20px;background:var(--bg);color:var(--ink);width:min(420px,calc(100vw - 24px));padding:24px;max-height:calc(100dvh - 24px);overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.ox-dialog::backdrop{background:#0006}
+.ox-dialog h2{font:var(--weight-bold) 20px/1.25 var(--font-stack);margin:0}
+.ox-dialog p{margin:10px 0 0;font-size:var(--font-subheadline);line-height:1.4;color:var(--ink-secondary)}
+.ox-dialog-input{display:block;width:100%;box-sizing:border-box;margin-top:16px;min-height:var(--control-height);padding:0 12px;border:1px solid var(--separator);border-radius:var(--radius-field);background:var(--card);color:var(--ink);font:inherit;font-size:var(--font-subheadline)}
+.ox-dialog-input:focus{outline:none;border-color:var(--accent)}
+.ox-dialog footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
+
+/* Modal scrolling belongs to the dialog, never the document behind it. The
+   controls layer keeps this lock until the final nested dialog is closed. */
+html.ox-dialog-scroll-lock { overflow:hidden!important; overscroll-behavior:none; padding-right:var(--ox-dialog-page-padding,0px)!important; }
+html.ox-dialog-scroll-lock body { overflow:hidden!important; overscroll-behavior:none; }
+dialog, [role="dialog"], [data-ox-dialog-scroll] { overscroll-behavior:contain; }
