@@ -1,18 +1,23 @@
-import {config} from './config.js?v=1fa97ff6bdef';
-export const isLocal = ['localhost','127.0.0.1','[::1]'].includes(location.hostname);
-export function activityId(hash=location.hash) {return /^#([A-Za-z0-9_-]{6,80})$/.exec(hash)?.[1]||null;}
-export async function loadActivity(id,language) {
-  if(!id)return null;
-  if(isLocal&&config.dataSource==='fixture') {
-    const {fixture}=await import('./fixtures.js?v=f2dec000fd11');return fixture(id,language);
-  }
-  // Contract not supplied yet: do not guess the RPC name, call a table, or expose a fixture remotely.
-  if(!config.rpcName)return null;
-  const response=await fetch(`${config.supabaseUrl}/rest/v1/rpc/${encodeURIComponent(config.rpcName)}`,{
-    method:'POST',credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer',
-    headers:{apikey:config.publishableKey,'Content-Type':'application/json'},
-    body:JSON.stringify({share_id:id,language}),signal:AbortSignal.timeout(10000)
-  });
-  if(!response.ok)return null;
-  return response.json();
+import {config} from './config.js?v=53af6894aebe';
+import {validId} from './model.js?v=bd1d9a9b4780';
+export function activityId(hash=location.hash){const id=hash.startsWith('#')?hash.slice(1):'';return validId(id)?id:null;}
+export async function loadActivity(id,signal){
+ if(!validId(id))return null;
+ const response=await fetch(`${config.supabaseUrl}/rest/v1/rpc/public_activity`,{
+  method:'POST',credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer',headers:{apikey:config.publishableKey,'Content-Type':'application/json'},body:JSON.stringify({p_id:id}),signal:signal||AbortSignal.timeout(10000)
+ });
+ if(!response.ok)return null;return response.json();
 }
+export async function loadPhotos(id,indexes,signal){
+ if(!validId(id))return [];
+ const photos=[];
+ try{for(const index of indexes){
+  if(!Number.isInteger(index)||index<0||index>3)continue;
+  const url=new URL(config.supabaseUrl+'/functions/v1/public-activity-media');url.searchParams.set('id',id);url.searchParams.set('index',String(index));
+  // Simple GET: no bearer/session/apikey header or private storage URL; endpoint rechecks revocation.
+  const response=await fetch(url,{credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer',signal:signal||AbortSignal.timeout(10000)});
+  if(!response.ok||!/^image\/jpeg(?:;|$)/i.test(response.headers.get('Content-Type')||''))throw new Error('Public media unavailable');
+  const blob=await response.blob();if(!blob.size)throw new Error('Empty public image');photos.push({url:URL.createObjectURL(blob),index});
+ }return photos;}catch(error){revokePhotos(photos);throw error;}
+}
+export function revokePhotos(photos){for(const photo of photos)URL.revokeObjectURL(photo.url);}

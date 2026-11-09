@@ -39,3 +39,5 @@ h1{margin:4px 0 0;font-size:28px;line-height:1.15}
 .photos.many{height:auto;grid-template-rows:repeat(2,150px);grid-auto-rows:150px}.photos.many img:first-child{grid-row:span 2}
 
 .mapc small{right:12px}.mapc:has(.btn) small{right:180px}
+
+.rep-target{display:block;font-size:var(--font-caption);color:var(--ink-secondary);font-weight:400;margin-top:3px;white-space:normal}
