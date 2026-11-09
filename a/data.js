@@ -1,6 +1,6 @@
 import {config} from './config.js?v=1fa97ff6bdef';
 export const isLocal = ['localhost','127.0.0.1','[::1]'].includes(location.hostname);
-export function activityId(path=location.pathname) {return /^\/a\/([A-Za-z0-9_-]{6,80})\/?$/.exec(path)?.[1]||null;}
+export function activityId(hash=location.hash) {return /^#([A-Za-z0-9_-]{6,80})$/.exec(hash)?.[1]||null;}
 export async function loadActivity(id,language) {
   if(!id)return null;
   if(isLocal&&config.dataSource==='fixture') {
