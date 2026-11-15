@@ -1,5 +1,5 @@
 import {config} from './config.js?v=53af6894aebe';
-import {validId} from './model.js?v=1017dd7149da';
+import {validId} from './model.js?v=aae290015a45';
 export function activityId(hash=location.hash){const id=hash.startsWith('#')?hash.slice(1):'';return validId(id)?id:null;}
 export async function loadActivity(id,signal){
  if(!validId(id))return null;

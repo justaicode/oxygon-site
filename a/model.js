@@ -17,7 +17,7 @@ export function normalize(raw,expectedId){
  const free=distanceFree(sport),stats={},summary=raw.summary||{};
  // Optional summary columns come from the SQL allowlist; derive running pace only as contracted.
  for(const [key,source]of [['elapsedSeconds','movingSec'],['temperatureC','tempC'],['load','load'],...(free?[]:[['distanceKm','distanceKm'],['ascentM','elevationGainM']])]){const value=number(summary[source]);if(value!==null)stats[key]=value;}
- for(const [key,source]of [['avgHeartRate','avgHR'],['maxHeartRate','maxHR']]){const value=number(summary[source]);if(value!==null)stats[key]=value;}
+ for(const [key,source]of [['avgHeartRate','avgHR'],['maxHeartRate','maxHR'],['elapsedTotalSeconds','elapsedSec'],['energyKcal','energyKcal'],['avgWatts','avgWatts'],['npWatts','npWatts'],['maxWatts','maxWatts'],['driftPct','driftPct']]){const value=source==='driftPct'?(typeof summary[source]==='number'&&Number.isFinite(summary[source])?summary[source]:null):number(summary[source]);if(value!==null)stats[key]=value;}
  if(sport==='sauna'&&Number.isInteger(summary.rounds)&&summary.rounds>0)stats.rounds=summary.rounds;
  if(sport==='run'&&stats.elapsedSeconds>0&&stats.distanceKm>0)stats.avgPaceSecondsPerKm=stats.elapsedSeconds/stats.distanceKm;
  const heartRateShared=stats.avgHeartRate!==undefined||stats.maxHeartRate!==undefined;
