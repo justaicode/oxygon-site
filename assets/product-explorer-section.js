@@ -400,7 +400,7 @@
           style.textContent +=
             ".activities-visual::after{content:\"Πραγματικές οθόνες της εφαρμογής\"}" +
             "@media(min-width:601px){.tool-picker-list{grid-template-columns:minmax(0,1fr);width:210px}}" +
-            "@media(max-width:600px){.activity-steps{grid-template-columns:repeat(3,minmax(0,1fr))}}";
+            "@media(max-width:600px){.activities-overview h2{font-size:clamp(18px,5vw,20px);line-height:1.1}.activity-steps{grid-template-columns:repeat(3,minmax(0,1fr))}}";
         }
         root.appendChild(style);
         root.appendChild(document.importNode(source.story, true));
