@@ -29,6 +29,8 @@
   }
 
   var MIN_LINE_SCALE = 0.7;
+  // iPhone's tile title: lineLimit(1).minimumScaleFactor(0.75). The web's tile-grid titles shrink the same, no further.
+  var TITLE_MIN_SCALE = 0.75;
 
   function clearFit(root) {
     root.querySelectorAll('.measurement-label > .measurement-content, .measurement-number, .measurement-unit').forEach(function (el) {
@@ -39,11 +41,17 @@
   // A header or a numeric reading shrinks (down to 0.7) before a pair stacks, so the
   // values in that row stay on one baseline. The icon, the face dots and a context
   // sentence keep their size; a sentence still takes the full width.
-  function fitLine(el, room, minScale) {
+  function fitLine(el, room, minScale, writes) {
     if (minScale == null) minScale = MIN_LINE_SCALE;
     // Measure the intrinsic width so a max-width cap (e.g. in the activity-popup
     // tile grid) doesn't make a long label look like it already fits.
     var width = el.scrollWidth;
+    // A tile-grid title box is as wide as its tile: its own width is what its icon and words take.
+    if (el.closest && el.closest('.tile-grid .measurement-label')) {
+      var r = document.createRange(); r.selectNodeContents(el);
+      var box = el.getBoundingClientRect(), words = r.getBoundingClientRect();
+      if (words.width) width = Math.max(words.right, box.left) - box.left;
+    }
     if (!(room > 0) || width <= room + 0.5) return;
     var numbers = el.querySelectorAll('.measurement-number, .measurement-unit');
     var fixed = 0;
@@ -59,16 +67,18 @@
     var scale = Math.max(minScale, (room - fixed) / flexible);
     if (numbers.length) {
       numbers.forEach(function (n) {
-        n.style.fontSize = (parseFloat(getComputedStyle(n).fontSize) * scale) + 'px';
+        writes.push({el:n, size:(parseFloat(getComputedStyle(n).fontSize) * scale) + 'px'});
       });
     } else {
-      el.style.fontSize = (parseFloat(getComputedStyle(el).fontSize) * scale) + 'px';
+      writes.push({el:el, size:(parseFloat(getComputedStyle(el).fontSize) * scale) + 'px'});
     }
   }
 
-  function fitGrid(grid, columns, minScale) {
+  function fitGrid(grid, columns, minScale, labelMinScale) {
+    if (labelMinScale == null) labelMinScale = minScale;
     var tiles = Array.from(grid.children).filter(function (t) { return t.classList.contains('measurement-tile'); });
     if (!tiles.length || !(columns > 0)) return;
+    var writes = [];
     var gap = parseFloat(getComputedStyle(grid).columnGap) || 0;
     var narrow = (grid.clientWidth - gap * (columns - 1)) / columns;
     tiles.forEach(function (t) {
@@ -76,10 +86,26 @@
       // One pixel inside the column, so a rounded font-size still clears the edge.
       var room = Math.max(1, narrow - parseFloat(inset.paddingLeft) - parseFloat(inset.paddingRight) - 1);
       var label = t.querySelector('.measurement-label > .measurement-content');
-      if (label) fitLine(label, room, minScale);
+      if (label) {
+        // The face dots are centred down the tile's right edge. A tall column (four faces or more) reaches the
+        // title's row: there the title ends 2 px before the dots, so nothing overlaps them.
+        var labelRoom = room;
+        var dots = t.querySelector('.ox-face-dots');
+        if (dots && dots.getClientRects().length) {
+          var dr = dots.getBoundingClientRect(), lr = label.getBoundingClientRect();
+          if (dr.top < lr.bottom && dr.bottom > lr.top) labelRoom = Math.max(1, Math.min(room, dr.left - lr.left - 2));
+        }
+        // A title that has to shrink first loses its tracking (.025em), so it keeps more of its size.
+        label.style.letterSpacing = '';
+        var words = document.createRange(); words.selectNodeContents(label);
+        var needs = words.getBoundingClientRect().right - label.getBoundingClientRect().left;
+        if (needs > labelRoom - 1 + 0.5) label.style.letterSpacing = '0';
+        fitLine(label, labelRoom - 1, labelMinScale, writes);
+      }
       var readings = t.querySelector('.measurement-readings');
-      if (readings) fitLine(readings, room, minScale);
+      if (readings) fitLine(readings, room, minScale, writes);
     });
+    writes.forEach(function(w){w.el.style.fontSize=w.size;});
   }
 
   function contentWidth(grid) {
@@ -87,6 +113,12 @@
     var widest = 0;
     pieces.forEach(function (el) { widest = Math.max(widest, el.getBoundingClientRect().width); });
     return widest;
+  }
+
+  function measureRows(rows) {
+    rows.forEach(function(r){r.prior=r.el.style.maxWidth;r.el.style.maxWidth=r.room+'px';});
+    rows.forEach(function(r){r.slots[r.index]=Math.max(r.slots[r.index],r.el.getBoundingClientRect().height);});
+    rows.forEach(function(r){r.el.style.maxWidth=r.prior;});
   }
 
   function layout(root) {
@@ -137,22 +169,22 @@
       // line, and a reading has already shrunk, so the value row does not move.
       if (g._mtExpanded) g.setAttribute('data-expanded-text', '');
     });
+    // Measure peers together: alternating max-width writes and height reads
+    // forces a layout for every tile row. Their widths are independent.
+    var rowMeasures = [];
     grids.forEach(function (g) {
       var columns = g._mtColumns;
       var gap = parseFloat(getComputedStyle(g).columnGap) || 0;
       var narrow = (g.clientWidth - gap * (columns - 1)) / columns;
       Array.from(g.children).filter(function (t) { return t.classList.contains('measurement-tile'); }).forEach(function (t) {
+        var inset = getComputedStyle(t);
+        var room = Math.max(1, narrow - parseFloat(inset.paddingLeft) - parseFloat(inset.paddingRight));
         Array.from(t.children).filter(function(row) { return ["measurement-label","measurement-value","measurement-context"].some(function(c) { return row.classList.contains(c); }); }).forEach(function (row, i) {
-          var content = row.firstElementChild, prior = content.style.maxWidth;
-          var inset = getComputedStyle(t);
-          // Measure every row at the width it will actually occupy, so a wrapped
-          // reason gets the taller row it needs and peers stay the same height.
-          content.style.maxWidth = Math.max(1, narrow - parseFloat(inset.paddingLeft) - parseFloat(inset.paddingRight)) + 'px';
-          slots[i] = Math.max(slots[i], content.getBoundingClientRect().height);
-          content.style.maxWidth = prior;
+          rowMeasures.push({el:row.firstElementChild, room:room, slots:slots, index:i});
         });
       });
     });
+    measureRows(rowMeasures);
     grids.forEach(function (g) {
       ['label', 'value', 'context'].forEach(function (name, i) {
         set(g, '--measurement-' + name + '-row', Math.ceil(slots[i]) + 'px');
@@ -160,21 +192,23 @@
       delete g._mtColumns;
       delete g._mtExpanded;
     });
-    // Activity popups use a fixed 3-column tile grid; shrink long labels/readings
-    // to fit without changing the grid layout, never below 11 px. Labels that still
-    // don't fit wrap to a second line, and every tile in the grid shares the same
+    // Activity popups use a fixed 3-column tile grid; shrink long labels/readings to fit without changing the
+    // grid layout. Readings never go below 11 px. A title stays one line and shrinks as iPhone's does
+    // (minimumScaleFactor .75, ActivityMetricCards), never further. Every tile in the grid shares the same
     // measured label / value / context row heights.
     tileGrids.forEach(function (g) {
       var label = g.querySelector('.measurement-label > .measurement-content');
       var minScale = label ? 11 / parseFloat(getComputedStyle(label).fontSize) : MIN_LINE_SCALE;
-      fitGrid(g, 3, Math.max(minScale, MIN_LINE_SCALE));
+      fitGrid(g, 3, Math.max(minScale, MIN_LINE_SCALE), TITLE_MIN_SCALE);
     });
+    var tileMeasures = [], tileHeights = [];
     tileGrids.forEach(function (g) {
       var tiles = Array.from(g.children).filter(function (t) { return t.classList.contains('measurement-tile') || t.classList.contains('card'); });
       if (!tiles.length) return;
       var gap = parseFloat(getComputedStyle(g).columnGap) || 0;
       var narrow = (g.clientWidth - gap * 2) / 3;
       var heights = [0, 0, 0];
+      tileHeights.push({grid:g, heights:heights});
       tiles.forEach(function (t) {
         var inset = getComputedStyle(t);
         var room = Math.max(1, narrow - parseFloat(inset.paddingLeft) - parseFloat(inset.paddingRight) - 1);
@@ -190,21 +224,39 @@
         ];
         rows.forEach(function (el, i) {
           if (!el) return;
-          var prior = el.style.maxWidth;
-          el.style.maxWidth = room + 'px';
-          heights[i] = Math.max(heights[i], el.getBoundingClientRect().height);
-          el.style.maxWidth = prior;
+          tileMeasures.push({el:el, room:room, slots:heights, index:i});
         });
       });
+    });
+    measureRows(tileMeasures);
+    tileHeights.forEach(function(item){
+      var g=item.grid, heights=item.heights;
       set(g, '--measurement-label-row', Math.ceil(heights[0]) + 'px');
       set(g, '--measurement-value-row', Math.ceil(heights[1]) + 'px');
       set(g, '--measurement-context-row', Math.ceil(heights[2]) + 'px');
     });
   }
 
+  // ResizeObserver sends an initial notification for every newly observed
+  // node, including the values just fitted by refresh. Do not fit them twice.
+  // Read the final boxes/styles together after fitting; genuine size/font/padding
+  // changes still schedule the same layout, including a hidden dialog opening.
+  function boxKey(el) {
+    var r = el.getBoundingClientRect(), c = getComputedStyle(el);
+    return [r.width, r.height, c.font, c.lineHeight, c.letterSpacing,
+      c.padding, c.borderWidth, c.columnGap, c.whiteSpace].join('|');
+  }
+  function rememberBoxes(state) {
+    state.boxes = new Map();
+    [state.root].concat(Array.from(state.root.querySelectorAll('.measurement-content'))).forEach(function (el) {
+      state.boxes.set(el, boxKey(el));
+    });
+  }
   function schedule(state) {
     if (state.frame) return;
-    state.frame = requestAnimationFrame(function () { state.frame = 0; layout(state.root); });
+    state.frame = requestAnimationFrame(function () {
+      state.frame = 0; layout(state.root); rememberBoxes(state);
+    });
   }
 
   function refresh(root) {
@@ -214,17 +266,19 @@
     });
     var state = roots.get(root);
     if (!state) {
-      state = { root: root, frame: 0, observer: null };
-      if (window.ResizeObserver) state.observer = new ResizeObserver(function () { schedule(state); });
+      state = { root: root, frame: 0, observer: null, boxes: new Map() };
+      if (window.ResizeObserver) state.observer = new ResizeObserver(function (entries) {
+        if (entries.some(function (e) { return state.boxes.has(e.target) && state.boxes.get(e.target) !== boxKey(e.target); })) schedule(state);
+      });
       roots.set(root, state);
     }
+    if (state.frame) { cancelAnimationFrame(state.frame); state.frame = 0; }
     layout(root);
+    rememberBoxes(state);
     if (state.observer) {
       state.observer.disconnect();
-      state.observer.observe(root);
-      root.querySelectorAll('.measurement-content').forEach(function (c) { state.observer.observe(c); });
-    }
-    schedule(state); // A dialog may become visible immediately after its render.
+      state.boxes.forEach(function (_, el) { state.observer.observe(el); });
+    } else schedule(state); // Older engines still fit after a hidden dialog opens.
   }
 
   window.addEventListener('resize', function () { roots.forEach(schedule); });

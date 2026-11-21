@@ -6,3 +6,6 @@
 .ox-face-dots > i.on{background:var(--accent,#007AFF)}
 .ox-face-dots.many{gap:2px}
 .ox-face-dots.many > i{width:4px;height:4px}
+/* Every tile that shows face dots is their positioned box, wherever it sits (Sauna's, Yoga's and Strength's live tiles,
+   11 Nov 2026, sat outside the grid that positions the run page's tiles). */
+.measurement-tile:has(> .ox-face-dots){position:relative}
